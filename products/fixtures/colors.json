@@ -1,0 +1,145 @@
+[
+  {
+    "model": "products.color",
+    "pk": "f5a7324e-5a9d-4c39-8c3a-58f65c8e77a0",
+    "fields": {
+      "name": "Черный",
+      "hex_code": "#000000",
+      "display_order": 1,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+    "fields": {
+      "name": "Красный",
+      "hex_code": "#FF0000",
+      "display_order": 2,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
+    "fields": {
+      "name": "Серый",
+      "hex_code": "#808080",
+      "display_order": 3,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f",
+    "fields": {
+      "name": "Темно-синий",
+      "hex_code": "#000080",
+      "display_order": 4,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a",
+    "fields": {
+      "name": "Коричневый",
+      "hex_code": "#654321",
+      "display_order": 5,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "e5f6a7b8-c9d0-8e9f-2a3b-4c5d6e7f8a9b",
+    "fields": {
+      "name": "Бежевый",
+      "hex_code": "#F5F5DC",
+      "display_order": 6,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "f6a7b8c9-d0e1-9f0a-3b4c-5d6e7f8a9b0c",
+    "fields": {
+      "name": "Синий",
+      "hex_code": "#0000FF",
+      "display_order": 7,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "a7b8c9d0-e1f2-0a1b-4c5d-6e7f8a9b0c1d",
+    "fields": {
+      "name": "Салатовый",
+      "hex_code": "#00FF00",
+      "display_order": 8,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "b8c9d0e1-f2a3-1b2c-5d6e-7f8a9b0c1d2e",
+    "fields": {
+      "name": "Фиолетовый",
+      "hex_code": "#800080",
+      "display_order": 9,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "c9d0e1f2-a3b4-2c3d-6e7f-8a9b0c1d2e3f",
+    "fields": {
+      "name": "Желтый",
+      "hex_code": "#FFFF00",
+      "display_order": 10,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "d0e1f2a3-b4c5-3d4e-7f8a-9b0c1d2e3f4a",
+    "fields": {
+      "name": "Зеленый",
+      "hex_code": "#008000",
+      "display_order": 11,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "e1f2a3b4-c5d6-4e5f-8a9b-0c1d2e3f4a5b",
+    "fields": {
+      "name": "Темно-зеленый",
+      "hex_code": "#006400",
+      "display_order": 12,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  },
+  {
+    "model": "products.color",
+    "pk": "f2a3b4c5-d6e7-5f6a-9b0c-1d2e3f4a5b6c",
+    "fields": {
+      "name": "Оранжевый",
+      "hex_code": "#FFA500",
+      "display_order": 13,
+      "created_at": "2025-05-12T00:00:00Z",
+      "updated_at": "2025-05-12T00:00:00Z"
+    }
+  }
+]

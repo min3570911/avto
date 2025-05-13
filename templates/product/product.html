@@ -52,6 +52,67 @@
       font-size: 0.9rem;
     }
   }
+  
+  /* Стили для визуализатора ковриков */
+  .product-visualizer {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 30px;
+  }
+  
+  .product-visualizer img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+  }
+  
+  .matcolor {
+    z-index: 1;
+  }
+  
+  .bordercolor {
+    z-index: 2;
+  }
+  
+  .podpicon {
+    z-index: 3;
+  }
+  
+  /* Стили для выбора цветов */
+  .color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .color-item {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #ccc;
+    transition: all 0.2s ease;
+  }
+  
+  .color-item:hover {
+    transform: scale(1.1);
+  }
+  
+  .color-item.active {
+    border: 2px solid #000;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+  }
+  
+  .color-name {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: center;
+  }
 </style>
 
 <section class="section-content padding-y">
@@ -61,9 +122,21 @@
     <div class="card">
       <div class="row no-gutters">
         <aside class="col-md-6">
+          <!-- Визуализатор ковриков с наложением цветов -->
+          <div class="product-visualizer mt-4 mb-4">
+            <!-- Базовое изображение коврика (черный по умолчанию) -->
+            <img class="matcolor img-fluid" src="/media/images/schema/sota1.png" alt="Коврик" />
+            
+            <!-- Изображение окантовки (черная по умолчанию) -->
+            <img class="bordercolor img-fluid" src="/media/images/schema/border211.png" alt="Окантовка" />
+            
+            <!-- Опциональный подпятник (скрыт по умолчанию) -->
+            <img class="podpicon img-fluid" src="/media/images/schema/podp.png" alt="Подпятник" style="display: none;" />
+          </div>
+          
           <!-- Gallery-Wrap -->
           <article class="gallery-wrap">
-            <div class="text-center mt-5 ml-3 mr-3 img-big-wrap">
+            <div class="text-center mt-2 ml-3 mr-3 img-big-wrap">
               <div class="carousel-inner">
                 {% for image in product.product_images.all %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
@@ -191,6 +264,53 @@
               </div>
               {% endif %}
             </div>
+            
+            <!-- Блок выбора цвета коврика -->
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>Цвет коврика</label>
+                <div class="mt-1 color-picker" data-color-type="carpet">
+                  {% for color in colors %}
+                    <div class="color-item {% if forloop.first %}active{% endif %}" 
+                         data-color-id="{{ color.uid }}"
+                         data-attr-id="1"
+                         data-attr-value="{{ forloop.counter }}"
+                         title="{{ color.name }}"
+                         style="background-color: {{ color.hex_code }};">
+                    </div>
+                  {% endfor %}
+                </div>
+                <input type="hidden" name="carpet_color" id="carpet_color_input" value="{{ colors.0.uid }}">
+              </div>
+              
+              <!-- Блок выбора цвета окантовки -->
+              <div class="form-group col-md-6">
+                <label>Цвет окантовки</label>
+                <div class="mt-1 color-picker" data-color-type="border">
+                  {% for color in colors %}
+                    <div class="color-item {% if forloop.first %}active{% endif %}" 
+                         data-color-id="{{ color.uid }}"
+                         data-attr-id="2"
+                         data-attr-value="{{ forloop.counter }}"
+                         title="{{ color.name }}"
+                         style="background-color: {{ color.hex_code }};">
+                    </div>
+                  {% endfor %}
+                </div>
+                <input type="hidden" name="border_color" id="border_color_input" value="{{ colors.0.uid }}">
+              </div>
+            </div>
+            
+            <!-- Дополнительные опции -->
+            <div class="form-group mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="podp_check" 
+                       data-attr-id="7" data-attr-value="1">
+                <label class="form-check-label" for="podp_check">
+                  Подпятник (+15.00 руб.)
+                </label>
+              </div>
+            </div>
 
             <!-- Add to Wishlist Button -->
             <div class="form-group d-flex justify-content-start">
@@ -204,7 +324,7 @@
                   </form>
                 </div>
                 <a
-                  href="{% url 'add_to_cart' product.uid %}?size={{ selected_size }}"
+                  href="{% url 'add_to_cart' product.uid %}?size={{ selected_size }}&carpet_color=__carpet_color__&border_color=__border_color__&podp=0"
                   id="add-to-cart-btn"
                   class="btn btn-primary"
                 >
@@ -412,6 +532,28 @@
       })
       .catch((error) => console.error("Error:", error));
   }
+  
+  // Функция обновления изображений ковриков
+  function setAttrValue(id, value) {
+    if (id == 1) {
+      // Цвет коврика
+      document.querySelector('.matcolor').src = '/media/images/schema/sota' + value + '.png';
+    }
+    
+    if (id == 2) {
+      // Цвет окантовки
+      document.querySelector('.bordercolor').src = '/media/images/schema/border2' + value + '.png';
+    }
+    
+    if (id == 7) {
+      // Подпятник
+      const podpIcon = document.querySelector('.podpicon');
+      podpIcon.style.display = value == 1 ? 'block' : 'none';
+    }
+    
+    // Обновить URL кнопки "Добавить в корзину"
+    updateCartUrl();
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
     const mainImage = document.getElementById("mainImage");
@@ -423,7 +565,62 @@
         mainImage.classList.add("zoomed-in");
       }
     });
+    
+    // Инициализация выбора цветов
+    const colorPickers = document.querySelectorAll('.color-picker');
+    
+    colorPickers.forEach(picker => {
+      const colorItems = picker.querySelectorAll('.color-item');
+      const colorType = picker.dataset.colorType;
+      const inputField = document.getElementById(`${colorType}_color_input`);
+      
+      colorItems.forEach(item => {
+        item.addEventListener('click', function() {
+          // Сбросить активный класс у всех элементов
+          colorItems.forEach(i => i.classList.remove('active'));
+          
+          // Добавить активный класс к выбранному
+          this.classList.add('active');
+          
+          // Обновить скрытое поле
+          inputField.value = this.dataset.colorId;
+          
+          // Обновить изображение коврика
+          setAttrValue(this.dataset.attrId, this.dataset.attrValue);
+        });
+      });
+    });
+    
+    // Обработчик для подпятника
+    const podpCheck = document.getElementById('podp_check');
+    if (podpCheck) {
+      podpCheck.addEventListener('change', function() {
+        setAttrValue(this.dataset.attrId, this.checked ? this.dataset.attrValue : 0);
+      });
+    }
+    
+    // Инициализация URL при загрузке страницы
+    updateCartUrl();
   });
+  
+  function updateCartUrl() {
+    const cartBtn = document.getElementById('add-to-cart-btn');
+    if (!cartBtn) return;
+    
+    let href = cartBtn.getAttribute('href');
+    const carpetColor = document.getElementById('carpet_color_input').value;
+    const borderColor = document.getElementById('border_color_input').value;
+    const hasPodp = document.getElementById('podp_check')?.checked ? '1' : '0';
+    
+    // Заменяем плейсхолдеры на фактические значения
+    href = href.replace('__carpet_color__', carpetColor);
+    href = href.replace('__border_color__', borderColor);
+    
+    // Обновляем значение подпятника
+    href = href.replace(/podp=\d/, `podp=${hasPodp}`);
+    
+    cartBtn.setAttribute('href', href);
+  }
 </script>
 
 {% endblock %}

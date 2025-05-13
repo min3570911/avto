@@ -1,8 +1,8 @@
 import os
 import json
 import uuid
-import razorpay
-from weasyprint import CSS, HTML
+# import razorpay  # Закомментировано, так как не будет использоваться
+# from weasyprint import CSS, HTML
 from products.models import *
 from django.urls import reverse
 from django.conf import settings
@@ -27,7 +27,7 @@ from accounts.forms import UserUpdateForm, UserProfileForm, ShippingAddressForm,
 
 
 def login_page(request):
-    next_url = request.GET.get('next') # Get the next URL from the query parameter
+    next_url = request.GET.get('next')  # Get the next URL from the query parameter
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -109,7 +109,12 @@ def activate_email_account(request, email_token):
 @login_required
 def add_to_cart(request, uid):
     try:
+        # Получаем базовые параметры
         variant = request.GET.get('size')
+        carpet_color_id = request.GET.get('carpet_color')
+        border_color_id = request.GET.get('border_color')
+        has_podp = request.GET.get('podp') == '1'
+
         if not variant:
             messages.warning(request, 'Please select a size variant!')
             return redirect(request.META.get('HTTP_REFERER'))
@@ -118,16 +123,43 @@ def add_to_cart(request, uid):
         cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
         size_variant = get_object_or_404(SizeVariant, size_name=variant)
 
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart, product=product, size_variant=size_variant)
-        if not created:
+        # Получаем цвета, если они выбраны
+        carpet_color = None
+        border_color = None
+        if carpet_color_id:
+            carpet_color = get_object_or_404(Color, uid=carpet_color_id)
+        if border_color_id:
+            border_color = get_object_or_404(Color, uid=border_color_id)
+
+        # Ищем существующий элемент корзины с такими же атрибутами
+        cart_item = CartItem.objects.filter(
+            cart=cart,
+            product=product,
+            size_variant=size_variant,
+            carpet_color=carpet_color,
+            border_color=border_color,
+            has_podpyatnik=has_podp
+        ).first()
+
+        if cart_item:
+            # Если товар уже есть, увеличиваем количество
             cart_item.quantity += 1
             cart_item.save()
+        else:
+            # Иначе создаем новый элемент корзины
+            cart_item = CartItem.objects.create(
+                cart=cart,
+                product=product,
+                size_variant=size_variant,
+                carpet_color=carpet_color,
+                border_color=border_color,
+                has_podpyatnik=has_podp
+            )
 
         messages.success(request, 'Item added to cart successfully.')
 
     except Exception as e:
-        messages.error(request, 'Error adding item to cart.', str(e))
+        messages.error(request, f'Error adding item to cart: {str(e)}')
 
     return redirect(reverse('cart'))
 
@@ -172,6 +204,8 @@ def cart(request):
             messages.success(request, 'Coupon applied successfully.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+    # Razorpay код закомментирован, так как не будет использоваться
+    """
     if cart_obj:
         cart_total_in_paise = int(cart_obj.get_cart_total_price_after_coupon() * 100)
 
@@ -186,6 +220,7 @@ def cart(request):
             {'amount': cart_total_in_paise, 'currency': 'INR', 'payment_capture': 1})
         cart_obj.razorpay_order_id = payment['id']
         cart_obj.save()
+    """
 
     context = {'cart': cart_obj, 'payment': payment, 'quantity_range': range(1, 6), }
     return render(request, 'accounts/cart.html', context)
@@ -230,19 +265,20 @@ def remove_coupon(request, cart_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-# Payment success view
+# Упрощенная версия без Razorpay
+@login_required
 def success(request):
-    order_id = request.GET.get('order_id')
-    cart = get_object_or_404(Cart, razorpay_order_id=order_id)
+    # Просто создаем заказ из корзины
+    cart = Cart.objects.get(is_paid=False, user=request.user)
 
-    # Mark the cart as paid
+    # Отмечаем корзину как оплаченную
     cart.is_paid = True
     cart.save()
 
-    # Create the order after payment is confirmed
+    # Создаем заказ
     order = create_order(cart)
 
-    context = {'order_id': order_id, 'order': order}
+    context = {'order': order}
     return render(request, 'payment_success/payment_success.html', context)
 
 
@@ -354,14 +390,17 @@ def order_history(request):
     return render(request, 'accounts/order_history.html', {'orders': orders})
 
 
-# Create an order view
+# Create an order view - simplified without Razorpay
 def create_order(cart):
-    order, created = Order.objects.get_or_create(
+    # Создаем уникальный ID заказа, так как Razorpay не используется
+    order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+
+    order = Order.objects.create(
         user=cart.user,
-        order_id=cart.razorpay_order_id,
-        payment_status="Paid",
+        order_id=order_id,
+        payment_status="Paid",  # Можно изменить на "Pending" или другой статус
         shipping_address=cart.user.profile.shipping_address,
-        payment_mode="Razorpay",
+        payment_mode="Direct",  # Заменили на прямую оплату
         order_total_price=cart.get_cart_total(),
         coupon=cart.coupon,
         grand_total=cart.get_cart_total_price_after_coupon(),
@@ -370,13 +409,16 @@ def create_order(cart):
     # Create OrderItem instances for each item in the cart
     cart_items = CartItem.objects.filter(cart=cart)
     for cart_item in cart_items:
-        OrderItem.objects.get_or_create(
+        OrderItem.objects.create(
             order=order,
             product=cart_item.product,
             size_variant=cart_item.size_variant,
             color_variant=cart_item.color_variant,
             quantity=cart_item.quantity,
-            product_price=cart_item.get_product_price()
+            product_price=cart_item.get_product_price(),
+            carpet_color=cart_item.carpet_color,
+            border_color=cart_item.border_color,
+            has_podpyatnik=cart_item.has_podpyatnik
         )
 
     return order

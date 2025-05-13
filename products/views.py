@@ -6,7 +6,8 @@ from accounts.models import Cart, CartItem
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from products.models import Product, SizeVariant, ProductReview, Wishlist
+from products.models import Product, SizeVariant, ProductReview, Wishlist, Color
+
 
 # Create your views here.
 
@@ -14,6 +15,9 @@ def get_product(request, slug):
     product = get_object_or_404(Product, slug=slug)
     sorted_size_variants = product.size_variant.all().order_by('size_name')
     related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
+
+    # Получаем все доступные цвета для выбора
+    colors = Color.objects.all().order_by('display_order')
 
     # Review product view
     review = None
@@ -61,6 +65,7 @@ def get_product(request, slug):
         'review_form': review_form,
         'rating_percentage': rating_percentage,
         'in_wishlist': in_wishlist,
+        'colors': colors,  # Добавлено
     }
 
     if request.GET.get('size'):
@@ -86,7 +91,7 @@ def edit_review(request, review_uid):
     review = ProductReview.objects.filter(uid=review_uid, user=request.user).first()
     if not review:
         return JsonResponse({"detail": "Review not found"}, status=404)
-    
+
     if request.method == "POST":
         stars = request.POST.get("stars")
         content = request.POST.get("content")
@@ -97,6 +102,7 @@ def edit_review(request, review_uid):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     return JsonResponse({"detail": "Invalid request"}, status=400)
+
 
 # Like and Dislike review view
 def like_review(request, review_uid):
@@ -128,7 +134,7 @@ def delete_review(request, slug, review_uid):
         return redirect('login')
 
     review = ProductReview.objects.filter(uid=review_uid, product__slug=slug, user=request.user).first()
-    
+
     if not review:
         messages.error(request, "Review not found.")
         return redirect('get_product', slug=slug)

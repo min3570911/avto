@@ -28,6 +28,13 @@ class SizeVariantAdmin(admin.ModelAdmin):
 
     model = SizeVariant
 
+
+@admin.register(Color)
+class ColorAdmin(admin.ModelAdmin):
+    list_display = ['name', 'hex_code', 'display_order']
+    model = Color
+
+
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductImage)
 admin.site.register(ProductReview)

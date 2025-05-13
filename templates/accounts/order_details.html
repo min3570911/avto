@@ -20,7 +20,9 @@
               <tr>
                 <th>Product</th>
                 <th>Size</th>
-                <th>Color</th>
+                <th>Цвет коврика</th>
+                <th>Цвет окантовки</th>
+                <th>Опции</th>
                 <th>Quantity</th>
                 <th>Price</th>
               </tr>
@@ -31,11 +33,29 @@
                 <td><a href="{% url 'get_product' item.product.slug %}" class="title text-dark">
                   {{ item.product.product_name }}</a></td>
                 <td>{{ item.size_variant.size_name|default:"N/A" }}</td>
-                {% if item.size_variant %}
-                  {% for color in item.product.color_variant.all %}
-                    <td>{{ color.color_name|default:"N/A" }}</td>
-                  {% endfor %}
-                {% endif %}
+                <td>
+                  {% if item.carpet_color %}
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+                    {{ item.carpet_color.name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.border_color %}
+                    <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+                    {{ item.border_color.name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.has_podpyatnik %}
+                    С подпятником
+                  {% else %}
+                    Без подпятника
+                  {% endif %}
+                </td>
                 <td>{{ item.quantity }}</td>
                 <td>₹ {{ item.product_price }}</td>
               </tr>

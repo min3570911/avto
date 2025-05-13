@@ -4,6 +4,7 @@ from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 
+
 # Create your models here.
 
 
@@ -100,16 +101,30 @@ class ProductReview(BaseModel):
         return self.dislikes.count()
 
 
-class Wishlist(BaseModel):
-    user=models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlist")
-    product=models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlisted_by")
-    size_variant=models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True,
-                                     blank=True, related_name="wishlist_items")
+class Color(BaseModel):
+    """Модель для хранения доступных цветов ковриков и окантовки"""
+    name = models.CharField(max_length=50, verbose_name="Название цвета")
+    hex_code = models.CharField(max_length=7, verbose_name="HEX-код")
+    display_order = models.PositiveSmallIntegerField(default=0, verbose_name="Порядок отображения")
 
-    added_on=models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name
 
     class Meta:
-        unique_together=('user', 'product', 'size_variant')
+        verbose_name = "Цвет"
+        verbose_name_plural = "Цвета"
+
+
+class Wishlist(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlist")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlisted_by")
+    size_variant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True,
+                                     blank=True, related_name="wishlist_items")
+
+    added_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product', 'size_variant')
 
     def __str__(self) -> str:
         return f'{self.user.username} - {self.product.product_name} - {self.size_variant.size_name if self.size_variant else "No Size"}'

@@ -2,7 +2,8 @@ from django.db.models import Q
 from django.shortcuts import render
 from products.models import Product, Category
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-
+from products.models import Product
+print("Количество продуктов в базе данных:", Product.objects.count())
 # Create your views here.
 
 
@@ -24,6 +25,8 @@ def index(request):
             query = query.order_by('-price')
 
     page = request.GET.get('page', 1)
+    # Перед созданием пагинатора добавьте сортировку
+    query = query.order_by('uid')  # Сортировка по UID
     paginator = Paginator(query, 20)
 
     try:
