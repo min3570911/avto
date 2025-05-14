@@ -59,8 +59,9 @@
     width: 100%;
     max-width: 500px;
     margin: 0 auto 30px;
+    min-height: 300px; /* Минимальная высота для предотвращения "прыжков" */
   }
-  
+
   .product-visualizer img {
     position: absolute;
     top: 0;
@@ -68,50 +69,54 @@
     width: 100%;
     height: auto;
   }
-  
+
   .matcolor {
     z-index: 1;
   }
-  
+
   .bordercolor {
     z-index: 2;
   }
-  
+
   .podpicon {
     z-index: 3;
   }
-  
-  /* Стили для выбора цветов */
+
+  /* Стили для выбора цветов с подписями */
   .color-picker {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
   }
-  
+
+  .color-selection {
+    margin-bottom: 10px;
+  }
+
   .color-item {
     display: inline-block;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #ccc;
     transition: all 0.2s ease;
+    margin: 0 auto;
   }
-  
+
   .color-item:hover {
     transform: scale(1.1);
+    border-color: #999;
   }
-  
+
   .color-item.active {
-    border: 2px solid #000;
+    border: 2px solid #FFEB3B;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
   }
-  
+
   .color-name {
     font-size: 12px;
     margin-top: 4px;
     text-align: center;
+    min-width: 60px;
   }
 </style>
 
@@ -126,14 +131,14 @@
           <div class="product-visualizer mt-4 mb-4">
             <!-- Базовое изображение коврика (черный по умолчанию) -->
             <img class="matcolor img-fluid" src="/media/images/schema/sota1.png" alt="Коврик" />
-            
+
             <!-- Изображение окантовки (черная по умолчанию) -->
             <img class="bordercolor img-fluid" src="/media/images/schema/border211.png" alt="Окантовка" />
-            
+
             <!-- Опциональный подпятник (скрыт по умолчанию) -->
             <img class="podpicon img-fluid" src="/media/images/schema/podp.png" alt="Подпятник" style="display: none;" />
           </div>
-          
+
           <!-- Gallery-Wrap -->
           <article class="gallery-wrap">
             <div class="text-center mt-2 ml-3 mr-3 img-big-wrap">
@@ -252,9 +257,9 @@
                   {% for size in sorted_size_variants %}
 
                   <label class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" name="selected_size" value="{{ size.size_name }}" 
-                    onchange="get_correct_price('{{ size.size_name }}'); updateCartUrl();" 
-                    id="size-{{ size.size_name }}" 
+                    <input type="radio" name="selected_size" value="{{ size.size_name }}"
+                    onchange="get_correct_price('{{ size.size_name }}'); updateCartUrl();"
+                    id="size-{{ size.size_name }}"
                     {% if selected_size == size.size_name %} checked {% endif %} class="custom-control-input" />
                     <div class="custom-control-label">{{ size.size_name }}</div>
                   </label>
@@ -264,47 +269,146 @@
               </div>
               {% endif %}
             </div>
-            
-            <!-- Блок выбора цвета коврика -->
+
+            <!-- ЗДЕСЬ НАЧИНАЕТСЯ ОБНОВЛЕННЫЙ БЛОК ВЫБОРА ЦВЕТА КОВРИКА С ПОДПИСЯМИ -->
+            <!-- Блок выбора цвета коврика с подписями под кружками -->
             <div class="form-row">
-              <div class="form-group col-md-6">
+              <div class="form-group col-md-12">
                 <label>Цвет коврика</label>
-                <div class="mt-1 color-picker" data-color-type="carpet">
-                  {% for color in colors %}
-                    <div class="color-item {% if forloop.first %}active{% endif %}" 
-                         data-color-id="{{ color.uid }}"
-                         data-attr-id="1"
-                         data-attr-value="{{ forloop.counter }}"
-                         title="{{ color.name }}"
-                         style="background-color: {{ color.hex_code }};">
-                    </div>
-                  {% endfor %}
+                <div class="mt-1 color-picker d-flex flex-wrap justify-content-start" data-color-type="carpet">
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item active" data-color-id="color-1" data-attr-id="1" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
+                    <div class="color-name small mt-1">Черный</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-2" data-attr-id="1" data-attr-value="2" title="Красный" style="background-color: #FF0000;"></div>
+                    <div class="color-name small mt-1">Красный</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-3" data-attr-id="1" data-attr-value="3" title="Серый" style="background-color: #AAAAAA;"></div>
+                    <div class="color-name small mt-1">Серый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-4" data-attr-id="1" data-attr-value="4" title="Темно-синий" style="background-color: #0000A0;"></div>
+                    <div class="color-name small mt-1">Темно-синий</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-5" data-attr-id="1" data-attr-value="5" title="Коричневый" style="background-color: #663300;"></div>
+                    <div class="color-name small mt-1">Коричневый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-6" data-attr-id="1" data-attr-value="6" title="Бежевый" style="background-color: #DDBB88;"></div>
+                    <div class="color-name small mt-1">Бежевый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-7" data-attr-id="1" data-attr-value="7" title="Синий" style="background-color: #0000FF;"></div>
+                    <div class="color-name small mt-1">Синий</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-8" data-attr-id="1" data-attr-value="8" title="Салатовый" style="background-color: #33CC33;"></div>
+                    <div class="color-name small mt-1">Салатовый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-9" data-attr-id="1" data-attr-value="9" title="Фиолетовый" style="background-color: #800080;"></div>
+                    <div class="color-name small mt-1">Фиолетовый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-10" data-attr-id="1" data-attr-value="10" title="Оранжевый" style="background-color: #FF8800;"></div>
+                    <div class="color-name small mt-1">Оранжевый</div>
+                  </div>
                 </div>
-                <input type="hidden" name="carpet_color" id="carpet_color_input" value="{{ colors.0.uid }}">
-              </div>
-              
-              <!-- Блок выбора цвета окантовки -->
-              <div class="form-group col-md-6">
-                <label>Цвет окантовки</label>
-                <div class="mt-1 color-picker" data-color-type="border">
-                  {% for color in colors %}
-                    <div class="color-item {% if forloop.first %}active{% endif %}" 
-                         data-color-id="{{ color.uid }}"
-                         data-attr-id="2"
-                         data-attr-value="{{ forloop.counter }}"
-                         title="{{ color.name }}"
-                         style="background-color: {{ color.hex_code }};">
-                    </div>
-                  {% endfor %}
-                </div>
-                <input type="hidden" name="border_color" id="border_color_input" value="{{ colors.0.uid }}">
+                <input type="hidden" name="carpet_color" id="carpet_color_input" value="color-1">
               </div>
             </div>
-            
+
+            <!-- Блок выбора цвета окантовки с подписями под кружками -->
+            <div class="form-row">
+              <div class="form-group col-md-12">
+                <label>Цвет окантовки</label>
+                <div class="mt-1 color-picker d-flex flex-wrap justify-content-start" data-color-type="border">
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item active" data-color-id="color-1" data-attr-id="2" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
+                    <div class="color-name small mt-1">Черный</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-2" data-attr-id="2" data-attr-value="2" title="Серый" style="background-color: #AAAAAA;"></div>
+                    <div class="color-name small mt-1">Серый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-3" data-attr-id="2" data-attr-value="3" title="Коричневый" style="background-color: #663300;"></div>
+                    <div class="color-name small mt-1">Коричневый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-4" data-attr-id="2" data-attr-value="4" title="Бежевый" style="background-color: #DDBB88;"></div>
+                    <div class="color-name small mt-1">Бежевый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-5" data-attr-id="2" data-attr-value="5" title="Синий" style="background-color: #0000FF;"></div>
+                    <div class="color-name small mt-1">Синий</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-6" data-attr-id="2" data-attr-value="6" title="Темно-синий" style="background-color: #0000A0;"></div>
+                    <div class="color-name small mt-1">Темно-синий</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-7" data-attr-id="2" data-attr-value="7" title="Красный" style="background-color: #FF0000;"></div>
+                    <div class="color-name small mt-1">Красный</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-8" data-attr-id="2" data-attr-value="8" title="Бордовый" style="background-color: #800000;"></div>
+                    <div class="color-name small mt-1">Бордовый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-9" data-attr-id="2" data-attr-value="9" title="Желтый" style="background-color: #FFFF00;"></div>
+                    <div class="color-name small mt-1">Желтый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-10" data-attr-id="2" data-attr-value="10" title="Зеленый" style="background-color: #008000;"></div>
+                    <div class="color-name small mt-1">Зеленый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-11" data-attr-id="2" data-attr-value="11" title="Темно-зеленый" style="background-color: #006400;"></div>
+                    <div class="color-name small mt-1">Темно-зеленый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-12" data-attr-id="2" data-attr-value="12" title="Фиолетовый" style="background-color: #800080;"></div>
+                    <div class="color-name small mt-1">Фиолетовый</div>
+                  </div>
+
+                  <div class="color-selection text-center mx-2">
+                    <div class="color-item" data-color-id="color-13" data-attr-id="2" data-attr-value="13" title="Оранжевый" style="background-color: #FF8800;"></div>
+                    <div class="color-name small mt-1">Оранжевый</div>
+                  </div>
+                </div>
+                <input type="hidden" name="border_color" id="border_color_input" value="color-1">
+              </div>
+            </div>
+            <!-- ЗДЕСЬ ЗАКАНЧИВАЕТСЯ ОБНОВЛЕННЫЙ БЛОК ВЫБОРА ЦВЕТА КОВРИКА С ПОДПИСЯМИ -->
+
             <!-- Дополнительные опции -->
             <div class="form-group mb-4">
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="podp_check" 
+                <input class="form-check-input" type="checkbox" id="podp_check"
                        data-attr-id="7" data-attr-value="1">
                 <label class="form-check-label" for="podp_check">
                   Подпятник (+15.00 руб.)
@@ -340,9 +444,9 @@
 
     <!-- Related Products Section -->
     <h3 class="title padding-y-sm">Related products</h3>
-    {% if related_products%} 
-      {% with related_products as list_products %} 
-        {% include 'product_parts/product_list.html' %} 
+    {% if related_products%}
+      {% with related_products as list_products %}
+        {% include 'product_parts/product_list.html' %}
       {% endwith %}
     {% else %}
     <p>No related products found.</p>
@@ -385,7 +489,7 @@
               <i class="fas fa-thumbs-down me-2"></i>
               <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
             </button>
-            
+
             {% else %}
             <button class="btn like-btn d-flex align-items-center">
               <i class="fas fa-thumbs-up me-2"></i>
@@ -479,148 +583,10 @@
   </div>
 </section>
 
-<script>
-  function get_correct_price(selected_size) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set("size", selected_size);
-    window.location.search = urlParams.toString();
-  }
+<!-- Добавляем скрытое поле CSRF-токена для AJAX-запросов -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-  function updateMainImage(src) {
-    document.getElementById("mainImage").src = src;
-  }
-
-  function setDeleteAction(actionUrl) {
-    const deleteForm = document.getElementById("deleteReviewForm");
-    deleteForm.action = actionUrl;
-  }
-
-  function toggleLike(reviewId) {
-    fetch(`/product/like-review/${reviewId}/`, {
-      method: "POST",
-      headers: { "X-CSRFToken": "{{ csrf_token }}" },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const likeElement = document.getElementById(`like-count-${reviewId}`);
-        const dislikeElement = document.getElementById(`dislike-count-${reviewId}`);
-        if (likeElement && dislikeElement) {
-          likeElement.innerText = data.likes;
-          dislikeElement.innerText = data.dislikes;
-        } else {
-          console.error("Like or Dislike element not found in DOM.");
-        }
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-
-  function toggleDislike(reviewId) {
-    fetch(`/product/dislike-review/${reviewId}/`, {
-      method: "POST",
-      headers: { "X-CSRFToken": "{{ csrf_token }}" },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const likeElement = document.getElementById(`like-count-${reviewId}`);
-        const dislikeElement = document.getElementById(`dislike-count-${reviewId}`);
-        if (likeElement && dislikeElement) {
-          likeElement.innerText = data.likes;
-          dislikeElement.innerText = data.dislikes;
-        } else {
-          console.error("Like or Dislike element not found in DOM.");
-        }
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-  
-  // Функция обновления изображений ковриков
-  function setAttrValue(id, value) {
-    if (id == 1) {
-      // Цвет коврика
-      document.querySelector('.matcolor').src = '/media/images/schema/sota' + value + '.png';
-    }
-    
-    if (id == 2) {
-      // Цвет окантовки
-      document.querySelector('.bordercolor').src = '/media/images/schema/border2' + value + '.png';
-    }
-    
-    if (id == 7) {
-      // Подпятник
-      const podpIcon = document.querySelector('.podpicon');
-      podpIcon.style.display = value == 1 ? 'block' : 'none';
-    }
-    
-    // Обновить URL кнопки "Добавить в корзину"
-    updateCartUrl();
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const mainImage = document.getElementById("mainImage");
-
-    mainImage.addEventListener("click", function () {
-      if (mainImage.classList.contains("zoomed-in")) {
-        mainImage.classList.remove("zoomed-in");
-      } else {
-        mainImage.classList.add("zoomed-in");
-      }
-    });
-    
-    // Инициализация выбора цветов
-    const colorPickers = document.querySelectorAll('.color-picker');
-    
-    colorPickers.forEach(picker => {
-      const colorItems = picker.querySelectorAll('.color-item');
-      const colorType = picker.dataset.colorType;
-      const inputField = document.getElementById(`${colorType}_color_input`);
-      
-      colorItems.forEach(item => {
-        item.addEventListener('click', function() {
-          // Сбросить активный класс у всех элементов
-          colorItems.forEach(i => i.classList.remove('active'));
-          
-          // Добавить активный класс к выбранному
-          this.classList.add('active');
-          
-          // Обновить скрытое поле
-          inputField.value = this.dataset.colorId;
-          
-          // Обновить изображение коврика
-          setAttrValue(this.dataset.attrId, this.dataset.attrValue);
-        });
-      });
-    });
-    
-    // Обработчик для подпятника
-    const podpCheck = document.getElementById('podp_check');
-    if (podpCheck) {
-      podpCheck.addEventListener('change', function() {
-        setAttrValue(this.dataset.attrId, this.checked ? this.dataset.attrValue : 0);
-      });
-    }
-    
-    // Инициализация URL при загрузке страницы
-    updateCartUrl();
-  });
-  
-  function updateCartUrl() {
-    const cartBtn = document.getElementById('add-to-cart-btn');
-    if (!cartBtn) return;
-    
-    let href = cartBtn.getAttribute('href');
-    const carpetColor = document.getElementById('carpet_color_input').value;
-    const borderColor = document.getElementById('border_color_input').value;
-    const hasPodp = document.getElementById('podp_check')?.checked ? '1' : '0';
-    
-    // Заменяем плейсхолдеры на фактические значения
-    href = href.replace('__carpet_color__', carpetColor);
-    href = href.replace('__border_color__', borderColor);
-    
-    // Обновляем значение подпятника
-    href = href.replace(/podp=\d/, `podp=${hasPodp}`);
-    
-    cartBtn.setAttribute('href', href);
-  }
-</script>
+<!-- Подключаем JavaScript-файл -->
+<script src="/media/js/product.js" type="text/javascript"></script>
 
 {% endblock %}
