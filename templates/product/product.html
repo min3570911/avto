@@ -82,13 +82,72 @@
     z-index: 3;
   }
 
-  /* Стили для выбора цветов с подписями */
+  /* Стили для выбора цветов с горизонтальной прокруткой */
+  .color-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+  }
+
   .color-picker {
-    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+  }
+
+  /* Для десктопа - стандартная сетка */
+  @media (min-width: 768px) {
+    .color-picker {
+      flex-wrap: wrap;
+    }
+
+    .scroll-indicator {
+      display: none;
+    }
+  }
+
+  /* Для мобильных - горизонтальная прокрутка */
+  @media (max-width: 767px) {
+    .color-wrapper {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .color-picker {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px 5px;
+      margin: -10px -5px 0;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    .color-picker::-webkit-scrollbar {
+      display: none; /* Chrome, Safari */
+    }
+
+    .scroll-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .scroll-indicator i {
+      margin: 0 5px;
+    }
   }
 
   .color-selection {
-    margin-bottom: 10px;
+    flex: 0 0 auto;
+    margin: 0 8px;
+    text-align: center;
+  }
+
+  @media (min-width: 768px) {
+    .color-selection {
+      margin: 0 12px 10px 0;
+    }
   }
 
   .color-item {
@@ -117,6 +176,18 @@
     margin-top: 4px;
     text-align: center;
     min-width: 60px;
+  }
+
+  @media (max-width: 767px) {
+    .color-item {
+      width: 32px;
+      height: 32px;
+    }
+
+    .color-name {
+      font-size: 11px;
+      min-width: 50px;
+    }
   }
 </style>
 
@@ -270,140 +341,153 @@
               {% endif %}
             </div>
 
-            <!-- ЗДЕСЬ НАЧИНАЕТСЯ ОБНОВЛЕННЫЙ БЛОК ВЫБОРА ЦВЕТА КОВРИКА С ПОДПИСЯМИ -->
-            <!-- Блок выбора цвета коврика с подписями под кружками -->
+            <!-- НАЧАЛО: Блок выбора цвета коврика с горизонтальной прокруткой -->
             <div class="form-row">
-              <div class="form-group col-md-12">
+              <div class="form-group col-12">
                 <label>Цвет коврика</label>
-                <div class="mt-1 color-picker d-flex flex-wrap justify-content-start" data-color-type="carpet">
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item active" data-color-id="color-1" data-attr-id="1" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
-                    <div class="color-name small mt-1">Черный</div>
-                  </div>
+                <div class="color-wrapper">
+                  <div class="color-picker" data-color-type="carpet">
+                    <div class="color-selection">
+                      <div class="color-item active" data-color-id="color-1" data-attr-id="1" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
+                      <div class="color-name">Черный</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-2" data-attr-id="1" data-attr-value="2" title="Красный" style="background-color: #FF0000;"></div>
-                    <div class="color-name small mt-1">Красный</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-2" data-attr-id="1" data-attr-value="2" title="Красный" style="background-color: #FF0000;"></div>
+                      <div class="color-name">Красный</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-3" data-attr-id="1" data-attr-value="3" title="Серый" style="background-color: #AAAAAA;"></div>
-                    <div class="color-name small mt-1">Серый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-3" data-attr-id="1" data-attr-value="3" title="Серый" style="background-color: #AAAAAA;"></div>
+                      <div class="color-name">Серый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-4" data-attr-id="1" data-attr-value="4" title="Темно-синий" style="background-color: #0000A0;"></div>
-                    <div class="color-name small mt-1">Темно-синий</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-4" data-attr-id="1" data-attr-value="4" title="Темно-синий" style="background-color: #0000A0;"></div>
+                      <div class="color-name">Темно-синий</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-5" data-attr-id="1" data-attr-value="5" title="Коричневый" style="background-color: #663300;"></div>
-                    <div class="color-name small mt-1">Коричневый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-5" data-attr-id="1" data-attr-value="5" title="Коричневый" style="background-color: #663300;"></div>
+                      <div class="color-name">Коричневый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-6" data-attr-id="1" data-attr-value="6" title="Бежевый" style="background-color: #DDBB88;"></div>
-                    <div class="color-name small mt-1">Бежевый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-6" data-attr-id="1" data-attr-value="6" title="Бежевый" style="background-color: #DDBB88;"></div>
+                      <div class="color-name">Бежевый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-7" data-attr-id="1" data-attr-value="7" title="Синий" style="background-color: #0000FF;"></div>
-                    <div class="color-name small mt-1">Синий</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-7" data-attr-id="1" data-attr-value="7" title="Синий" style="background-color: #0000FF;"></div>
+                      <div class="color-name">Синий</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-8" data-attr-id="1" data-attr-value="8" title="Салатовый" style="background-color: #33CC33;"></div>
-                    <div class="color-name small mt-1">Салатовый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-8" data-attr-id="1" data-attr-value="8" title="Салатовый" style="background-color: #33CC33;"></div>
+                      <div class="color-name">Салатовый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-9" data-attr-id="1" data-attr-value="9" title="Фиолетовый" style="background-color: #800080;"></div>
-                    <div class="color-name small mt-1">Фиолетовый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-9" data-attr-id="1" data-attr-value="9" title="Фиолетовый" style="background-color: #800080;"></div>
+                      <div class="color-name">Фиолетовый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-10" data-attr-id="1" data-attr-value="10" title="Оранжевый" style="background-color: #FF8800;"></div>
-                    <div class="color-name small mt-1">Оранжевый</div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-10" data-attr-id="1" data-attr-value="10" title="Оранжевый" style="background-color: #FF8800;"></div>
+                      <div class="color-name">Оранжевый</div>
+                    </div>
+                  </div>
+                  <div class="scroll-indicator d-md-none">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Прокрутите для выбора</span>
+                    <i class="fas fa-chevron-right"></i>
                   </div>
                 </div>
                 <input type="hidden" name="carpet_color" id="carpet_color_input" value="color-1">
               </div>
             </div>
 
-            <!-- Блок выбора цвета окантовки с подписями под кружками -->
+            <!-- Блок выбора цвета окантовки с горизонтальной прокруткой -->
             <div class="form-row">
-              <div class="form-group col-md-12">
+              <div class="form-group col-12">
                 <label>Цвет окантовки</label>
-                <div class="mt-1 color-picker d-flex flex-wrap justify-content-start" data-color-type="border">
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item active" data-color-id="color-1" data-attr-id="2" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
-                    <div class="color-name small mt-1">Черный</div>
-                  </div>
+                <div class="color-wrapper">
+                  <div class="color-picker" data-color-type="border">
+                    <div class="color-selection">
+                      <div class="color-item active" data-color-id="color-1" data-attr-id="2" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;"></div>
+                      <div class="color-name">Черный</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-2" data-attr-id="2" data-attr-value="2" title="Серый" style="background-color: #AAAAAA;"></div>
-                    <div class="color-name small mt-1">Серый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-2" data-attr-id="2" data-attr-value="2" title="Серый" style="background-color: #AAAAAA;"></div>
+                      <div class="color-name">Серый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-3" data-attr-id="2" data-attr-value="3" title="Коричневый" style="background-color: #663300;"></div>
-                    <div class="color-name small mt-1">Коричневый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-3" data-attr-id="2" data-attr-value="3" title="Коричневый" style="background-color: #663300;"></div>
+                      <div class="color-name">Коричневый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-4" data-attr-id="2" data-attr-value="4" title="Бежевый" style="background-color: #DDBB88;"></div>
-                    <div class="color-name small mt-1">Бежевый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-4" data-attr-id="2" data-attr-value="4" title="Бежевый" style="background-color: #DDBB88;"></div>
+                      <div class="color-name">Бежевый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-5" data-attr-id="2" data-attr-value="5" title="Синий" style="background-color: #0000FF;"></div>
-                    <div class="color-name small mt-1">Синий</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-5" data-attr-id="2" data-attr-value="5" title="Синий" style="background-color: #0000FF;"></div>
+                      <div class="color-name">Синий</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-6" data-attr-id="2" data-attr-value="6" title="Темно-синий" style="background-color: #0000A0;"></div>
-                    <div class="color-name small mt-1">Темно-синий</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-6" data-attr-id="2" data-attr-value="6" title="Темно-синий" style="background-color: #0000A0;"></div>
+                      <div class="color-name">Темно-синий</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-7" data-attr-id="2" data-attr-value="7" title="Красный" style="background-color: #FF0000;"></div>
-                    <div class="color-name small mt-1">Красный</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-7" data-attr-id="2" data-attr-value="7" title="Красный" style="background-color: #FF0000;"></div>
+                      <div class="color-name">Красный</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-8" data-attr-id="2" data-attr-value="8" title="Бордовый" style="background-color: #800000;"></div>
-                    <div class="color-name small mt-1">Бордовый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-8" data-attr-id="2" data-attr-value="8" title="Бордовый" style="background-color: #800000;"></div>
+                      <div class="color-name">Бордовый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-9" data-attr-id="2" data-attr-value="9" title="Желтый" style="background-color: #FFFF00;"></div>
-                    <div class="color-name small mt-1">Желтый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-9" data-attr-id="2" data-attr-value="9" title="Желтый" style="background-color: #FFFF00;"></div>
+                      <div class="color-name">Желтый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-10" data-attr-id="2" data-attr-value="10" title="Зеленый" style="background-color: #008000;"></div>
-                    <div class="color-name small mt-1">Зеленый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-10" data-attr-id="2" data-attr-value="10" title="Зеленый" style="background-color: #008000;"></div>
+                      <div class="color-name">Зеленый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-11" data-attr-id="2" data-attr-value="11" title="Темно-зеленый" style="background-color: #006400;"></div>
-                    <div class="color-name small mt-1">Темно-зеленый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-11" data-attr-id="2" data-attr-value="11" title="Темно-зеленый" style="background-color: #006400;"></div>
+                      <div class="color-name">Темно-зеленый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-12" data-attr-id="2" data-attr-value="12" title="Фиолетовый" style="background-color: #800080;"></div>
-                    <div class="color-name small mt-1">Фиолетовый</div>
-                  </div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-12" data-attr-id="2" data-attr-value="12" title="Фиолетовый" style="background-color: #800080;"></div>
+                      <div class="color-name">Фиолетовый</div>
+                    </div>
 
-                  <div class="color-selection text-center mx-2">
-                    <div class="color-item" data-color-id="color-13" data-attr-id="2" data-attr-value="13" title="Оранжевый" style="background-color: #FF8800;"></div>
-                    <div class="color-name small mt-1">Оранжевый</div>
+                    <div class="color-selection">
+                      <div class="color-item" data-color-id="color-13" data-attr-id="2" data-attr-value="13" title="Оранжевый" style="background-color: #FF8800;"></div>
+                      <div class="color-name">Оранжевый</div>
+                    </div>
+                  </div>
+                  <div class="scroll-indicator d-md-none">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Прокрутите для выбора</span>
+                    <i class="fas fa-chevron-right"></i>
                   </div>
                 </div>
                 <input type="hidden" name="border_color" id="border_color_input" value="color-1">
               </div>
             </div>
-            <!-- ЗДЕСЬ ЗАКАНЧИВАЕТСЯ ОБНОВЛЕННЫЙ БЛОК ВЫБОРА ЦВЕТА КОВРИКА С ПОДПИСЯМИ -->
+            <!-- КОНЕЦ: Блок выбора цвета -->
 
             <!-- Дополнительные опции -->
             <div class="form-group mb-4">

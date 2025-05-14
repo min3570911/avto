@@ -47,6 +47,30 @@ const borderColorToImage = {
 };
 
 /**
+ * Предзагрузка изображений для более быстрого переключения.
+ */
+function preloadImages() {
+  // Предзагрузка изображений ковриков
+  for (let i = 1; i <= 10; i++) {
+    const img = new Image();
+    img.src = `/media/images/schema/sota${i}.png`;
+  }
+
+  // Предзагрузка изображений окантовки
+  for (let i = 1; i <= 13; i++) {
+    const key = i.toString();
+    if (borderColorToImage[key]) {
+      const img = new Image();
+      img.src = `/media/images/schema/${borderColorToImage[key]}`;
+    }
+  }
+
+  // Предзагрузка изображения подпятника
+  const podpImg = new Image();
+  podpImg.src = '/media/images/schema/podp.png';
+}
+
+/**
  * Получение корректной цены при выборе размера.
  *
  * @param {string} selected_size Выбранный размер
@@ -240,6 +264,36 @@ function setImageWithFallback(element, primarySrc, fallbackSrc) {
   );
 }
 
+// Улучшение взаимодействия с горизонтальной прокруткой
+function initColorPickerScrolls() {
+  const colorPickers = document.querySelectorAll('.color-picker');
+
+  colorPickers.forEach(picker => {
+    // Показываем индикатор прокрутки, только если контент не помещается
+    if (picker.scrollWidth > picker.clientWidth) {
+      const indicator = picker.nextElementSibling;
+      if (indicator && indicator.classList.contains('scroll-indicator')) {
+        indicator.style.display = 'flex';
+      }
+    }
+
+    // Индикатор прокрутки левого и правого края
+    picker.addEventListener('scroll', function() {
+      const isAtStart = this.scrollLeft <= 10;
+      const isAtEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth - 10;
+
+      const indicator = this.nextElementSibling;
+      if (indicator && indicator.classList.contains('scroll-indicator')) {
+        const leftArrow = indicator.querySelector('.fa-chevron-left');
+        const rightArrow = indicator.querySelector('.fa-chevron-right');
+
+        if (leftArrow) leftArrow.style.opacity = isAtStart ? '0.3' : '1';
+        if (rightArrow) rightArrow.style.opacity = isAtEnd ? '0.3' : '1';
+      }
+    });
+  });
+}
+
 /**
  * Инициализация функциональности страницы продукта.
  */
@@ -251,6 +305,12 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("Элемент коврика:", document.querySelector('.matcolor'));
   console.log("Элемент окантовки:", document.querySelector('.bordercolor'));
   console.log("Элемент подпятника:", document.querySelector('.podpicon'));
+
+  // Предзагрузка изображений
+  preloadImages();
+
+  // Инициализация скроллеров
+  initColorPickerScrolls();
 
   // Эффект зума для главного изображения
   const mainImage = document.getElementById("mainImage");
