@@ -107,21 +107,23 @@ def activate_email_account(request, email_token):
 
 
 @login_required
+@login_required
 def add_to_cart(request, uid):
     try:
         # Получаем базовые параметры
-        variant = request.GET.get('size')
+        kit_code = request.GET.get('kit')
         carpet_color_id = request.GET.get('carpet_color')
         border_color_id = request.GET.get('border_color')
         has_podp = request.GET.get('podp') == '1'
 
-        if not variant:
-            messages.warning(request, 'Please select a size variant!')
+        if not kit_code:
+            messages.warning(request, 'Пожалуйста, выберите комплектацию!')
             return redirect(request.META.get('HTTP_REFERER'))
 
         product = get_object_or_404(Product, uid=uid)
         cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
-        size_variant = get_object_or_404(SizeVariant, size_name=variant)
+        # Получаем комплектацию из справочника по коду
+        kit_variant = get_object_or_404(KitVariant, code=kit_code)
 
         # Получаем цвета, если они выбраны
         carpet_color = None
@@ -135,7 +137,7 @@ def add_to_cart(request, uid):
         cart_item = CartItem.objects.filter(
             cart=cart,
             product=product,
-            size_variant=size_variant,
+            kit_variant=kit_variant,
             carpet_color=carpet_color,
             border_color=border_color,
             has_podpyatnik=has_podp
@@ -150,16 +152,16 @@ def add_to_cart(request, uid):
             cart_item = CartItem.objects.create(
                 cart=cart,
                 product=product,
-                size_variant=size_variant,
+                kit_variant=kit_variant,
                 carpet_color=carpet_color,
                 border_color=border_color,
                 has_podpyatnik=has_podp
             )
 
-        messages.success(request, 'Item added to cart successfully.')
+        messages.success(request, 'Товар добавлен в корзину!')
 
     except Exception as e:
-        messages.error(request, f'Error adding item to cart: {str(e)}')
+        messages.error(request, f'Ошибка при добавлении товара в корзину: {str(e)}')
 
     return redirect(reverse('cart'))
 
@@ -174,7 +176,7 @@ def cart(request):
         cart_obj = Cart.objects.get(is_paid=False, user=user)
 
     except Exception as e:
-        messages.warning(request, "Your cart is empty. Please add a product to cart.", str(e))
+        messages.warning(request, "Ваша корзина пуста. Пожалуйста, добавьте товар в корзину.", str(e))
         return redirect(reverse('index'))
 
     if request.method == 'POST':
@@ -182,45 +184,27 @@ def cart(request):
         coupon_obj = Coupon.objects.filter(coupon_code__exact=coupon).first()
 
         if not coupon_obj:
-            messages.warning(request, 'Invalid coupon code.')
+            messages.warning(request, 'Неверный код купона.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if cart_obj and cart_obj.coupon:
-            messages.warning(request, 'Coupon already exists.')
+            messages.warning(request, 'Купон уже применен.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if coupon_obj and coupon_obj.is_expired:
-            messages.warning(request, 'Coupon code expired.')
+            messages.warning(request, 'Срок действия купона истек.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if cart_obj and coupon_obj and cart_obj.get_cart_total() < coupon_obj.minimum_amount:
             messages.warning(
-                request, f'Amount should be greater than {coupon_obj.minimum_amount}')
+                request, f'Сумма должна быть больше {coupon_obj.minimum_amount}')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if cart_obj and coupon_obj:
             cart_obj.coupon = coupon_obj
             cart_obj.save()
-            messages.success(request, 'Coupon applied successfully.')
+            messages.success(request, 'Купон успешно применен.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    # Razorpay код закомментирован, так как не будет использоваться
-    """
-    if cart_obj:
-        cart_total_in_paise = int(cart_obj.get_cart_total_price_after_coupon() * 100)
-
-        if cart_total_in_paise < 100:
-            messages.warning(
-                request, 'Total amount in cart is less than the minimum required amount (1.00 INR). Please add a product to the cart.')
-            return redirect('index')
-
-        client = razorpay.Client(
-            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_SECRET_KEY))
-        payment = client.order.create(
-            {'amount': cart_total_in_paise, 'currency': 'INR', 'payment_capture': 1})
-        cart_obj.razorpay_order_id = payment['id']
-        cart_obj.save()
-    """
 
     context = {'cart': cart_obj, 'payment': payment, 'quantity_range': range(1, 6), }
     return render(request, 'accounts/cart.html', context)
@@ -247,11 +231,11 @@ def remove_cart(request, uid):
     try:
         cart_item = get_object_or_404(CartItem, uid=uid)
         cart_item.delete()
-        messages.success(request, 'Item removed from cart.')
+        messages.success(request, 'Товар удален из корзины.')
 
     except Exception as e:
         print(e)
-        messages.warning(request, 'Error removing item from cart.')
+        messages.warning(request, 'Ошибка при удалении товара из корзины.')
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -261,7 +245,7 @@ def remove_coupon(request, cart_id):
     cart.coupon = None
     cart.save()
 
-    messages.success(request, 'Coupon Removed.')
+    messages.success(request, 'Купон удален.')
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
@@ -412,7 +396,7 @@ def create_order(cart):
         OrderItem.objects.create(
             order=order,
             product=cart_item.product,
-            size_variant=cart_item.size_variant,
+            kit_variant=cart_item.kit_variant,
             color_variant=cart_item.color_variant,
             quantity=cart_item.quantity,
             product_price=cart_item.get_product_price(),

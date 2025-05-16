@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from base.models import BaseModel
-from products.models import Product, ColorVariant, SizeVariant, Coupon, Color
+from products.models import Product, ColorVariant, KitVariant, Coupon, Color
 from home.models import ShippingAddress
 from django.conf import settings
 import os
@@ -75,7 +75,7 @@ class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="cart_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     color_variant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    size_variant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="cart_items_carpet")
     border_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
@@ -89,8 +89,8 @@ class CartItem(BaseModel):
         if self.color_variant:
             price += self.color_variant.price
 
-        if self.size_variant:
-            price += self.size_variant.price
+        if self.kit_variant:
+            price += float(self.kit_variant.price_modifier)
 
         # Добавляем стоимость подпятника если выбран
         if self.has_podpyatnik:
@@ -120,7 +120,7 @@ class Order(BaseModel):
 class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    size_variant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
     color_variant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="order_items_carpet")
@@ -137,7 +137,7 @@ class OrderItem(BaseModel):
         # Use the get_product_price method from CartItem
         cart_item = CartItem(
             product=self.product,
-            size_variant=self.size_variant,
+            kit_variant=self.kit_variant,
             color_variant=self.color_variant,
             quantity=self.quantity,
             has_podpyatnik=self.has_podpyatnik

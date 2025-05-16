@@ -3,6 +3,7 @@
  *
  * Функциональность:
  * - Визуализация ковриков с разными цветами и окантовкой
+ * - Визуализация разных комплектаций
  * - Обработка выбора подпятника
  * - Обработка лайков/дизлайков отзывов
  * - Эффект зума для изображений
@@ -68,16 +69,26 @@ function preloadImages() {
   // Предзагрузка изображения подпятника
   const podpImg = new Image();
   podpImg.src = '/media/images/schema/podp.png';
+
+  // Предзагрузка изображений комплектаций из справочника
+  const kitDataElements = document.querySelectorAll('#kit-variant-data > div');
+  for (const element of kitDataElements) {
+    const imagePath = element.dataset.kitImage;
+    if (imagePath) {
+      const img = new Image();
+      img.src = imagePath;
+    }
+  }
 }
 
 /**
- * Получение корректной цены при выборе размера.
+ * Получение корректной цены при выборе комплектации.
  *
- * @param {string} selected_size Выбранный размер
+ * @param {string} selected_kit Выбранная комплектация
  */
-function get_correct_price(selected_size) {
+function get_correct_price(selected_kit) {
   const urlParams = new URLSearchParams(window.location.search);
-  urlParams.set("size", selected_size);
+  urlParams.set("kit", selected_kit);
   window.location.search = urlParams.toString();
 }
 
@@ -210,6 +221,46 @@ function setAttrValue(id, value) {
 }
 
 /**
+ * Обновление визуализации при выборе комплектации.
+ *
+ * @param {string} kit_code Код комплектации
+ */
+function updateVisualization(kit_code) {
+  console.log("Обновление визуализации для комплектации:", kit_code);
+
+  // Получаем элементы визуализации
+  const visualizer = document.querySelector('.product-visualizer');
+  if (!visualizer) return;
+
+  const matcolorElement = visualizer.querySelector('.matcolor');
+  if (!matcolorElement) {
+    console.error("Элемент коврика не найден!");
+    return;
+  }
+
+  // Получаем путь к изображению из скрытых полей данных
+  const kitDataElements = document.querySelectorAll('#kit-variant-data > div');
+  let imagePath = null;
+
+  for (const element of kitDataElements) {
+    if (element.dataset.kitCode === kit_code) {
+      imagePath = element.dataset.kitImage;
+      break;
+    }
+  }
+
+  if (imagePath) {
+    console.log(`Найдено изображение для комплектации ${kit_code}: ${imagePath}`);
+    // Используем изображение из справочника
+    matcolorElement.src = imagePath;
+  } else {
+    console.warn(`Изображение для комплектации ${kit_code} не найдено, используем изображение по умолчанию`);
+    // Используем изображение по умолчанию
+    matcolorElement.src = '/media/images/schema/sota1.png';
+  }
+}
+
+/**
  * Обновление URL для кнопки добавления в корзину.
  */
 function updateCartUrl() {
@@ -217,15 +268,21 @@ function updateCartUrl() {
   if (!cartBtn) return;
 
   let href = cartBtn.getAttribute('href');
+  const selectedKit = document.querySelector('input[name="selected_kit"]:checked')?.value || 'salon';
   const carpetColor = document.getElementById('carpet_color_input')?.value || '';
   const borderColor = document.getElementById('border_color_input')?.value || '';
   const hasPodp = document.getElementById('podp_check')?.checked ? '1' : '0';
 
-  // Заменяем плейсхолдеры на фактические значения
+  // Заменяем параметр kit
+  if (href.includes('kit=')) {
+    href = href.replace(/kit=[^&]*/, `kit=${selectedKit}`);
+  } else {
+    href += (href.includes('?') ? '&' : '?') + `kit=${selectedKit}`;
+  }
+
+  // Обновляем остальные параметры
   href = href.replace('__carpet_color__', carpetColor);
   href = href.replace('__border_color__', borderColor);
-
-  // Обновляем значение подпятника
   href = href.replace(/podp=\d/, `podp=${hasPodp}`);
 
   console.log("Обновленный URL корзины:", href);
@@ -254,6 +311,11 @@ function checkImageExists(url, successCallback, errorCallback) {
  * @param {string} fallbackSrc Запасной источник
  */
 function setImageWithFallback(element, primarySrc, fallbackSrc) {
+  if (!primarySrc) {
+    element.src = fallbackSrc;
+    return;
+  }
+
   checkImageExists(
     primarySrc,
     function() { element.src = primarySrc; },
@@ -369,6 +431,19 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("Переключение подпятника:", this.checked);
       setAttrValue(parseInt(this.dataset.attrId), this.checked ? parseInt(this.dataset.attrValue) : 0);
     });
+  }
+
+  // Инициализация визуализации для выбранной комплектации
+  const defaultKitRadio = document.querySelector('input[name="selected_kit"]:checked');
+  if (defaultKitRadio) {
+    updateVisualization(defaultKitRadio.value);
+  } else {
+    // Если ничего не выбрано, выбираем первый вариант
+    const firstKitRadio = document.querySelector('input[name="selected_kit"]');
+    if (firstKitRadio) {
+      firstKitRadio.checked = true;
+      updateVisualization(firstKitRadio.value);
+    }
   }
 
   // Инициализация URL при загрузке страницы

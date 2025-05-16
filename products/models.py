@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
-
 class Category(BaseModel):
     category_name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -29,13 +28,19 @@ class ColorVariant(BaseModel):
         return self.color_name
 
 
-class SizeVariant(BaseModel):
-    size_name = models.CharField(max_length=100)
-    price = models.IntegerField(default=0)
-    order = models.IntegerField(default=0)
+class KitVariant(BaseModel):
+    name = models.CharField(max_length=100, verbose_name="Название комплектации")
+    code = models.CharField(max_length=50, unique=True, verbose_name="Символьный код")
+    price_modifier = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Модификатор цены")
+    order = models.IntegerField(default=0, verbose_name="Порядок сортировки")
+    image = models.ImageField(upload_to='configurations', null=True, blank=True, verbose_name="Изображение схемы")
 
     def __str__(self) -> str:
-        return self.size_name
+        return self.name
+
+    class Meta:
+        verbose_name = "Тип комплектации"
+        verbose_name_plural = "Типы комплектаций"
 
 
 class Product(BaseModel):
@@ -47,7 +52,7 @@ class Product(BaseModel):
     price = models.IntegerField()
     product_desription = models.TextField()
     color_variant = models.ManyToManyField(ColorVariant, blank=True)
-    size_variant = models.ManyToManyField(SizeVariant, blank=True)
+    # Убираем связь с kit_variant
     newest_product = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -57,8 +62,12 @@ class Product(BaseModel):
     def __str__(self) -> str:
         return self.product_name
 
-    def get_product_price_by_size(self, size):
-        return self.price + SizeVariant.objects.get(size_name=size).price
+    def get_product_price_by_kit(self, kit_code):
+        # Получаем комплектацию из справочника
+        kit = KitVariant.objects.filter(code=kit_code).first()
+        if kit:
+            return self.price + float(kit.price_modifier)
+        return self.price
 
     def get_rating(self):
         total = sum(int(review['stars']) for review in self.reviews.values())
@@ -118,13 +127,12 @@ class Color(BaseModel):
 class Wishlist(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="wishlist")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlisted_by")
-    size_variant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True,
-                                     blank=True, related_name="wishlist_items")
-
+    kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True,
+                                    blank=True, related_name="wishlist_items")
     added_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'product', 'size_variant')
+        unique_together = ('user', 'product', 'kit_variant')
 
     def __str__(self) -> str:
-        return f'{self.user.username} - {self.product.product_name} - {self.size_variant.size_name if self.size_variant else "No Size"}'
+        return f'{self.user.username} - {self.product.product_name} - {self.kit_variant.name if self.kit_variant else "No Kit"}'

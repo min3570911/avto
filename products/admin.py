@@ -22,11 +22,12 @@ class ColorVariantAdmin(admin.ModelAdmin):
     model = ColorVariant
 
 
-@admin.register(SizeVariant)
-class SizeVariantAdmin(admin.ModelAdmin):
-    list_display = ['size_name', 'price', 'order']
-
-    model = SizeVariant
+@admin.register(KitVariant)
+class KitVariantAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'price_modifier', 'order', 'image']
+    list_filter = ['name']
+    search_fields = ['name', 'code']
+    model = KitVariant
 
 
 @admin.register(Color)
@@ -38,3 +39,4 @@ class ColorAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductImage)
 admin.site.register(ProductReview)
+admin.site.register(Wishlist)

@@ -6,14 +6,15 @@ from accounts.models import Cart, CartItem
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from products.models import Product, SizeVariant, ProductReview, Wishlist, Color
+from products.models import Product, KitVariant, ProductReview, Wishlist, Color
 
 
 # Create your views here.
 
 def get_product(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    sorted_size_variants = product.size_variant.all().order_by('size_name')
+    # Берем все комплектации из справочника, не привязываясь к продукту
+    sorted_kit_variants = KitVariant.objects.all().order_by('order')
     related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
 
     # Получаем все доступные цвета для выбора
@@ -60,19 +61,30 @@ def get_product(request, slug):
 
     context = {
         'product': product,
-        'sorted_size_variants': sorted_size_variants,
+        'sorted_kit_variants': sorted_kit_variants,
         'related_products': related_products,
         'review_form': review_form,
         'rating_percentage': rating_percentage,
         'in_wishlist': in_wishlist,
-        'colors': colors,  # Добавлено
+        'colors': colors,
     }
 
-    if request.GET.get('size'):
-        size = request.GET.get('size')
-        price = product.get_product_price_by_size(size)
-        context['selected_size'] = size
-        context['updated_price'] = price
+    # По умолчанию выбираем "Салон"
+    default_kit = sorted_kit_variants.filter(code='salon').first()
+    if default_kit and not request.GET.get('kit'):
+        context['selected_kit'] = default_kit.code
+        context['updated_price'] = product.get_product_price_by_kit(default_kit.code)
+
+    # Если указан kit в URL, используем его
+    if request.GET.get('kit'):
+        kit_code = request.GET.get('kit')
+        try:
+            price = product.get_product_price_by_kit(kit_code)
+            context['selected_kit'] = kit_code
+            context['updated_price'] = price
+        except Exception as e:
+            print(f"Ошибка расчета цены: {e}")
+            messages.warning(request, "Ошибка расчета цены для выбранной комплектации")
 
     return render(request, 'product/product.html', context=context)
 
@@ -147,18 +159,18 @@ def delete_review(request, slug, review_uid):
 # Add a product to Wishlist
 @login_required
 def add_to_wishlist(request, uid):
-    variant = request.GET.get('size')
-    if not variant:
-        messages.warning(request, 'Please select a size variant before adding to the wishlist!')
+    kit_code = request.GET.get('kit')
+    if not kit_code:
+        messages.warning(request, 'Пожалуйста, выберите комплектацию перед добавлением в избранное!')
         return redirect(request.META.get('HTTP_REFERER'))
 
     product = get_object_or_404(Product, uid=uid)
-    size_variant = get_object_or_404(SizeVariant, size_name=variant)
+    kit_variant = get_object_or_404(KitVariant, code=kit_code)
     wishlist, created = Wishlist.objects.get_or_create(
-        user=request.user, product=product, size_variant=size_variant)
+        user=request.user, product=product, kit_variant=kit_variant)
 
     if created:
-        messages.success(request, "Product added to Wishlist!")
+        messages.success(request, "Товар добавлен в избранное!")
 
     return redirect(reverse('wishlist'))
 
@@ -167,16 +179,16 @@ def add_to_wishlist(request, uid):
 @login_required
 def remove_from_wishlist(request, uid):
     product = get_object_or_404(Product, uid=uid)
-    size_variant_name = request.GET.get('size')
+    kit_code = request.GET.get('kit')
 
-    if size_variant_name:
-        size_variant = get_object_or_404(SizeVariant, size_name=size_variant_name)
+    if kit_code:
+        kit_variant = get_object_or_404(KitVariant, code=kit_code)
         Wishlist.objects.filter(
-            user=request.user, product=product, size_variant=size_variant).delete()
+            user=request.user, product=product, kit_variant=kit_variant).delete()
     else:
         Wishlist.objects.filter(user=request.user, product=product).delete()
 
-    messages.success(request, "Product removed from wishlist!")
+    messages.success(request, "Товар удален из избранного!")
     return redirect(reverse('wishlist'))
 
 
@@ -193,19 +205,19 @@ def move_to_cart(request, uid):
     wishlist = Wishlist.objects.filter(user=request.user, product=product).first()
 
     if not wishlist:
-        messages.error(request, "Item not found in wishlist.")
+        messages.error(request, "Товар не найден в избранном.")
         return redirect('wishlist')
 
-    size_variant = wishlist.size_variant
+    kit_variant = wishlist.kit_variant
     wishlist.delete()
 
     cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
     cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product, size_variant=size_variant)
+        cart=cart, product=product, kit_variant=kit_variant)
 
     if not created:
         cart_item.quantity += 1
         cart_item.save()
 
-    messages.success(request, "Product moved to cart successfully!")
+    messages.success(request, "Товар перемещен в корзину!")
     return redirect('cart')

@@ -321,20 +321,23 @@
                 </div>
               </div>
 
-              {% if sorted_size_variants %}
+              {% if sorted_kit_variants %}
               <div class="form-group col-md">
-                <label>Select size</label>
+                <label>Комплектация</label>
                 <div class="mt-1">
-                  {% for size in sorted_size_variants %}
-
+                  {% for kit in sorted_kit_variants %}
                   <label class="custom-control custom-radio custom-control-inline">
-                    <input type="radio" name="selected_size" value="{{ size.size_name }}"
-                    onchange="get_correct_price('{{ size.size_name }}'); updateCartUrl();"
-                    id="size-{{ size.size_name }}"
-                    {% if selected_size == size.size_name %} checked {% endif %} class="custom-control-input" />
-                    <div class="custom-control-label">{{ size.size_name }}</div>
+                    <input
+                      type="radio"
+                      name="selected_kit"
+                      value="{{ kit.code }}"
+                      onchange="get_correct_price('{{ kit.code }}'); updateVisualization('{{ kit.code }}'); updateCartUrl();"
+                      id="kit-{{ kit.code }}"
+                      {% if selected_kit == kit.code %} checked {% elif forloop.first and not selected_kit %} checked {% endif %}
+                      class="custom-control-input"
+                    />
+                    <div class="custom-control-label">{{ kit.name }} ({{ kit.price_modifier }})</div>
                   </label>
-
                   {% endfor %}
                 </div>
               </div>
@@ -501,26 +504,27 @@
             </div>
 
             <!-- Add to Wishlist Button -->
-            <div class="form-group d-flex justify-content-start">
-              <div class="d-sm-flex mr-2">
-                <div class="mb-2 mb-sm-0 mr-0 mr-sm-3">
-                  <form method="POST" action="{% url 'add_to_wishlist' product.uid %}?size={{ selected_size }}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-primary">
-                      <i class="fas fa-heart"></i> Add to Wishlist
-                    </button>
-                  </form>
-                </div>
-                <a
-                  href="{% url 'add_to_cart' product.uid %}?size={{ selected_size }}&carpet_color=__carpet_color__&border_color=__border_color__&podp=0"
-                  id="add-to-cart-btn"
-                  class="btn btn-primary"
-                >
-                  <i class="fas fa-shopping-bag mr-1"></i>
-                  <span>Add to cart</span>
-                </a>
-              </div>
-            </div>
+            <!-- Исправление блока с кнопками добавления в корзину и избранное -->
+<div class="form-group d-flex justify-content-start">
+  <div class="d-sm-flex mr-2">
+    <div class="mb-2 mb-sm-0 mr-0 mr-sm-3">
+      <form method="POST" action="{% url 'add_to_wishlist' product.uid %}?kit={{ selected_kit }}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-primary">
+          <i class="fas fa-heart"></i> Add to Wishlist
+        </button>
+      </form>
+    </div>
+
+      href="{% url 'add_to_cart' product.uid %}?kit={{ selected_kit }}&carpet_color=__carpet_color__&border_color=__border_color__&podp=0"
+      id="add-to-cart-btn"
+      class="btn btn-primary"
+    >
+      <i class="fas fa-shopping-bag mr-1"></i>
+      <span>Add to cart</span>
+    </a>
+  </div>
+</div>
           </article>
         </main>
       </div>
@@ -669,7 +673,15 @@
 
 <!-- Добавляем скрытое поле CSRF-токена для AJAX-запросов -->
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-
+<!-- Скрытые поля для хранения данных комплектаций -->
+<div id="kit-variant-data" style="display: none;">
+  {% for kit in sorted_kit_variants %}
+    <div
+      data-kit-code="{{ kit.code }}"
+      data-kit-image="{% if kit.image %}{{ kit.image.url }}{% endif %}"
+    ></div>
+  {% endfor %}
+</div>
 <!-- Подключаем JavaScript-файл -->
 <script src="/media/js/product.js" type="text/javascript"></script>
 
