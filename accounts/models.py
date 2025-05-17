@@ -94,7 +94,13 @@ class CartItem(BaseModel):
 
         # Добавляем стоимость подпятника если выбран
         if self.has_podpyatnik:
-            price += 15  # 15 рублей за подпятник
+            # Ищем опцию подпятник в справочнике комплектаций
+            podpyatnik_option = KitVariant.objects.filter(code='podpyatnik', is_option=True).first()
+            if podpyatnik_option:
+                price += float(podpyatnik_option.price_modifier)
+            else:
+                # Если записи нет, используем значение по умолчанию
+                price += 15
 
         return price
 
@@ -111,7 +117,7 @@ class Order(BaseModel):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return f"Order {self.order_id} by {self.user.username}"
+        return f"Заказ {self.order_id} от {self.user.username}"
 
     def get_order_total_price(self):
         return self.order_total_price

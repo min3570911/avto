@@ -7,5 +7,9 @@ class ReviewForm(forms.ModelForm):
         fields = ['stars', 'content']
         widgets = {
             "stars": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
-            "content": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "content": forms.Textarea(attrs={"class": "form-control", "rows": 4, "placeholder": "Напишите ваш отзыв здесь..."}),
+        }
+        labels = {
+            "stars": "Оценка",
+            "content": "Комментарий"
         }

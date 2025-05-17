@@ -1,5 +1,5 @@
 {% extends 'base/base.html' %}
-{% block title %}Order Details{% endblock title%}
+{% block title %}Детали заказа{% endblock title%}
 {% load static %} {% block start %}
 
 <section class="section-content padding-y">
@@ -9,22 +9,22 @@
       <!-- Order Summary -->
       <main class="col-md-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-          <h3 class="mb-0">Order Summary</h3>
+          <h3 class="mb-0">Итоги заказа</h3>
           <a href="{% url 'download_invoice' order.order_id %}" class="btn btn-success">
-            Download Invoice
+            Скачать счет
           </a>
         </div>
         <div class="table-responsive mb-4">
           <table class="table table-striped table-bordered">
             <thead class="thead-dark">
               <tr>
-                <th>Product</th>
-                <th>Size</th>
+                <th>Товар</th>
+                <th>Комплектация</th>
                 <th>Цвет коврика</th>
                 <th>Цвет окантовки</th>
                 <th>Опции</th>
-                <th>Quantity</th>
-                <th>Price</th>
+                <th>Количество</th>
+                <th>Цена</th>
               </tr>
             </thead>
             <tbody>
@@ -32,13 +32,13 @@
               <tr>
                 <td><a href="{% url 'get_product' item.product.slug %}" class="title text-dark">
                   {{ item.product.product_name }}</a></td>
-                <td>{{ item.size_variant.size_name|default:"N/A" }}</td>
+                <td>{{ item.kit_variant.name|default:"Н/Д" }}</td>
                 <td>
                   {% if item.carpet_color %}
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
                     {{ item.carpet_color.name }}
                   {% else %}
-                    N/A
+                    Н/Д
                   {% endif %}
                 </td>
                 <td>
@@ -46,7 +46,7 @@
                     <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
                     {{ item.border_color.name }}
                   {% else %}
-                    N/A
+                    Н/Д
                   {% endif %}
                 </td>
                 <td>
@@ -69,44 +69,44 @@
 
       <!-- Order Details Summary -->
       <main class="col-md-6">
-        <h3 class="mb-4">Order Details</h3>
+        <h3 class="mb-4">Детали заказа</h3>
         <div class="card mb-4">
           <div class="card-body">
-            <h5 class="card-title">Order Information</h5>
+            <h5 class="card-title">Информация о заказе</h5>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Order ID #:</dt>
+              <dt style="width: 135px;">Номер заказа #:</dt>
               <dd class="text-right">
                 <strong>{{ order.order_id }}</strong>
               </dd>
             </dl>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Place on:</dt>
+              <dt style="width: 135px;">Размещен:</dt>
               <dd class="text-right">
                 <strong>{{ order.order_date|date:"F j, Y" }}</strong>
               </dd>
             </dl>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Customer:</dt>
+              <dt style="width: 135px;">Клиент:</dt>
               <dd class="text-right">
                 <strong>{{ order.user.get_full_name }}</strong>
               </dd>
             </dl>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Payment Status:</dt>
+              <dt style="width: 135px;">Статус оплаты:</dt>
               <dd class="text-right">
                 <strong>{{ order.payment_status }}</strong>
               </dd>
             </dl>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Payment Mode:</dt>
+              <dt style="width: 135px;">Способ оплаты:</dt>
               <dd class="text-right">
                 <strong>{{ order.payment_mode }}</strong>
               </dd>
             </dl>
             <dl class="dlist-align">
-              <dt style="width: 150px;">Shipping Address:</dt>
+              <dt style="width: 150px;">Адрес доставки:</dt>
               <dd class="text-right">
-                <strong>{{ order.shipping_address|default:"Not Provided" }}</strong>
+                <strong>{{ order.shipping_address|default:"Не указан" }}</strong>
               </dd>
             </dl>
           </div>
@@ -119,23 +119,23 @@
       <main class="col-md-4">
         <div class="card" style="margin-top: 59px;">
           <div class="card-body">
-            <h5 class="card-title">Payment Summary</h5>
+            <h5 class="card-title">Сумма заказа</h5>
             <dl class="dlist-align">
-              <dt style="width: 135px;">Item(s) Subtotal:</dt>
+              <dt style="width: 135px;">Стоимость товаров:</dt>
               <dd class="text-right">
                 <strong>₹{{ order.order_total_price }}</strong>
               </dd>
             </dl>
 
             <dl class="dlist-align">
-              <dt style="width: 135px;">Coupon Applied:</dt>
+              <dt style="width: 135px;">Применен купон:</dt>
               <dd class="text-right">
                 <strong>₹{{ order.coupon.discount_amount|default:"0" }}</strong>
               </dd>
             </dl>
 
             <dl class="dlist-align">
-              <dt style="width: 135px;">Grand Total:</dt>
+              <dt style="width: 135px;">Итого:</dt>
               <dd class="text-right">
                 <strong>₹{{ order.grand_total }}</strong>
               </dd>

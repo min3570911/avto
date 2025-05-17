@@ -1,5 +1,5 @@
 {% extends "base/base.html" %}
-{% block title %}Shopping Cart{% endblock %}
+{% block title %}Корзина{% endblock %}
 {% block start %} {% load static %}
 
 <section class="section-content padding-y">
@@ -11,9 +11,9 @@
           <table class="table table-borderless table-shopping-cart">
             <thead class="text-muted">
               <tr class="small text-uppercase">
-                <th scope="col">Product</th>
-                <th scope="col" width="120">Quantity</th>
-                <th scope="col" width="120">Price</th>
+                <th scope="col">Товар</th>
+                <th scope="col" width="120">Количество</th>
+                <th scope="col" width="120">Цена</th>
                 <th scope="col" class="text-right" width="200"></th>
               </tr>
             </thead>
@@ -37,10 +37,10 @@
                       </a>
 
                       <p class="text-muted small">
-                        {% if cart_item.size_variant %}
-                          Size: {{ cart_item.size_variant.size_name }}<br />
+                        {% if cart_item.kit_variant %}
+                          Комплектация: {{ cart_item.kit_variant.name }}<br />
                         {% else %}
-                          Size : N/A <br />
+                          Комплектация: Н/Д <br />
                         {% endif %}
 
                         {% if cart_item.carpet_color %}
@@ -56,18 +56,14 @@
                         {% endif %}
 
                         {% if cart_item.has_podpyatnik %}
-                          С подпятником (+15 руб.)<br />
+                          С подпятником<br />
                         {% endif %}
 
-                        {% if cart_item.product.color_variant.exists %}
-                          {% for color in cart_item.product.color_variant.all %}
-                            Color: {{ color.color_name }}<br />
+                        {% if cart_item.color_variant.exists %}
+                          {% for color in cart_item.color_variant.all %}
+                            Цвет: {{ color.color_name }}<br />
                           {% endfor %}
-                        {% else %}
-                          Color: N/A<br />
                         {% endif %}
-
-                        Brand: Nike
                       </p>
                     </figcaption>
                   </figure>
@@ -87,7 +83,7 @@
                 </td>
                 <td class="text-right">
                   <a
-                    data-original-title="Save to Wishlist"
+                    data-original-title="Добавить в избранное"
                     title=""
                     href=""
                     class="btn btn-light"
@@ -96,7 +92,7 @@
                     <i class="fa fa-heart"></i>
                   </a>
                   <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
-                    Remove
+                    Удалить
                   </a>
                 </td>
               </tr>
@@ -112,7 +108,7 @@
             </a>
 
             <a href="{% url 'index' %}" class="btn btn-light">
-              <i class="fa fa-chevron-left"></i> Continue Shopping
+              <i class="fa fa-chevron-left"></i> Продолжить покупки
             </a>
           </div>
         </div>
@@ -120,8 +116,7 @@
 
         <div class="alert alert-success mt-3">
           <p class="icontext">
-            <i class="icon text-success fa fa-truck"></i> Free Delivery within
-            1-2 weeks
+            <i class="icon text-success fa fa-truck"></i> Бесплатная доставка в течение 1-2 недель
           </p>
         </div>
       </main>
@@ -132,16 +127,16 @@
             <form method="POST">
               {% csrf_token %}
               <div class="form-group">
-                <label>Have coupon?</label>
+                <label>Есть купон?</label>
                 <div class="input-group">
                   <input
                     type="text"
                     class="form-control"
                     name="coupon"
-                    placeholder="Coupon code"
+                    placeholder="Код купона"
                   />
                   <span class="input-group-append">
-                    <button type="submit" class="btn btn-primary">Apply</button>
+                    <button type="submit" class="btn btn-primary">Применить</button>
                   </span>
                 </div>
               </div>
@@ -161,18 +156,18 @@
         <div class="card">
           <div class="card-body">
             <dl class="dlist-align">
-              <dt>Total price:</dt>
+              <dt>Общая стоимость:</dt>
               <dd class="text-right">
                 <strong>₹{{ cart.get_cart_total }}</strong>
               </dd>
             </dl>
             {% if cart.coupon %}
             <dl class="dlist-align">
-              <dt>Discount:</dt>
+              <dt>Скидка:</dt>
               <dd class="text-right">₹{{ cart.coupon.discount_amount }}</dd>
             </dl>
             <dl class="dlist-align">
-              <dt>Total:</dt>
+              <dt>Итого:</dt>
               <dd class="text-right h5">
                 <strong>₹{{ cart.get_cart_total_price_after_coupon }}</strong>
               </dd>
@@ -192,52 +187,6 @@
   </div>
   <!-- container .//  -->
 </section>
-
-<!-- Razorpay скрипт закомментирован -->
-<!--
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<script>
-  var options = {
-    key: "rzp_test_5XxorWz3z1N2m5",
-    amount: "{{ cart.get_cart_total_price_after_coupon|floatformat:0 }}",
-    currency: "INR",
-    name: "Django Ecommerce Site",
-    description: "Purchased",
-    order_id: "{{ payment.id }}",
-
-    handler: function (response) {
-      console.log("Success");
-      window.location.href = `http://127.0.0.1:8000/accounts/success/?order_id={{ payment.id }}`;
-    },
-    prefill: {
-      name: "Gaurav Kumar",
-      email: "gaurav.kumar@example.com",
-      contact: "9000090000",
-    },
-    notes: {
-      address: "Razorpay Corporate Office",
-    },
-    theme: {
-      color: "#3399cc",
-    },
-  };
-  var rzp1 = new Razorpay(options);
-  rzp1.on("payment.failed", function (response) {
-    alert(response.error.code);
-    alert(response.error.description);
-    alert(response.error.source);
-    alert(response.error.step);
-    alert(response.error.reason);
-    alert(response.error.metadata.order_id);
-    alert(response.error.metadata.payment_id);
-  });
-  document.getElementById("rzp-button1").onclick = function (e) {
-    rzp1.open();
-    e.preventDefault();
-  };
-</script>
--->
 
 <script>
   function updateCartItem(selectElement, cartItemId) {
@@ -259,7 +208,7 @@
         if (data.success) {
             window.location.reload();
         } else {
-            alert("Error updating cart");
+            alert("Ошибка обновления корзины");
         }
     });
 }

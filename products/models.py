@@ -34,6 +34,7 @@ class KitVariant(BaseModel):
     price_modifier = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Модификатор цены")
     order = models.IntegerField(default=0, verbose_name="Порядок сортировки")
     image = models.ImageField(upload_to='configurations', null=True, blank=True, verbose_name="Изображение схемы")
+    is_option = models.BooleanField(default=False, verbose_name="Дополнительная опция")
 
     def __str__(self) -> str:
         return self.name
@@ -129,6 +130,11 @@ class Wishlist(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="wishlisted_by")
     kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True,
                                     blank=True, related_name="wishlist_items")
+    carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name="wishlist_carpet_items")
+    border_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name="wishlist_border_items")
+    has_podpyatnik = models.BooleanField(default=False)
     added_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:

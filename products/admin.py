@@ -24,8 +24,8 @@ class ColorVariantAdmin(admin.ModelAdmin):
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'price_modifier', 'order', 'image']
-    list_filter = ['name']
+    list_display = ['name', 'code', 'price_modifier', 'order', 'is_option']
+    list_filter = ['is_option']
     search_fields = ['name', 'code']
     model = KitVariant
 
@@ -33,6 +33,7 @@ class KitVariantAdmin(admin.ModelAdmin):
 @admin.register(Color)
 class ColorAdmin(admin.ModelAdmin):
     list_display = ['name', 'hex_code', 'display_order']
+    list_editable = ['display_order']
     model = Color
 
 

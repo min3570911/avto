@@ -47,6 +47,15 @@ const borderColorToImage = {
   13: "border223.png"  // Оранжевый
 };
 
+// Таблица соответствия комплектаций и файлов схем (резервная)
+const kitToSchemaImage = {
+  'salon': 'salon.png',
+  'trunk': 'trunk.png',
+  'salon_trunk': 'salon_trunk.png',
+  'driver_only': 'driver_only.png',
+  'front_only': 'front_only.png'
+};
+
 /**
  * Предзагрузка изображений для более быстрого переключения.
  */
@@ -82,14 +91,254 @@ function preloadImages() {
 }
 
 /**
- * Получение корректной цены при выборе комплектации.
+ * Обновление конфигурации при изменении параметров.
  *
- * @param {string} selected_kit Выбранная комплектация
+ * @param {string} kitCode Код выбранной комплектации
  */
-function get_correct_price(selected_kit) {
-  const urlParams = new URLSearchParams(window.location.search);
-  urlParams.set("kit", selected_kit);
-  window.location.search = urlParams.toString();
+function updateConfig(kitCode) {
+  // Если kitCode не передан, берем из выбранного радио
+  if (!kitCode) {
+    const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
+    if (selectedKit) {
+      kitCode = selectedKit.value;
+    } else {
+      kitCode = 'salon'; // По умолчанию
+    }
+  }
+
+  // Отмечаем выбранный вариант как активный
+  const radioButtons = document.querySelectorAll('input[name="selected_kit"]');
+  radioButtons.forEach(radio => {
+    const label = radio.closest('.kit-option-label');
+    if (radio.value === kitCode) {
+      label.classList.add('active');
+      radio.checked = true;
+    } else {
+      label.classList.remove('active');
+    }
+  });
+
+  // Обновляем изображение комплектации
+  updateKitImage(kitCode);
+
+  // Обновляем подпятник
+  updatePodp();
+
+  // Обновляем цену
+  updatePrice();
+
+  // Обновляем скрытые поля для форм
+  updateHiddenFields();
+}
+
+/**
+ * Обновление изображения комплектации.
+ *
+ * @param {string} kitCode Код выбранной комплектации
+ */
+function updateKitImage(kitCode) {
+  console.log("Обновление изображения комплектации:", kitCode);
+
+  // Находим данные о выбранной комплектации в скрытых полях
+  const kitData = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
+  if (!kitData) {
+    console.error("Данные о комплектации не найдены:", kitCode);
+    return;
+  }
+
+  // Получаем URL изображения из данных комплектации
+  const imageUrl = kitData.dataset.kitImage;
+
+  // Обновляем базовое изображение комплектации
+  const kitBaseImage = document.querySelector('.kit-base-image');
+  if (kitBaseImage) {
+    if (imageUrl) {
+      // Устанавливаем изображение из справочника
+      kitBaseImage.src = imageUrl;
+      console.log(`Установлено изображение комплектации: ${imageUrl}`);
+    } else {
+      // Если изображения нет в справочнике, используем резервное
+      const fallbackImage = kitToSchemaImage[kitCode] || "salon.png";
+      kitBaseImage.src = `/media/images/schema/${fallbackImage}`;
+      console.log(`Установлено резервное изображение комплектации: ${fallbackImage}`);
+    }
+  } else {
+    console.error("Элемент базового изображения комплектации не найден");
+  }
+}
+
+/**
+ * Обновление отображения подпятника.
+ */
+function updatePodp() {
+  const podpElement = document.querySelector('.podpicon');
+  const podpCheck = document.getElementById('podp_check');
+
+  if (podpElement && podpCheck) {
+    podpElement.style.display = podpCheck.checked ? 'block' : 'none';
+    console.log("Подпятник " + (podpCheck.checked ? "показан" : "скрыт"));
+  }
+}
+
+/**
+ * Обновление цены при изменении комплектации и опций.
+ */
+function updatePrice() {
+  // Базовая цена продукта
+  const basePrice = parseFloat(document.querySelector('meta[name="product-price"]').content) || 0;
+
+  // Цена выбранной комплектации
+  let kitPrice = 0;
+  const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
+  if (selectedKit) {
+    const kitData = document.querySelector(`#kit-variant-data div[data-kit-code="${selectedKit.value}"]`);
+    if (kitData && kitData.dataset.kitPrice) {
+      kitPrice = parseFloat(kitData.dataset.kitPrice);
+    }
+  }
+
+  // Цена подпятника
+  let podpPrice = 0;
+  if (document.getElementById('podp_check').checked) {
+    const podpData = document.querySelector('#kit-variant-data div[data-option-code="podpyatnik"]');
+    if (podpData && podpData.dataset.optionPrice) {
+      podpPrice = parseFloat(podpData.dataset.optionPrice);
+    } else {
+      podpPrice = 15; // Значение по умолчанию
+    }
+  }
+
+  // Итоговая цена
+  const totalPrice = basePrice + kitPrice + podpPrice;
+
+  // Обновляем отображение
+  const priceElement = document.getElementById('totalPrice');
+  if (priceElement) {
+    priceElement.textContent = `₹${totalPrice.toFixed(2)} руб.`;
+  }
+}
+
+/**
+ * Обновление скрытых полей для форм.
+ */
+function updateHiddenFields() {
+  // Получаем выбранную комплектацию
+  const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
+  const kitCode = selectedKit ? selectedKit.value : 'salon';
+
+  // Получаем выбранные цвета
+  const carpetColor = document.getElementById('carpet_color_input').value;
+  const borderColor = document.getElementById('border_color_input').value;
+
+  // Проверяем подпятник
+  const hasPodp = document.getElementById('podp_check').checked ? "1" : "0";
+
+  // Получаем количество
+  const quantity = document.getElementById('quantity').value || "1";
+
+  // Обновляем поля формы добавления в избранное
+  document.getElementById('wishlist-kit').value = kitCode;
+  document.getElementById('wishlist-carpet-color').value = carpetColor;
+  document.getElementById('wishlist-border-color').value = borderColor;
+  document.getElementById('wishlist-podp').value = hasPodp;
+  document.getElementById('wishlist-quantity').value = quantity;
+
+  // Обновляем поля формы добавления в корзину
+  document.getElementById('cart-kit').value = kitCode;
+  document.getElementById('cart-carpet-color').value = carpetColor;
+  document.getElementById('cart-border-color').value = borderColor;
+  document.getElementById('cart-podp').value = hasPodp;
+  document.getElementById('cart-quantity').value = quantity;
+}
+
+/**
+ * Активация выбранного цвета.
+ *
+ * @param {HTMLElement} element Элемент цвета
+ * @param {string} type Тип цвета ("carpet" или "border")
+ */
+function activateColor(element, type) {
+  // Удаляем класс active со всех цветов этого типа
+  const colorItems = document.querySelectorAll(`.color-picker[data-color-type="${type}"] .color-item`);
+  colorItems.forEach(item => {
+    item.classList.remove('active');
+    item.style.border = '2px solid #ccc';
+  });
+
+  // Добавляем класс active на выбранный цвет
+  element.classList.add('active');
+  element.style.border = '2px solid #FFEB3B';
+
+  // Обновляем скрытое поле с выбранным цветом
+  if (type === 'carpet') {
+    document.getElementById('carpet_color_input').value = element.dataset.colorId;
+  } else if (type === 'border') {
+    document.getElementById('border_color_input').value = element.dataset.colorId;
+  }
+
+  // Обновляем изображение коврика/окантовки
+  setAttrValue(parseInt(element.dataset.attrId), parseInt(element.dataset.attrValue));
+
+  // Обновляем скрытые поля для форм
+  updateHiddenFields();
+}
+
+/**
+ * Установка атрибутов и обновление изображений.
+ *
+ * @param {number} id ID атрибута (1=коврик, 2=окантовка, 7=подпятник)
+ * @param {number} value Значение атрибута
+ */
+function setAttrValue(id, value) {
+  console.log("setAttrValue called with id:", id, "value:", value);
+
+  // Соответствие цветов и изображений
+  if (id === attributeIds.CARPET_COLOR) {
+    // Цвет коврика
+    const carpetElement = document.querySelector('.matcolor');
+    if (carpetElement) {
+      // Проверяем, что выбрано корректное значение (1-10)
+      if (value < 1 || value > 10) {
+        console.error(`Некорректное значение цвета коврика: ${value}. Допустимые значения: 1-10`);
+        value = 1; // Устанавливаем значение по умолчанию
+      }
+
+      // Устанавливаем изображение коврика с проверкой
+      setImageWithFallback(
+        carpetElement,
+        `/media/images/schema/sota${value}.png`,
+        '/media/images/schema/sota1.png'
+      );
+
+      console.log(`Установлено изображение коврика: sota${value}.png (${carpetColors[value] || 'Неизвестный цвет'})`);
+    } else {
+      console.error("Элемент коврика не найден!");
+    }
+  }
+
+  if (id === attributeIds.BORDER_COLOR) {
+    const borderElement = document.querySelector('.bordercolor');
+    if (borderElement) {
+      // Используем соответствие из таблицы или дефолтное изображение, если соответствия нет
+      const borderImageFile = borderColorToImage[value] || "border211.png";
+
+      // Устанавливаем изображение окантовки с проверкой
+      setImageWithFallback(
+        borderElement,
+        `/media/images/schema/${borderImageFile}`,
+        '/media/images/schema/border211.png'
+      );
+
+      console.log("Установлено изображение окантовки:", borderImageFile, "для цвета #", value);
+    } else {
+      console.error("Элемент окантовки не найден!");
+    }
+  }
+
+  if (id === attributeIds.PODPYATNIK) {
+    // Этот код теперь в функции updatePodp()
+    updatePodp();
+  }
 }
 
 /**
@@ -98,7 +347,12 @@ function get_correct_price(selected_kit) {
  * @param {string} src Путь к изображению
  */
 function updateMainImage(src) {
-  document.getElementById("mainImage").src = src;
+  const mainImage = document.getElementById("mainImage");
+  if (mainImage) {
+    mainImage.src = src;
+    // Сбрасываем зум при смене изображения
+    mainImage.classList.remove("zoomed-in");
+  }
 }
 
 /**
@@ -166,130 +420,6 @@ function toggleDislike(reviewId) {
 }
 
 /**
- * Установка атрибутов и обновление изображений.
- *
- * @param {number} id ID атрибута (1=коврик, 2=окантовка, 7=подпятник)
- * @param {number} value Значение атрибута
- */
-function setAttrValue(id, value) {
-  console.log("setAttrValue called with id:", id, "value:", value);
-
-  // Соответствие цветов и изображений
-  if (id === attributeIds.CARPET_COLOR) {
-    // Цвет коврика
-    const carpetElement = document.querySelector('.matcolor');
-    if (carpetElement) {
-      // Проверяем, что выбрано корректное значение (1-10)
-      if (value < 1 || value > 10) {
-        console.error(`Некорректное значение цвета коврика: ${value}. Допустимые значения: 1-10`);
-        value = 1; // Устанавливаем значение по умолчанию
-      }
-
-      // Устанавливаем изображение коврика
-      carpetElement.src = `/media/images/schema/sota${value}.png`;
-      console.log(`Установлено изображение коврика: sota${value}.png (${carpetColors[value] || 'Неизвестный цвет'})`);
-    } else {
-      console.error("Элемент коврика не найден!");
-    }
-  }
-
-  if (id === attributeIds.BORDER_COLOR) {
-    const borderElement = document.querySelector('.bordercolor');
-    if (borderElement) {
-      // Используем соответствие из таблицы или дефолтное изображение, если соответствия нет
-      const borderImageFile = borderColorToImage[value] || "border211.png";
-      borderElement.src = `/media/images/schema/${borderImageFile}`;
-      console.log("Установлено изображение окантовки:", borderElement.src, "для цвета #", value);
-    } else {
-      console.error("Элемент окантовки не найден!");
-    }
-  }
-
-  if (id === attributeIds.PODPYATNIK) {
-    // Подпятник
-    const podpElement = document.querySelector('.podpicon');
-    if (podpElement) {
-      podpElement.style.display = value == 1 ? 'block' : 'none';
-      console.log("Подпятник " + (value == 1 ? "показан" : "скрыт"));
-    } else {
-      console.error("Элемент подпятника не найден!");
-    }
-  }
-
-  // Обновляем URL кнопки "Добавить в корзину"
-  updateCartUrl();
-}
-
-/**
- * Обновление визуализации при выборе комплектации.
- *
- * @param {string} kit_code Код комплектации
- */
-function updateVisualization(kit_code) {
-  console.log("Обновление визуализации для комплектации:", kit_code);
-
-  // Получаем элементы визуализации
-  const visualizer = document.querySelector('.product-visualizer');
-  if (!visualizer) return;
-
-  const matcolorElement = visualizer.querySelector('.matcolor');
-  if (!matcolorElement) {
-    console.error("Элемент коврика не найден!");
-    return;
-  }
-
-  // Получаем путь к изображению из скрытых полей данных
-  const kitDataElements = document.querySelectorAll('#kit-variant-data > div');
-  let imagePath = null;
-
-  for (const element of kitDataElements) {
-    if (element.dataset.kitCode === kit_code) {
-      imagePath = element.dataset.kitImage;
-      break;
-    }
-  }
-
-  if (imagePath) {
-    console.log(`Найдено изображение для комплектации ${kit_code}: ${imagePath}`);
-    // Используем изображение из справочника
-    matcolorElement.src = imagePath;
-  } else {
-    console.warn(`Изображение для комплектации ${kit_code} не найдено, используем изображение по умолчанию`);
-    // Используем изображение по умолчанию
-    matcolorElement.src = '/media/images/schema/sota1.png';
-  }
-}
-
-/**
- * Обновление URL для кнопки добавления в корзину.
- */
-function updateCartUrl() {
-  const cartBtn = document.getElementById('add-to-cart-btn');
-  if (!cartBtn) return;
-
-  let href = cartBtn.getAttribute('href');
-  const selectedKit = document.querySelector('input[name="selected_kit"]:checked')?.value || 'salon';
-  const carpetColor = document.getElementById('carpet_color_input')?.value || '';
-  const borderColor = document.getElementById('border_color_input')?.value || '';
-  const hasPodp = document.getElementById('podp_check')?.checked ? '1' : '0';
-
-  // Заменяем параметр kit
-  if (href.includes('kit=')) {
-    href = href.replace(/kit=[^&]*/, `kit=${selectedKit}`);
-  } else {
-    href += (href.includes('?') ? '&' : '?') + `kit=${selectedKit}`;
-  }
-
-  // Обновляем остальные параметры
-  href = href.replace('__carpet_color__', carpetColor);
-  href = href.replace('__border_color__', borderColor);
-  href = href.replace(/podp=\d/, `podp=${hasPodp}`);
-
-  console.log("Обновленный URL корзины:", href);
-  cartBtn.setAttribute('href', href);
-}
-
-/**
  * Проверка существования изображения.
  *
  * @param {string} url URL изображения
@@ -326,7 +456,9 @@ function setImageWithFallback(element, primarySrc, fallbackSrc) {
   );
 }
 
-// Улучшение взаимодействия с горизонтальной прокруткой
+/**
+ * Улучшение взаимодействия с горизонтальной прокруткой.
+ */
 function initColorPickerScrolls() {
   const colorPickers = document.querySelectorAll('.color-picker');
 
@@ -357,95 +489,68 @@ function initColorPickerScrolls() {
 }
 
 /**
+ * Инициализация зума для главного изображения.
+ */
+function initializeImageZoom() {
+  const mainImage = document.getElementById('mainImage');
+  if (mainImage) {
+    mainImage.addEventListener('click', function() {
+      this.classList.toggle('zoomed-in');
+    });
+  }
+}
+
+/**
+ * Инициализация кнопок для изменения количества товара.
+ */
+function initializeQuantityButtons() {
+  const quantityInput = document.getElementById('quantity');
+  const plusButton = document.getElementById('button-plus');
+  const minusButton = document.getElementById('button-minus');
+
+  if (quantityInput && plusButton && minusButton) {
+    plusButton.addEventListener('click', function() {
+      let quantity = parseInt(quantityInput.value);
+      if (isNaN(quantity)) quantity = 0;
+      quantityInput.value = quantity + 1;
+      updateHiddenFields();
+    });
+
+    minusButton.addEventListener('click', function() {
+      let quantity = parseInt(quantityInput.value);
+      if (isNaN(quantity) || quantity <= 1) quantity = 2;
+      quantityInput.value = quantity - 1;
+      updateHiddenFields();
+    });
+
+    quantityInput.addEventListener('change', function() {
+      let quantity = parseInt(quantityInput.value);
+      if (isNaN(quantity) || quantity < 1) {
+        quantityInput.value = 1;
+      }
+      updateHiddenFields();
+    });
+  }
+}
+
+/**
  * Инициализация функциональности страницы продукта.
  */
 document.addEventListener("DOMContentLoaded", function () {
   console.log("DOM загружен. Инициализация страницы продукта...");
-  console.log("Доступные цвета ковриков:", Object.entries(carpetColors).map(([key, value]) => `${key}: ${value}`).join(', '));
-
-  // Проверяем наличие необходимых элементов в DOM
-  console.log("Элемент коврика:", document.querySelector('.matcolor'));
-  console.log("Элемент окантовки:", document.querySelector('.bordercolor'));
-  console.log("Элемент подпятника:", document.querySelector('.podpicon'));
 
   // Предзагрузка изображений
   preloadImages();
 
-  // Инициализация скроллеров
+  // Инициализация скроллеров для выбора цвета
   initColorPickerScrolls();
 
-  // Эффект зума для главного изображения
-  const mainImage = document.getElementById("mainImage");
-  if (mainImage) {
-    mainImage.addEventListener("click", function () {
-      if (mainImage.classList.contains("zoomed-in")) {
-        mainImage.classList.remove("zoomed-in");
-      } else {
-        mainImage.classList.add("zoomed-in");
-      }
-    });
-  }
+  // Инициализация масштабирования изображения
+  initializeImageZoom();
 
-  // Инициализация выбора цветов
-  const colorPickers = document.querySelectorAll('.color-picker');
+  // Инициализация кнопок изменения количества
+  initializeQuantityButtons();
 
-  colorPickers.forEach(picker => {
-    // Находим все кружки цветов в текущем пикере
-    const colorItems = picker.querySelectorAll('.color-item');
-    const colorType = picker.dataset.colorType;
-    const inputField = document.getElementById(`${colorType}_color_input`);
-
-    // Проверяем корректность количества цветов
-    if (colorType === 'carpet' && colorItems.length !== 10) {
-      console.warn(`Внимание! Количество кружков цвета коврика (${colorItems.length}) не соответствует ожидаемому (10).`);
-    }
-
-    colorItems.forEach(item => {
-      item.addEventListener('click', function() {
-        const attrValue = parseInt(this.dataset.attrValue);
-        const colorName = this.getAttribute('title');
-
-        console.log(`Выбран ${colorType} цвет #${attrValue}: ${colorName}`);
-
-        // Сбросить активный класс у всех элементов
-        colorItems.forEach(i => i.classList.remove('active'));
-
-        // Добавить активный класс к выбранному
-        this.classList.add('active');
-
-        // Обновить скрытое поле
-        if (inputField) {
-          inputField.value = this.dataset.colorId;
-        }
-
-        // Обновить изображение коврика/окантовки
-        setAttrValue(parseInt(this.dataset.attrId), attrValue);
-      });
-    });
-  });
-
-  // Обработчик для подпятника
-  const podpCheck = document.getElementById('podp_check');
-  if (podpCheck) {
-    podpCheck.addEventListener('change', function() {
-      console.log("Переключение подпятника:", this.checked);
-      setAttrValue(parseInt(this.dataset.attrId), this.checked ? parseInt(this.dataset.attrValue) : 0);
-    });
-  }
-
-  // Инициализация визуализации для выбранной комплектации
-  const defaultKitRadio = document.querySelector('input[name="selected_kit"]:checked');
-  if (defaultKitRadio) {
-    updateVisualization(defaultKitRadio.value);
-  } else {
-    // Если ничего не выбрано, выбираем первый вариант
-    const firstKitRadio = document.querySelector('input[name="selected_kit"]');
-    if (firstKitRadio) {
-      firstKitRadio.checked = true;
-      updateVisualization(firstKitRadio.value);
-    }
-  }
-
-  // Инициализация URL при загрузке страницы
-  updateCartUrl();
+  // Инициализация конфигурации по умолчанию (используем первую комплектацию)
+  updateConfig();
 });

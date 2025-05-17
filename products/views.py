@@ -13,8 +13,14 @@ from products.models import Product, KitVariant, ProductReview, Wishlist, Color
 
 def get_product(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    # Берем все комплектации из справочника, не привязываясь к продукту
-    sorted_kit_variants = KitVariant.objects.all().order_by('order')
+    # Берем все комплектации из справочника, отсортированные по порядку
+    # Фильтруем только обычные комплектации (не дополнительные опции)
+    sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
+
+    # Получаем дополнительные опции (подпятник)
+    additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
+
+    # Получаем связанные товары из той же категории
     related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
 
     # Получаем все доступные цвета для выбора
@@ -26,8 +32,8 @@ def get_product(request, slug):
         try:
             review = ProductReview.objects.filter(product=product, user=request.user).first()
         except Exception as e:
-            print("No reviews found for this product", str(e))
-            messages.warning(request, "No reviews found for this product")
+            print("Отзывы для этого товара не найдены", str(e))
+            messages.warning(request, "Отзывы для этого товара не найдены")
 
     rating_percentage = 0
     if product.reviews.exists():
@@ -35,10 +41,10 @@ def get_product(request, slug):
 
     if request.method == 'POST' and request.user.is_authenticated:
         if review:
-            # If review exists, update it
+            # Если отзыв существует, обновляем его
             review_form = ReviewForm(request.POST, instance=review)
         else:
-            # Otherwise, create a new review
+            # Иначе создаем новый отзыв
             review_form = ReviewForm(request.POST)
 
         if review_form.is_valid():
@@ -46,12 +52,12 @@ def get_product(request, slug):
             review.product = product
             review.user = request.user
             review.save()
-            messages.success(request, "Review added successfully!")
+            messages.success(request, "Отзыв успешно добавлен!")
             return redirect('get_product', slug=slug)
     else:
         review_form = ReviewForm()
 
-    # Related product view
+    # Ограничиваем количество связанных товаров
     if len(related_products) >= 4:
         related_products = random.sample(related_products, 4)
 
@@ -62,6 +68,7 @@ def get_product(request, slug):
     context = {
         'product': product,
         'sorted_kit_variants': sorted_kit_variants,
+        'additional_options': additional_options,
         'related_products': related_products,
         'review_form': review_form,
         'rating_percentage': rating_percentage,
@@ -102,7 +109,7 @@ def product_reviews(request):
 def edit_review(request, review_uid):
     review = ProductReview.objects.filter(uid=review_uid, user=request.user).first()
     if not review:
-        return JsonResponse({"detail": "Review not found"}, status=404)
+        return JsonResponse({"detail": "Отзыв не найден"}, status=404)
 
     if request.method == "POST":
         stars = request.POST.get("stars")
@@ -110,10 +117,10 @@ def edit_review(request, review_uid):
         review.stars = stars
         review.content = content
         review.save()
-        messages.success(request, "Your review has been updated successfully.")
+        messages.success(request, "Ваш отзыв успешно обновлен.")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    return JsonResponse({"detail": "Invalid request"}, status=400)
+    return JsonResponse({"detail": "Некорректный запрос"}, status=400)
 
 
 # Like and Dislike review view
@@ -142,17 +149,17 @@ def dislike_review(request, review_uid):
 # delete review view
 def delete_review(request, slug, review_uid):
     if not request.user.is_authenticated:
-        messages.warning(request, "You need to be logged in to delete a review.")
+        messages.warning(request, "Необходимо войти в систему, чтобы удалить отзыв.")
         return redirect('login')
 
     review = ProductReview.objects.filter(uid=review_uid, product__slug=slug, user=request.user).first()
 
     if not review:
-        messages.error(request, "Review not found.")
+        messages.error(request, "Отзыв не найден.")
         return redirect('get_product', slug=slug)
 
     review.delete()
-    messages.success(request, "Your review has been deleted.")
+    messages.success(request, "Ваш отзыв был удален.")
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
@@ -160,16 +167,49 @@ def delete_review(request, slug, review_uid):
 @login_required
 def add_to_wishlist(request, uid):
     kit_code = request.GET.get('kit')
+    carpet_color_id = request.GET.get('carpet_color')
+    border_color_id = request.GET.get('border_color')
+    has_podp = request.GET.get('podp') == '1'
+
     if not kit_code:
         messages.warning(request, 'Пожалуйста, выберите комплектацию перед добавлением в избранное!')
         return redirect(request.META.get('HTTP_REFERER'))
 
     product = get_object_or_404(Product, uid=uid)
     kit_variant = get_object_or_404(KitVariant, code=kit_code)
-    wishlist, created = Wishlist.objects.get_or_create(
-        user=request.user, product=product, kit_variant=kit_variant)
 
-    if created:
+    # Получаем цвета из базы данных, если они выбраны
+    carpet_color = None
+    border_color = None
+    if carpet_color_id:
+        carpet_color = get_object_or_404(Color, uid=carpet_color_id)
+    if border_color_id:
+        border_color = get_object_or_404(Color, uid=border_color_id)
+
+    # Проверяем, есть ли уже такой товар в избранном
+    wishlist_item = Wishlist.objects.filter(
+        user=request.user,
+        product=product,
+        kit_variant=kit_variant
+    ).first()
+
+    if wishlist_item:
+        # Обновляем существующую запись
+        wishlist_item.carpet_color = carpet_color
+        wishlist_item.border_color = border_color
+        wishlist_item.has_podpyatnik = has_podp
+        wishlist_item.save()
+        messages.success(request, "Товар в избранном обновлен!")
+    else:
+        # Создаем новую запись
+        Wishlist.objects.create(
+            user=request.user,
+            product=product,
+            kit_variant=kit_variant,
+            carpet_color=carpet_color,
+            border_color=border_color,
+            has_podpyatnik=has_podp
+        )
         messages.success(request, "Товар добавлен в избранное!")
 
     return redirect(reverse('wishlist'))
@@ -209,15 +249,38 @@ def move_to_cart(request, uid):
         return redirect('wishlist')
 
     kit_variant = wishlist.kit_variant
+    carpet_color = wishlist.carpet_color
+    border_color = wishlist.border_color
+    has_podpyatnik = wishlist.has_podpyatnik
+
     wishlist.delete()
 
     cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product, kit_variant=kit_variant)
 
-    if not created:
+    # Проверяем, есть ли уже такой товар в корзине
+    cart_item = CartItem.objects.filter(
+        cart=cart,
+        product=product,
+        kit_variant=kit_variant,
+        carpet_color=carpet_color,
+        border_color=border_color,
+        has_podpyatnik=has_podpyatnik
+    ).first()
+
+    if cart_item:
+        # Если товар уже есть, увеличиваем количество
         cart_item.quantity += 1
         cart_item.save()
+    else:
+        # Создаем новый элемент корзины
+        CartItem.objects.create(
+            cart=cart,
+            product=product,
+            kit_variant=kit_variant,
+            carpet_color=carpet_color,
+            border_color=border_color,
+            has_podpyatnik=has_podpyatnik
+        )
 
     messages.success(request, "Товар перемещен в корзину!")
     return redirect('cart')

@@ -1,6 +1,5 @@
 import os
 import json
-import uuid
 # import razorpay  # Закомментировано, так как не будет использоваться
 # from weasyprint import CSS, HTML
 from products.models import *
@@ -34,17 +33,17 @@ def login_page(request):
         user_obj = User.objects.filter(username=username)
 
         if not user_obj.exists():
-            messages.warning(request, 'Account not found!')
+            messages.warning(request, 'Аккаунт не найден!')
             return HttpResponseRedirect(request.path_info)
 
         if not user_obj[0].profile.is_email_verified:
-            messages.error(request, 'Account not verified!')
+            messages.error(request, 'Аккаунт не верифицирован!')
             return HttpResponseRedirect(request.path_info)
 
         user_obj = authenticate(username=username, password=password)
         if user_obj:
             login(request, user_obj)
-            messages.success(request, 'Login Successfull.')
+            messages.success(request, 'Успешный вход.')
 
             # Check if the next URL is safe
             if url_has_allowed_host_and_scheme(url=next_url, allowed_hosts=request.get_host()):
@@ -52,7 +51,7 @@ def login_page(request):
             else:
                 return redirect('index')
 
-        messages.warning(request, 'Invalid credentials.')
+        messages.warning(request, 'Неверные учетные данные.')
         return HttpResponseRedirect(request.path_info)
 
     return render(request, 'accounts/login.html')
@@ -69,7 +68,7 @@ def register_page(request):
         user_obj = User.objects.filter(username=username, email=email)
 
         if user_obj.exists():
-            messages.info(request, 'Username or email already exists!')
+            messages.info(request, 'Имя пользователя или email уже существуют!')
             return HttpResponseRedirect(request.path_info)
 
         user_obj = User.objects.create(
@@ -82,7 +81,7 @@ def register_page(request):
         profile.save()
 
         send_account_activation_email(email, profile.email_token)
-        messages.success(request, "An email has been sent to your mail.")
+        messages.success(request, "На ваш email отправлено письмо для подтверждения.")
         return HttpResponseRedirect(request.path_info)
 
     return render(request, 'accounts/register.html')
@@ -91,7 +90,7 @@ def register_page(request):
 @login_required
 def user_logout(request):
     logout(request)
-    messages.warning(request, "Logged Out Successfully!")
+    messages.warning(request, "Выход выполнен успешно!")
     return redirect('index')
 
 
@@ -100,13 +99,12 @@ def activate_email_account(request, email_token):
         user = Profile.objects.get(email_token=email_token)
         user.is_email_verified = True
         user.save()
-        messages.success(request, 'Account verification successful.')
+        messages.success(request, 'Аккаунт успешно верифицирован.')
         return redirect('login')
     except Exception as e:
-        return HttpResponse('Invalid email token.')
+        return HttpResponse('Неверный токен email.')
 
 
-@login_required
 @login_required
 def add_to_cart(request, uid):
     try:
@@ -262,7 +260,7 @@ def success(request):
     # Создаем заказ
     order = create_order(cart)
 
-    context = {'order': order}
+    context = {'order_id': order.order_id}
     return render(request, 'payment_success/payment_success.html', context)
 
 
@@ -297,7 +295,7 @@ def download_invoice(request, order_id):
     pdf = render_to_pdf('accounts/order_pdf_generate.html', context)
     if pdf:
         return pdf
-    return HttpResponse("Error generating PDF", status=400)
+    return HttpResponse("Ошибка генерации PDF", status=400)
 
 
 @login_required
@@ -315,7 +313,7 @@ def profile_view(request, username):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            messages.success(request, 'Your profile has been updated successfully!')
+            messages.success(request, 'Ваш профиль успешно обновлен!')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     context = {
@@ -334,10 +332,10 @@ def change_password(request):
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)  # Important!
-            messages.success(request, 'Your password was successfully updated!')
+            messages.success(request, 'Ваш пароль успешно обновлен!')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         else:
-            messages.warning(request, 'Please correct the error below.')
+            messages.warning(request, 'Пожалуйста, исправьте ошибки ниже.')
     else:
         form = CustomPasswordChangeForm(request.user)
     return render(request, 'accounts/change_password.html', {'form': form})
@@ -356,7 +354,7 @@ def update_shipping_address(request):
             shipping_address.current_address = True
             shipping_address.save()
 
-            messages.success(request, "The Address Has Been Successfully Saved/Updated!")
+            messages.success(request, "Адрес доставки успешно сохранен/обновлен!")
 
             form = ShippingAddressForm()
         else:
@@ -382,9 +380,9 @@ def create_order(cart):
     order = Order.objects.create(
         user=cart.user,
         order_id=order_id,
-        payment_status="Paid",  # Можно изменить на "Pending" или другой статус
+        payment_status="Оплачен",  # Можно изменить на "В ожидании" или другой статус
         shipping_address=cart.user.profile.shipping_address,
-        payment_mode="Direct",  # Заменили на прямую оплату
+        payment_mode="Напрямую",  # Заменили на прямую оплату
         order_total_price=cart.get_cart_total(),
         coupon=cart.coupon,
         grand_total=cart.get_cart_total_price_after_coupon(),
@@ -430,5 +428,5 @@ def delete_account(request):
         user = request.user
         logout(request)
         user.delete()
-        messages.success(request, "Your account has been deleted successfully.")
+        messages.success(request, "Ваш аккаунт успешно удален.")
         return redirect('index')
