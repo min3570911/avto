@@ -1,6 +1,8 @@
 import os
 import json
-# import razorpay  # Закомментировано, так как не будет использоваться
+# import razorpay
+# Закомментировано, так как не будет использоваться
+import uuid
 # from weasyprint import CSS, HTML
 from products.models import *
 from django.urls import reverse
@@ -103,66 +105,6 @@ def activate_email_account(request, email_token):
         return redirect('login')
     except Exception as e:
         return HttpResponse('Неверный токен email.')
-
-
-@login_required
-def add_to_cart(request, uid):
-    try:
-        # Получаем базовые параметры
-        kit_code = request.GET.get('kit')
-        carpet_color_id = request.GET.get('carpet_color')
-        border_color_id = request.GET.get('border_color')
-        has_podp = request.GET.get('podp') == '1'
-
-        if not kit_code:
-            messages.warning(request, 'Пожалуйста, выберите комплектацию!')
-            return redirect(request.META.get('HTTP_REFERER'))
-
-        product = get_object_or_404(Product, uid=uid)
-        cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
-        # Получаем комплектацию из справочника по коду
-        kit_variant = get_object_or_404(KitVariant, code=kit_code)
-
-        # Получаем цвета, если они выбраны
-        carpet_color = None
-        border_color = None
-        if carpet_color_id:
-            carpet_color = get_object_or_404(Color, uid=carpet_color_id)
-        if border_color_id:
-            border_color = get_object_or_404(Color, uid=border_color_id)
-
-        # Ищем существующий элемент корзины с такими же атрибутами
-        cart_item = CartItem.objects.filter(
-            cart=cart,
-            product=product,
-            kit_variant=kit_variant,
-            carpet_color=carpet_color,
-            border_color=border_color,
-            has_podpyatnik=has_podp
-        ).first()
-
-        if cart_item:
-            # Если товар уже есть, увеличиваем количество
-            cart_item.quantity += 1
-            cart_item.save()
-        else:
-            # Иначе создаем новый элемент корзины
-            cart_item = CartItem.objects.create(
-                cart=cart,
-                product=product,
-                kit_variant=kit_variant,
-                carpet_color=carpet_color,
-                border_color=border_color,
-                has_podpyatnik=has_podp
-            )
-
-        messages.success(request, 'Товар добавлен в корзину!')
-
-    except Exception as e:
-        messages.error(request, f'Ошибка при добавлении товара в корзину: {str(e)}')
-
-    return redirect(reverse('cart'))
-
 
 @login_required
 def cart(request):
@@ -430,3 +372,41 @@ def delete_account(request):
         user.delete()
         messages.success(request, "Ваш аккаунт успешно удален.")
         return redirect('index')
+
+
+@login_required
+def add_to_cart(request, uid):  # ← ВНЕ delete_account
+    try:
+        kit_code = request.POST.get('kit')
+        carpet_color_id = request.POST.get('carpet_color')
+        border_color_id = request.POST.get('border_color')
+        has_podp = request.POST.get('podp') == '1'
+        quantity = int(request.POST.get('quantity') or 1)
+
+        product = get_object_or_404(Product, uid=uid)
+        kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
+        carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
+        border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
+
+        cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
+
+        item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            kit_variant=kit_variant,
+            carpet_color=carpet_color,
+            border_color=border_color,
+            has_podpyatnik=has_podp,
+            defaults={'quantity': quantity},
+        )
+
+        if not created:
+            item.quantity += quantity
+            item.save()
+
+        messages.success(request, 'Товар добавлен в корзину!')
+
+    except Exception as e:
+        messages.error(request, f'Ошибка при добавлении в корзину: {str(e)}')
+
+    return redirect('cart')

@@ -79,6 +79,7 @@ class CartItem(BaseModel):
     quantity = models.IntegerField(default=1)
     has_podpyatnik = models.BooleanField(default=False)
 
+
     def get_product_price(self):
         price = self.product.price * self.quantity
 

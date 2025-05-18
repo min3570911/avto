@@ -1,100 +1,74 @@
 import random
-from .forms import ReviewForm
-from django.urls import reverse
-from django.contrib import messages
-from accounts.models import Cart, CartItem
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseRedirect, JsonResponse
+from django.contrib import messages
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+
 from products.models import Product, KitVariant, ProductReview, Wishlist, Color
+from accounts.models import Cart, CartItem
+from .forms import ReviewForm
 
 
-# Create your views here.
-
+# -----------------------------  карточка товара  ----------------------------- #
 def get_product(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    # Берем все комплектации из справочника, отсортированные по порядку
-    # Фильтруем только обычные комплектации (не дополнительные опции)
+
+    # варианты комплектов
     sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
+    additional_options  = KitVariant.objects.filter(is_option=True ).order_by('order')
 
-    # Получаем дополнительные опции (подпятник)
-    additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
-
-    # Получаем связанные товары из той же категории
-    related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
-
-    # Получаем все доступные цвета для выбора
+    # цвета
     colors = Color.objects.all().order_by('display_order')
 
-    # Review product view
-    review = None
-    if request.user.is_authenticated:
-        try:
-            review = ProductReview.objects.filter(product=product, user=request.user).first()
-        except Exception as e:
-            print("Отзывы для этого товара не найдены", str(e))
-            messages.warning(request, "Отзывы для этого товара не найдены")
-
-    rating_percentage = 0
-    if product.reviews.exists():
-        rating_percentage = (product.get_rating() / 5) * 100
-
-    if request.method == 'POST' and request.user.is_authenticated:
-        if review:
-            # Если отзыв существует, обновляем его
-            review_form = ReviewForm(request.POST, instance=review)
-        else:
-            # Иначе создаем новый отзыв
-            review_form = ReviewForm(request.POST)
-
-        if review_form.is_valid():
-            review = review_form.save(commit=False)
-            review.product = product
-            review.user = request.user
-            review.save()
-            messages.success(request, "Отзыв успешно добавлен!")
-            return redirect('get_product', slug=slug)
-    else:
-        review_form = ReviewForm()
-
-    # Ограничиваем количество связанных товаров
+    # похожие товары
+    related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
     if len(related_products) >= 4:
         related_products = random.sample(related_products, 4)
 
-    in_wishlist = False
+    # рейтинг / отзыв текущего пользователя
+    review = ProductReview.objects.filter(product=product, user=request.user).first() if request.user.is_authenticated else None
+    rating_percentage = (product.get_rating() / 5) * 100 if product.reviews.exists() else 0
+    review_form = ReviewForm(request.POST or None, instance=review)
+
+    if request.method == 'POST' and request.user.is_authenticated and review_form.is_valid():
+        new_rev = review_form.save(commit=False)
+        new_rev.product, new_rev.user = product, request.user
+        new_rev.save()
+        messages.success(request, 'Отзыв сохранён')
+        return redirect('get_product', slug=slug)
+
+    # ----------  определяем, лежит ли товар уже в корзине пользователя  ----------
+    in_cart = False
     if request.user.is_authenticated:
-        in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
+        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+        if cart:
+            in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
+
+    # ----------  цена и комплект по умолчанию  ----------
+    selected_kit, updated_price = None, product.price
+    default_kit = sorted_kit_variants.filter(code='salon').first()
+    kit_code    = request.GET.get('kit') or (default_kit.code if default_kit else None)
+
+    if kit_code:
+        selected_kit = kit_code
+        updated_price = product.get_product_price_by_kit(kit_code)
 
     context = {
-        'product': product,
-        'sorted_kit_variants': sorted_kit_variants,
-        'additional_options': additional_options,
-        'related_products': related_products,
-        'review_form': review_form,
-        'rating_percentage': rating_percentage,
-        'in_wishlist': in_wishlist,
-        'colors': colors,
+        'product'              : product,
+        'sorted_kit_variants'  : sorted_kit_variants,
+        'additional_options'   : additional_options,
+        'related_products'     : related_products,
+        'review_form'          : review_form,
+        'rating_percentage'    : rating_percentage,
+        'in_wishlist'          : Wishlist.objects.filter(user=request.user, product=product).exists() if request.user.is_authenticated else False,
+        'colors'               : colors,
+        'in_cart'              : in_cart,
+        'selected_kit'         : selected_kit,
+        'updated_price'        : updated_price,
     }
 
-    # По умолчанию выбираем "Салон"
-    default_kit = sorted_kit_variants.filter(code='salon').first()
-    if default_kit and not request.GET.get('kit'):
-        context['selected_kit'] = default_kit.code
-        context['updated_price'] = product.get_product_price_by_kit(default_kit.code)
-
-    # Если указан kit в URL, используем его
-    if request.GET.get('kit'):
-        kit_code = request.GET.get('kit')
-        try:
-            price = product.get_product_price_by_kit(kit_code)
-            context['selected_kit'] = kit_code
-            context['updated_price'] = price
-        except Exception as e:
-            print(f"Ошибка расчета цены: {e}")
-            messages.warning(request, "Ошибка расчета цены для выбранной комплектации")
-
-    return render(request, 'product/product.html', context=context)
-
+    return render(request, 'product/product.html', context)
 
 # Product Review view
 @login_required
@@ -283,4 +257,51 @@ def move_to_cart(request, uid):
         )
 
     messages.success(request, "Товар перемещен в корзину!")
+    return redirect('cart')
+
+
+@login_required
+def add_to_cart(request, uid):
+    # Получаем данные из POST-запроса
+    kit_code = request.POST.get('kit')
+    carpet_color_id = request.POST.get('carpet_color')
+    border_color_id = request.POST.get('border_color')
+    has_podp = request.POST.get('podp') == '1'
+    quantity = int(request.POST.get('quantity', 1))  # Получаем количество из запроса
+
+    # Получаем объекты из базы данных
+    product = get_object_or_404(Product, uid=uid)
+
+    # Если kit_code не передан, выбираем "Салон" по умолчанию
+    if not kit_code:
+        kit_variant = KitVariant.objects.filter(code='salon').first()
+        if not kit_variant:  # Проверяем, существует ли комплектация "Салон"
+            messages.error(request, "Комплектация 'Салон' не найдена.")
+            return redirect('get_product', slug=product.slug)  # Редирект на страницу товара
+    else:
+        kit_variant = get_object_or_404(KitVariant, code=kit_code)
+
+    carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
+    border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
+
+    # Получаем или создаем корзину пользователя
+    cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
+
+    # Проверяем, есть ли уже такой товар в корзине
+    cart_item, item_created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        kit_variant=kit_variant,
+        carpet_color=carpet_color,
+        border_color=border_color,
+        has_podpyatnik=has_podp,
+        defaults={'quantity': quantity}  # Устанавливаем количество при создании
+    )
+
+    if not item_created:
+        # Если товар уже есть, увеличиваем количество
+        cart_item.quantity += quantity
+        cart_item.save()
+
+    messages.success(request, "Товар добавлен в корзину!")
     return redirect('cart')
