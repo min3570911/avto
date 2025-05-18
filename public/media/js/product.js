@@ -1,210 +1,162 @@
 /**
  * Скрипт для управления цветом ковриков и окантовки, а также выбором комплектации
- *
- * Данные о комплектациях, ценах и изображениях берутся динамически из DOM,
- * куда они передаются из Django-бэкенда
  */
 
-// 🎨 Таблица цветов ковриков
-const carpetColors = {
-  1: "Черный",
-  2: "Красный",
-  3: "Серый",
-  4: "Темно-синий",
-  5: "Коричневый",
-  6: "Бежевый",
-  7: "Синий",
-  8: "Салатовый",
-  9: "Фиолетовый",
-  10: "Оранжевый"
-};
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+  // Перемещаем изображение схемы к радио-кнопкам и скрываем в визуализаторе
+  moveKitSchemaImage();
 
-// 🎨 Таблица цветов окантовки
-const borderColorToImage = {
-  1: "border211.png",  // Черный
-  2: "border212.png",  // Серый
-  3: "border213.png",  // Коричневый
-  4: "border214.png",  // Бежевый
-  5: "border215.png",  // Синий
-  6: "border216.png",  // Темно-синий
-  7: "border217.png",  // Красный
-  8: "border218.png",  // Бордовый
-  9: "border219.png",  // Желтый
-  10: "border220.png", // Зеленый
-  11: "border221.png", // Темно-зеленый
-  12: "border222.png", // Фиолетовый
-  13: "border223.png"  // Оранжевый
-};
-
-/**
- * Получает данные о комплектациях и ценах из DOM
- * @returns {Object} Справочник комплектаций
- */
-function getKitVariantsFromDOM() {
-  const kitVariants = {};
-
-  // Находим все доступные комплектации в DOM
-  const kitElements = document.querySelectorAll('input[name="selected_kit"]');
-
-  kitElements.forEach(kitElement => {
-    const kitCode = kitElement.value;
-    const kitLabel = kitElement.closest('.kit-option-label');
-
-    if (kitLabel) {
-      // Получаем название из текста лейбла
-      const nameMatch = kitLabel.textContent.match(/^(.*?)\s+\(/);
-      const name = nameMatch ? nameMatch[1].trim() : kitLabel.textContent.trim();
-
-      // Получаем цену из текста лейбла
-      const priceMatch = kitLabel.textContent.match(/\+(\d+(?:\.\d+)?)\s*руб\./);
-      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
-
-      // Путь к изображению берем из скрытого элемента с данными комплектаций
-      const kitDataElement = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
-      let image = '/media/images/schema/salon.png'; // Значение по умолчанию
-
-      if (kitDataElement && kitDataElement.dataset.kitImage) {
-        image = kitDataElement.dataset.kitImage;
-      }
-
-      // Сохраняем данные в справочник
-      kitVariants[kitCode] = {
-        name: name,
-        image: image,
-        price: price
-      };
-    }
-  });
-
-  return kitVariants;
-}
-
-/**
- * Получает данные о дополнительных опциях из DOM
- * @returns {Object} Справочник опций
- */
-function getOptionVariantsFromDOM() {
-  const optionVariants = {};
-
-  // Находим опцию подпятника
-  const podpElement = document.getElementById('podp_check');
-  if (podpElement) {
-    const podpLabel = podpElement.closest('.form-check').querySelector('label');
-
-    if (podpLabel) {
-      // Получаем цену из текста лейбла
-      const priceMatch = podpLabel.textContent.match(/\+(\d+(?:\.\d+)?)\s*руб\./);
-      const price = priceMatch ? parseFloat(priceMatch[1]) : 15.00; // Цена по умолчанию, если не удалось извлечь
-
-      // Сохраняем данные в справочник
-      optionVariants['podpyatnik'] = {
-        name: 'Подпятник',
-        price: price
-      };
-    }
+  // Инициализируем начальный выбор комплектации
+  const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
+  if (selectedKit) {
+    updateConfig(selectedKit.value);
+  } else {
+    updateConfig('salon');
   }
 
-  return optionVariants;
-}
+  // Инициализируем обработчики событий
+  setupEventHandlers();
+});
 
 /**
- * Инициализирует область выбора комплектации
- * Создает контейнер с изображением схемы рядом с радио-кнопками
+ * Перемещает изображение схемы комплектации рядом с радио-кнопками и скрывает в визуализаторе
  */
-function initializeConfigSection() {
+function moveKitSchemaImage() {
   // Находим контейнер с комплектациями
-  const configSection = document.querySelector('.form-group:has(label:contains("Комплектация"))');
-  if (!configSection) return;
+  const kitConfigSection = document.getElementById('kit-configuration');
+  if (!kitConfigSection) return;
 
-  // Создаем контейнер для схемы комплектации
-  const schemaContainer = document.createElement('div');
-  schemaContainer.className = 'kit-schema-container';
-  schemaContainer.style.cssText = 'display: flex; flex-direction: row; margin-top: 15px;';
+  // Находим контейнер с радио-кнопками
+  const kitOptions = kitConfigSection.querySelector('.kit-options');
+  if (!kitOptions) return;
 
-  // Создаем контейнер для радио-кнопок
-  const radioContainer = document.createElement('div');
-  radioContainer.className = 'kit-radio-options';
-  radioContainer.style.cssText = 'flex: 1;';
+  // Находим изображение схемы в визуализаторе
+  const visualizerImage = document.querySelector('.kit-base-image');
 
-  // Перемещаем все существующие радио-кнопки в новый контейнер
-  const kitOptions = configSection.querySelector('.kit-options');
-  if (kitOptions) {
-    radioContainer.appendChild(kitOptions);
+  // Скрываем изображение в визуализаторе (оставляем только слои с ковриком и окантовкой)
+  if (visualizerImage) {
+    visualizerImage.style.display = 'none';
   }
 
-  // Создаем контейнер для изображения схемы
+  // Создаем флекс-контейнер для радио-кнопок и изображения
+  const flexContainer = document.createElement('div');
+  flexContainer.style.cssText = 'display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 15px;';
+
+  // Вставляем флекс-контейнер перед kitOptions
+  kitOptions.parentNode.insertBefore(flexContainer, kitOptions);
+
+  // Перемещаем kitOptions внутрь флекс-контейнера
+  flexContainer.appendChild(kitOptions);
+
+  // Добавляем стили к контейнеру с радио-кнопками
+  kitOptions.style.cssText = 'flex: 1; min-width: 200px;';
+
+  // Создаем контейнер для изображения
   const imageContainer = document.createElement('div');
-  imageContainer.className = 'kit-image-container';
-  imageContainer.style.cssText = 'flex: 1; text-align: center; margin-left: 15px;';
+  imageContainer.style.cssText = 'flex: 1; min-width: 150px; max-width: 250px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background-color: #f8f8f8;';
 
   // Создаем изображение схемы
   const schemaImage = document.createElement('img');
   schemaImage.id = 'kit-schema-image';
-  schemaImage.className = 'kit-schema-image';
-  schemaImage.style.cssText = 'max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;';
+  schemaImage.style.cssText = 'max-width: 100%; height: auto;';
   schemaImage.alt = 'Схема комплектации';
+
+  // Получаем URL изображения из существующего элемента или из data-атрибутов
+  let imageUrl = '';
+  if (visualizerImage && visualizerImage.src) {
+    imageUrl = visualizerImage.src;
+  } else {
+    // Ищем выбранную комплектацию
+    const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
+    const kitCode = selectedKit ? selectedKit.value : 'salon';
+
+    // Получаем изображение из data-атрибутов
+    const kitData = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
+    if (kitData && kitData.dataset.kitImage) {
+      imageUrl = kitData.dataset.kitImage;
+    }
+  }
+
+  // Устанавливаем изображение схемы
+  if (imageUrl) {
+    schemaImage.src = imageUrl;
+  }
 
   // Добавляем изображение в контейнер
   imageContainer.appendChild(schemaImage);
-
-  // Собираем все вместе
-  schemaContainer.appendChild(radioContainer);
-  schemaContainer.appendChild(imageContainer);
-
-  // Добавляем собранный контейнер в раздел комплектации
-  configSection.appendChild(schemaContainer);
-
-  // Загружаем изображение для комплектации по умолчанию
-  const defaultKitCode = 'salon';
-  const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
-  if (selectedKit) {
-    updateSchemaImage(selectedKit.value);
-  } else {
-    updateSchemaImage(defaultKitCode);
-  }
+  flexContainer.appendChild(imageContainer);
 }
 
 /**
- * Обновляет изображение схемы комплектации
- * @param {string} kitCode - Код выбранной комплектации
+ * Устанавливает обработчики событий для интерактивных элементов
  */
-function updateSchemaImage(kitCode) {
-  const schemaImage = document.getElementById('kit-schema-image');
-  if (!schemaImage) return;
+function setupEventHandlers() {
+  // Обработчики для выбора комплектации
+  const kitRadios = document.querySelectorAll('input[name="selected_kit"]');
+  kitRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      updateConfig(this.value);
+    });
+  });
 
-  // Получаем данные о комплектациях из DOM
-  const kitVariants = getKitVariantsFromDOM();
+  // Обработчик для подпятника
+  const podpCheck = document.getElementById('podp_check');
+  if (podpCheck) {
+    podpCheck.addEventListener('change', updatePodp);
+  }
 
-  // Берем изображение из данных комплектации
-  if (kitVariants[kitCode] && kitVariants[kitCode].image) {
-    schemaImage.src = kitVariants[kitCode].image;
-    schemaImage.alt = `Схема комплектации "${kitVariants[kitCode].name}"`;
-  } else {
-    // Если изображения нет, берем из data-атрибута или показываем заглушку
-    const kitDataElement = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
-    if (kitDataElement && kitDataElement.dataset.kitImage) {
-      schemaImage.src = kitDataElement.dataset.kitImage;
-    } else {
-      schemaImage.src = '/media/images/schema/salon.png';
+  // Обработчики для выбора цвета
+  const colorItems = document.querySelectorAll('.color-item');
+  colorItems.forEach(item => {
+    const colorPicker = item.closest('.color-picker');
+    if (colorPicker && colorPicker.dataset.colorType) {
+      const type = colorPicker.dataset.colorType;
+      item.addEventListener('click', function() {
+        activateColor(this, type);
+      });
     }
-    schemaImage.alt = 'Схема комплектации';
+  });
+
+  // Обработчики для кнопок количества
+  const plusBtn = document.getElementById('button-plus');
+  const minusBtn = document.getElementById('button-minus');
+  const quantityInput = document.getElementById('quantity');
+
+  if (plusBtn && quantityInput) {
+    plusBtn.addEventListener('click', function() {
+      quantityInput.value = parseInt(quantityInput.value || '1') + 1;
+      updateHiddenFields();
+    });
+  }
+
+  if (minusBtn && quantityInput) {
+    minusBtn.addEventListener('click', function() {
+      const currentVal = parseInt(quantityInput.value || '1');
+      if (currentVal > 1) {
+        quantityInput.value = currentVal - 1;
+        updateHiddenFields();
+      }
+    });
+  }
+
+  // Добавляем обработчик клика для зума изображения
+  const mainImage = document.getElementById('mainImage');
+  if (mainImage) {
+    mainImage.addEventListener('click', function() {
+      this.classList.toggle('zoomed-in');
+    });
   }
 }
 
 /**
- * Активирует выбор комплектации
+ * Обновляет конфигурацию при выборе комплектации
  * @param {string} kitCode - Код выбранной комплектации
  */
 function updateConfig(kitCode) {
-  // Если код не передан, берем активный
-  if (!kitCode) {
-    const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
-    kitCode = selectedKit ? selectedKit.value : 'salon';
-  }
-
-  // Активируем выбранную комплектацию визуально
-  const labels = document.querySelectorAll('.kit-option-label');
-  labels.forEach(label => {
+  // Выделяем выбранную комплектацию
+  const kitLabels = document.querySelectorAll('.kit-option-label');
+  kitLabels.forEach(label => {
     const radio = label.querySelector('input[type="radio"]');
     if (radio && radio.value === kitCode) {
       label.classList.add('active');
@@ -214,28 +166,54 @@ function updateConfig(kitCode) {
     }
   });
 
-  // Обновляем изображение схемы комплектации в секции выбора комплектации
-  updateSchemaImage(kitCode);
+  // Обновляем изображение схемы рядом с радио-кнопками
+  updateKitSchemaImage(kitCode);
 
-  // Обновляем изображение схемы в визуализаторе ковриков
-  const kitImage = document.querySelector('.kit-base-image');
-  if (kitImage) {
-    const kitDataElement = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
-    if (kitDataElement && kitDataElement.dataset.kitImage) {
-      kitImage.src = kitDataElement.dataset.kitImage;
-    }
-  }
-
-  // Обновляем цену
+  // Обновляем цену и скрытые поля
   updatePrice();
-
-  // Обновляем скрытые поля форм
   updateHiddenFields();
 }
 
 /**
+ * Обновляет изображение схемы комплектации
+ * @param {string} kitCode - Код выбранной комплектации
+ */
+function updateKitSchemaImage(kitCode) {
+  // Находим изображение схемы
+  const schemaImage = document.getElementById('kit-schema-image');
+  if (!schemaImage) return;
+
+  // Находим data-атрибуты выбранной комплектации
+  const kitData = document.querySelector(`#kit-variant-data div[data-kit-code="${kitCode}"]`);
+  if (!kitData) return;
+
+  // Получаем URL изображения из data-атрибута
+  if (kitData.dataset.kitImage) {
+    schemaImage.src = kitData.dataset.kitImage;
+    schemaImage.alt = `Схема комплектации ${kitCode}`;
+  }
+}
+
+/**
+ * Обновляет отображение подпятника
+ */
+function updatePodp() {
+  const podpElement = document.querySelector('.podpicon');
+  const podpCheck = document.getElementById('podp_check');
+
+  if (podpElement && podpCheck) {
+    // Показываем/скрываем подпятник
+    podpElement.style.display = podpCheck.checked ? 'block' : 'none';
+
+    // Обновляем цену и скрытые поля
+    updatePrice();
+    updateHiddenFields();
+  }
+}
+
+/**
  * Активирует выбранный цвет и обновляет изображение
- * @param {HTMLElement} element - Элемент с цветом, на который кликнули
+ * @param {HTMLElement} element - Элемент цвета
  * @param {string} type - Тип цвета ('carpet' или 'border')
  */
 function activateColor(element, type) {
@@ -270,7 +248,16 @@ function activateColor(element, type) {
   } else if (attrId === 2) { // Цвет окантовки
     const borderImage = document.querySelector('.bordercolor');
     if (borderImage) {
-      borderImage.src = `/media/images/schema/${borderColorToImage[attrValue]}`;
+      // Используем предопределенные изображения для окантовки
+      const borderImageMap = {
+        1: "border211.png", 2: "border212.png", 3: "border213.png", 4: "border214.png",
+        5: "border215.png", 6: "border216.png", 7: "border217.png", 8: "border218.png",
+        9: "border219.png", 10: "border220.png", 11: "border221.png", 12: "border222.png",
+        13: "border223.png"
+      };
+
+      const borderFile = borderImageMap[attrValue] || "border211.png";
+      borderImage.src = `/media/images/schema/${borderFile}`;
     }
   }
 
@@ -279,46 +266,37 @@ function activateColor(element, type) {
 }
 
 /**
- * Обновляет отображение подпятника
- */
-function updatePodp() {
-  const podpElement = document.querySelector('.podpicon');
-  const podpCheck = document.getElementById('podp_check');
-
-  if (podpElement && podpCheck) {
-    // Показываем/скрываем подпятник
-    podpElement.style.display = podpCheck.checked ? 'block' : 'none';
-
-    // Обновляем цену и скрытые поля
-    updatePrice();
-    updateHiddenFields();
-  }
-}
-
-/**
  * Обновляет цену на основе выбранной комплектации и опций
  */
 function updatePrice() {
-  // Получаем данные о комплектациях из DOM
-  const kitVariants = getKitVariantsFromDOM();
-  const optionVariants = getOptionVariantsFromDOM();
-
-  // Берем выбранную комплектацию
+  // Находим выбранную комплектацию
   const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
-  const kitCode = selectedKit ? selectedKit.value : 'salon';
+  if (!selectedKit) return;
 
-  let totalPrice = 0;
+  // Находим data-атрибуты выбранной комплектации
+  const kitData = document.querySelector(`#kit-variant-data div[data-kit-code="${selectedKit.value}"]`);
+  if (!kitData) return;
 
-  // Добавляем цену комплектации
-  if (kitVariants[kitCode]) {
-    totalPrice = kitVariants[kitCode].price;
-  }
+  // Получаем базовую цену продукта из мета-тега
+  let basePrice = parseFloat(document.querySelector('meta[name="product-price"]').content || 0);
 
-  // Добавляем цену подпятника, если выбран
+  // Получаем цену модификатора комплектации из data-атрибута
+  let kitPrice = parseFloat(kitData.dataset.kitPrice || 0);
+
+  // Получаем цену подпятника, если выбран
+  let podpPrice = 0;
   const podpCheck = document.getElementById('podp_check');
-  if (podpCheck && podpCheck.checked && optionVariants['podpyatnik']) {
-    totalPrice += optionVariants['podpyatnik'].price;
+
+  if (podpCheck && podpCheck.checked) {
+    // Ищем цену подпятника в data-атрибутах
+    const podpData = document.querySelector('#kit-variant-data div[data-option-code="podpyatnik"]');
+    if (podpData && podpData.dataset.optionPrice) {
+      podpPrice = parseFloat(podpData.dataset.optionPrice);
+    }
   }
+
+  // Рассчитываем итоговую цену
+  const totalPrice = basePrice + kitPrice + podpPrice;
 
   // Обновляем отображение цены
   const priceElement = document.getElementById('totalPrice');
@@ -332,75 +310,21 @@ function updatePrice() {
  */
 function updateHiddenFields() {
   // Получаем выбранные значения
-  const carpetColor = document.getElementById('carpet_color_input').value;
-  const borderColor = document.getElementById('border_color_input').value;
-  const hasPodp = document.getElementById('podp_check').checked ? "1" : "0";
-  const quantity = document.getElementById('quantity').value || "1";
   const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
   const kitCode = selectedKit ? selectedKit.value : 'salon';
+  const carpetColor = document.getElementById('carpet_color_input').value;
+  const borderColor = document.getElementById('border_color_input').value;
+  const hasPodp = document.getElementById('podp_check').checked ? '1' : '0';
+  const quantity = document.getElementById('quantity').value || '1';
 
-
-  // Обновляем скрытые поля формы избранного
+  // Обновляем форму добавления в избранное
   document.getElementById('wishlist-kit').value = kitCode;
   document.getElementById('wishlist-carpet-color').value = carpetColor;
   document.getElementById('wishlist-border-color').value = borderColor;
   document.getElementById('wishlist-podp').value = hasPodp;
   document.getElementById('wishlist-quantity').value = quantity;
 
-  // Обновляем скрытые поля формы корзины
-  document.getElementById('cart-kit').value = kitCode;
-  document.getElementById('cart-carpet-color').value = carpetColor;
-  document.getElementById('cart-border-color').value = borderColor;
-  document.getElementById('cart-podp').value = hasPodp;
-  document.getElementById('cart-quantity').value = quantity;
-}
-}
-
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-  // Инициализируем секцию выбора комплектации с изображением схемы
-  initializeConfigSection();
-
-  // Инициализируем комплектацию (берем активную или устанавливаем по умолчанию)
-  const selectedKit = document.querySelector('input[name="selected_kit"]:checked');
-  if (selectedKit) {
-    updateConfig(selectedKit.value);
-  } else {
-    updateConfig('salon');
-  }
-
-  // Привязываем обработчики событий для выбора цвета
-  const colorItems = document.querySelectorAll('.color-item');
-  colorItems.forEach(item => {
-    const type = item.closest('.color-picker').dataset.colorType;
-    item.addEventListener('click', function() {
-      activateColor(this, type);
-    });
-  });
-
-  // Привязываем обработчики событий для выбора комплектации
-  const kitRadios = document.querySelectorAll('input[name="selected_kit"]');
-  kitRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
-      updateConfig(this.value);
-    });
-  });
-
-  // Привязываем обработчик для подпятника
-  const podpCheck = document.getElementById('podp_check');
-  if (podpCheck) {
-    podpCheck.addEventListener('change', updatePodp);
-  }
-});
-
-  // Обновляем скрытые поля формы избранного
-  document.getElementById('wishlist-kit').value = kitCode;
-  document.getElementById('wishlist-carpet-color').value = carpetColor;
-  document.getElementById('wishlist-border-color').value = borderColor;
-  document.getElementById('wishlist-podp').value = hasPodp;
-  document.getElementById('wishlist-quantity').value = quantity;
-
-  // Обновляем скрытые поля формы корзины
+  // Обновляем форму добавления в корзину
   document.getElementById('cart-kit').value = kitCode;
   document.getElementById('cart-carpet-color').value = carpetColor;
   document.getElementById('cart-border-color').value = borderColor;
@@ -408,34 +332,64 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cart-quantity').value = quantity;
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-  // Инициализируем секцию выбора комплектации с изображением схемы
-  initializeConfigSection();
-
-  // Инициализируем комплектацию по умолчанию (Салон)
-  updateConfig('salon');
-
-  // Привязываем обработчики событий для выбора цвета
-  const colorItems = document.querySelectorAll('.color-item');
-  colorItems.forEach(item => {
-    const type = item.closest('.color-picker').dataset.colorType;
-    item.addEventListener('click', function() {
-      activateColor(this, type);
-    });
-  });
-
-  // Привязываем обработчики событий для выбора комплектации
-  const kitRadios = document.querySelectorAll('input[name="selected_kit"]');
-  kitRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
-      updateConfig(this.value);
-    });
-  });
-
-  // Привязываем обработчик для подпятника
-  const podpCheck = document.getElementById('podp_check');
-  if (podpCheck) {
-    podpCheck.addEventListener('change', updatePodp);
+/**
+ * Обновляет главное изображение продукта при клике на миниатюру
+ * @param {string} src - Путь к изображению
+ */
+function updateMainImage(src) {
+  const mainImage = document.getElementById('mainImage');
+  if (mainImage) {
+    mainImage.src = src;
+    // Сбрасываем зум при смене изображения
+    mainImage.classList.remove('zoomed-in');
   }
-});
+}
+
+/**
+ * Устанавливает URL для формы удаления отзыва
+ * @param {string} actionUrl - URL действия формы
+ */
+function setDeleteAction(actionUrl) {
+  const deleteForm = document.getElementById('deleteReviewForm');
+  if (deleteForm) {
+    deleteForm.action = actionUrl;
+  }
+}
+
+/**
+ * Отправляет лайк для отзыва
+ * @param {string} reviewId - ID отзыва
+ */
+function toggleLike(reviewId) {
+  // Используем уже существующую функцию из шаблона
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  fetch(`/product/like-review/${reviewId}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken }
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById(`like-count-${reviewId}`).innerText = data.likes;
+    document.getElementById(`dislike-count-${reviewId}`).innerText = data.dislikes;
+  });
+}
+
+/**
+ * Отправляет дизлайк для отзыва
+ * @param {string} reviewId - ID отзыва
+ */
+function toggleDislike(reviewId) {
+  // Используем уже существующую функцию из шаблона
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  fetch(`/product/dislike-review/${reviewId}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfToken }
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById(`like-count-${reviewId}`).innerText = data.likes;
+    document.getElementById(`dislike-count-${reviewId}`).innerText = data.dislikes;
+  });
+}
