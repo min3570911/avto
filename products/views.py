@@ -261,47 +261,39 @@ def move_to_cart(request, uid):
 
 
 @login_required
+@login_required
 def add_to_cart(request, uid):
-    # Получаем данные из POST-запроса
-    kit_code = request.POST.get('kit')
-    carpet_color_id = request.POST.get('carpet_color')
-    border_color_id = request.POST.get('border_color')
-    has_podp = request.POST.get('podp') == '1'
-    quantity = int(request.POST.get('quantity', 1))  # Получаем количество из запроса
+    try:
+        kit_code = request.POST.get('kit')
+        carpet_color_id = request.POST.get('carpet_color')
+        border_color_id = request.POST.get('border_color')
+        has_podp = request.POST.get('podp') == '1'
+        quantity = int(request.POST.get('quantity') or 1)
 
-    # Получаем объекты из базы данных
-    product = get_object_or_404(Product, uid=uid)
+        product = get_object_or_404(Product, uid=uid)
+        kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
+        carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
+        border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
 
-    # Если kit_code не передан, выбираем "Салон" по умолчанию
-    if not kit_code:
-        kit_variant = KitVariant.objects.filter(code='salon').first()
-        if not kit_variant:  # Проверяем, существует ли комплектация "Салон"
-            messages.error(request, "Комплектация 'Салон' не найдена.")
-            return redirect('get_product', slug=product.slug)  # Редирект на страницу товара
-    else:
-        kit_variant = get_object_or_404(KitVariant, code=kit_code)
+        cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
 
-    carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
-    border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
+        item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            kit_variant=kit_variant,
+            carpet_color=carpet_color,
+            border_color=border_color,
+            has_podpyatnik=has_podp,
+            defaults={'quantity': quantity},
+        )
 
-    # Получаем или создаем корзину пользователя
-    cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
+        if not created:
+            item.quantity += quantity
+            item.save()
 
-    # Проверяем, есть ли уже такой товар в корзине
-    cart_item, item_created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        kit_variant=kit_variant,
-        carpet_color=carpet_color,
-        border_color=border_color,
-        has_podpyatnik=has_podp,
-        defaults={'quantity': quantity}  # Устанавливаем количество при создании
-    )
+        messages.success(request, 'Товар добавлен в корзину!')
 
-    if not item_created:
-        # Если товар уже есть, увеличиваем количество
-        cart_item.quantity += quantity
-        cart_item.save()
+    except Exception as e:
+        messages.error(request, f'Ошибка при добавлении в корзину: {str(e)}')
 
-    messages.success(request, "Товар добавлен в корзину!")
     return redirect('cart')

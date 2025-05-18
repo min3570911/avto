@@ -3,214 +3,210 @@
 {% block start %} {% load static %}
 
 <section class="section-content padding-y">
-  <div class="container">
-    {% include 'base/alert.html' %}
-    <div class="row">
-      <main class="col-md-9">
-        <div class="card">
-          <table class="table table-borderless table-shopping-cart">
-            <thead class="text-muted">
-              <tr class="small text-uppercase">
-                <th scope="col">Товар</th>
-                <th scope="col" width="120">Количество</th>
-                <th scope="col" width="120">Цена</th>
-                <th scope="col" class="text-right" width="200"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for cart_item in cart.cart_items.all %}
-              <tr>
-                <td>
-                  <figure class="itemside">
-                    <div class="aside">
-                      <img
-                        src="/media/{{ cart_item.product.product_images.first.image }}"
-                        class="img-sm"
-                      />
+    <div class="container">
+        {% include 'base/alert.html' %}
+        <div class="row">
+            <main class="col-md-9">
+                <div class="card">
+                    <table class="table table-borderless table-shopping-cart">
+                        <thead class="text-muted">
+                            <tr class="small text-uppercase">
+                                <th scope="col">Товар</th>
+                                <th scope="col" width="120">Количество</th>
+                                <th scope="col" width="120">Цена</th>
+                                <th scope="col" class="text-right" width="200"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cart_item in cart.cart_items.all %}
+                            <tr>
+                                <td>
+                                    <figure class="itemside">
+                                        <div class="aside">
+                                            {% if cart_item.kit_variant and cart_item.kit_variant.image %}
+                                            <img src="{{ cart_item.kit_variant.image.url }}" class="img-sm"
+                                                alt="{{ cart_item.kit_variant.name }}" />
+                                            {% else %}
+                                            <img src="/media/{{ cart_item.product.product_images.first.image }}"
+                                                class="img-sm" alt="{{ cart_item.product.product_name }}" />
+                                            {% endif %}
+                                        </div>
+                                        <figcaption class="info">
+                                            <a href="{% url 'get_product' cart_item.product.slug %}"
+                                                class="title text-dark">
+                                                {{ cart_item.product.product_name }}
+                                            </a>
+
+                                            <p class="text-muted small">
+                                                {% if cart_item.kit_variant %}
+                                                Комплектация: {{ cart_item.kit_variant.name }}<br />
+                                                {% else %}
+                                                Комплектация: Н/Д <br />
+                                                {% endif %}
+
+                                                {% if cart_item.carpet_color %}
+                                                Цвет коврика:
+                                                <span
+                                                    style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+                                                {{ cart_item.carpet_color.name }}<br />
+                                                {% endif %}
+
+                                                {% if cart_item.border_color %}
+                                                Цвет окантовки:
+                                                <span
+                                                    style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+                                                {{ cart_item.border_color.name }}<br />
+                                                {% endif %}
+
+                                                {% if cart_item.has_podpyatnik %}
+                                                С подпятником<br />
+                                                {% endif %}
+
+                                                {% if cart_item.color_variant.exists %}
+                                                {% for color in cart_item.color_variant.all %}
+                                                Цвет: {{ color.color_name }}<br />
+                                                {% endfor %}
+                                                {% endif %}
+                                            </p>
+                                        </figcaption>
+                                    </figure>
+                                </td>
+                                <td>
+                                    <select class="form-control"
+                                        onchange="updateCartItem(this, '{{ cart_item.uid }}')">
+                                        {% for i in quantity_range %}
+                                        <option value="{{ i }}" {% if cart_item.quantity == i %}selected{% endif %}>
+                                            {{ i }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="price-wrap">
+                                        <var class="price">₹{{ cart_item.get_product_price }} </var>
+                                    </div>
+                                    <!-- price-wrap .// -->
+                                </td>
+                                <td class="text-right">
+                                    <a data-original-title="Добавить в избранное" title="" href="" class="btn btn-light"
+                                        data-toggle="tooltip">
+                                        <i class="fa fa-heart"></i>
+                                    </a>
+                                    <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
+                                        Удалить
+                                    </a>
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="card-body border-top">
+                        <!-- Заменена кнопка Razorpay на обычную форму оформления заказа -->
+                        <a href="{% url 'success' %}" class="btn btn-primary float-md-right">
+                            Оформить заказ <i class="fa fa-chevron-right"></i>
+                        </a>
+
+                        <a href="{% url 'index' %}" class="btn btn-light">
+                            <i class="fa fa-chevron-left"></i> Продолжить покупки
+                        </a>
                     </div>
-                    <figcaption class="info">
-                      <a
-                        href="{% url 'get_product' cart_item.product.slug %}"
-                        class="title text-dark"
-                      >
-                        {{ cart_item.product.product_name }}
-                      </a>
-
-                      <p class="text-muted small">
-                        {% if cart_item.kit_variant %}
-                          Комплектация: {{ cart_item.kit_variant.name }}<br />
-                        {% else %}
-                          Комплектация: Н/Д <br />
-                        {% endif %}
-
-                        {% if cart_item.carpet_color %}
-                          Цвет коврика:
-                          <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
-                          {{ cart_item.carpet_color.name }}<br />
-                        {% endif %}
-
-                        {% if cart_item.border_color %}
-                          Цвет окантовки:
-                          <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
-                          {{ cart_item.border_color.name }}<br />
-                        {% endif %}
-
-                        {% if cart_item.has_podpyatnik %}
-                          С подпятником<br />
-                        {% endif %}
-
-                        {% if cart_item.color_variant.exists %}
-                          {% for color in cart_item.color_variant.all %}
-                            Цвет: {{ color.color_name }}<br />
-                          {% endfor %}
-                        {% endif %}
-                      </p>
-                    </figcaption>
-                  </figure>
-                </td>
-                <td>
-                  <select class="form-control" onchange="updateCartItem(this, '{{ cart_item.uid }}')">
-                    {% for i in quantity_range %}
-                      <option value="{{ i }}" {% if cart_item.quantity == i %}selected{% endif %}>{{ i }}</option>
-                    {% endfor %}
-                  </select>
-                </td>
-                <td>
-                  <div class="price-wrap">
-                    <var class="price">₹{{ cart_item.get_product_price }} </var>
-                  </div>
-                  <!-- price-wrap .// -->
-                </td>
-                <td class="text-right">
-                  <a
-                    data-original-title="Добавить в избранное"
-                    title=""
-                    href=""
-                    class="btn btn-light"
-                    data-toggle="tooltip"
-                  >
-                    <i class="fa fa-heart"></i>
-                  </a>
-                  <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
-                    Удалить
-                  </a>
-                </td>
-              </tr>
-
-              {% endfor %}
-            </tbody>
-          </table>
-
-          <div class="card-body border-top">
-            <!-- Заменена кнопка Razorpay на обычную форму оформления заказа -->
-            <a href="{% url 'success' %}" class="btn btn-primary float-md-right">
-              Оформить заказ <i class="fa fa-chevron-right"></i>
-            </a>
-
-            <a href="{% url 'index' %}" class="btn btn-light">
-              <i class="fa fa-chevron-left"></i> Продолжить покупки
-            </a>
-          </div>
-        </div>
-        <!-- card.// -->
-
-        <div class="alert alert-success mt-3">
-          <p class="icontext">
-            <i class="icon text-success fa fa-truck"></i> Бесплатная доставка в течение 1-2 недель
-          </p>
-        </div>
-      </main>
-      <!-- col.// -->
-      <aside class="col-md-3">
-        <div class="card mb-3">
-          <div class="card-body">
-            <form method="POST">
-              {% csrf_token %}
-              <div class="form-group">
-                <label>Есть купон?</label>
-                <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control"
-                    name="coupon"
-                    placeholder="Код купона"
-                  />
-                  <span class="input-group-append">
-                    <button type="submit" class="btn btn-primary">Применить</button>
-                  </span>
                 </div>
-              </div>
+                <!-- card.// -->
 
-              {% if cart.coupon %}
+                <div class="alert alert-success mt-3">
+                    <p class="icontext">
+                        <i class="icon text-success fa fa-truck"></i> Бесплатная доставка в течение 1-2 недель
+                    </p>
+                </div>
+            </main>
+            <!-- col.// -->
+            <aside class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label>Есть купон?</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="coupon" placeholder="Код купона" />
+                                    <span class="input-group-append">
+                                        <button type="submit" class="btn btn-primary">Применить</button>
+                                    </span>
+                                </div>
+                            </div>
 
-              <a href="{% url 'remove_coupon' cart.uid %}" class="btn btn-success">
-                {{ cart.coupon.coupon_code }}
-              </a>
+                            {% if cart.coupon %}
 
-              {% endif %}
-            </form>
-          </div>
-          <!-- card-body.// -->
+                            <a href="{% url 'remove_coupon' cart.uid %}" class="btn btn-success">
+                                {{ cart.coupon.coupon_code }}
+                            </a>
+
+                            {% endif %}
+                        </form>
+                    </div>
+                    <!-- card-body.// -->
+                </div>
+                <!-- card .// -->
+                <div class="card">
+                    <div class="card-body">
+                        <dl class="dlist-align">
+                            <dt>Общая стоимость:</dt>
+                            <dd class="text-right">
+                                <strong>₹{{ cart.get_cart_total }}</strong>
+                            </dd>
+                        </dl>
+                        {% if cart.coupon %}
+                        <dl class="dlist-align">
+                            <dt>Скидка:</dt>
+                            <dd class="text-right">₹{{ cart.coupon.discount_amount }}</dd>
+                        </dl>
+                        <dl class="dlist-align">
+                            <dt>Итого:</dt>
+                            <dd class="text-right h5">
+                                <strong>₹{{ cart.get_cart_total_price_after_coupon }}</strong>
+                            </dd>
+                        </dl>
+                        {% endif %}
+                        <hr />
+                        <p class="text-center mb-3">
+                            <img src="{% static 'images/misc/payments.png' %}" height="26" />
+                        </p>
+                    </div>
+                    <!-- card-body.// -->
+                </div>
+                <!-- card .// -->
+            </aside>
+            <!-- col.// -->
         </div>
-        <!-- card .// -->
-        <div class="card">
-          <div class="card-body">
-            <dl class="dlist-align">
-              <dt>Общая стоимость:</dt>
-              <dd class="text-right">
-                <strong>₹{{ cart.get_cart_total }}</strong>
-              </dd>
-            </dl>
-            {% if cart.coupon %}
-            <dl class="dlist-align">
-              <dt>Скидка:</dt>
-              <dd class="text-right">₹{{ cart.coupon.discount_amount }}</dd>
-            </dl>
-            <dl class="dlist-align">
-              <dt>Итого:</dt>
-              <dd class="text-right h5">
-                <strong>₹{{ cart.get_cart_total_price_after_coupon }}</strong>
-              </dd>
-            </dl>
-            {% endif %}
-            <hr />
-            <p class="text-center mb-3">
-              <img src="{% static 'images/misc/payments.png' %}" height="26" />
-            </p>
-          </div>
-          <!-- card-body.// -->
-        </div>
-        <!-- card .// -->
-      </aside>
-      <!-- col.// -->
     </div>
-  </div>
-  <!-- container .//  -->
+    <!-- container .// -->
 </section>
 
 <script>
-  function updateCartItem(selectElement, cartItemId) {
-    const quantity = selectElement.value;
+    function updateCartItem(selectElement, cartItemId) {
+        const quantity = selectElement.value;
 
-    fetch("{% url 'update_cart_item' %}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: JSON.stringify({
-            "cart_item_id": cartItemId,
-            "quantity": quantity
+        fetch("{% url 'update_cart_item' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                "cart_item_id": cartItemId,
+                "quantity": quantity
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert("Ошибка обновления корзины");
-        }
-    });
-}
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert("Ошибка обновления корзины"); // Error updating cart -> Ошибка обновления корзины
+                }
+            });
+    }
 </script>
 {% endblock %}

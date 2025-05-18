@@ -21,19 +21,19 @@ class ShippingAddressForm(forms.ModelForm):
     class Meta:
         model = ShippingAddress
         fields = '__all__'
-        exclude = ['user']
+        exclude = ['user', 'current_address']  # Исключаем user и current_address
 
 
 class CustomPasswordChangeForm(PasswordChangeForm):
     old_password = forms.CharField(
-        label="Current password",
+        label="Текущий пароль",  # Current password -> Текущий пароль
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
     new_password1 = forms.CharField(
-        label="New password",
+        label="Новый пароль",  # New password -> Новый пароль
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )
     new_password2 = forms.CharField(
-        label="New password confirmation",
+        label="Подтверждение нового пароля",  # New password confirmation -> Подтверждение нового пароля
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
     )

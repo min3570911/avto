@@ -1,5 +1,23 @@
 from django.urls import path
-from accounts.views import *
+from accounts.views import (
+    login_page,
+    register_page,
+    user_logout,
+    activate_email_account,
+    profile_view,
+    change_password,
+    update_shipping_address,
+    cart,
+    add_to_cart,
+    update_cart_item,
+    remove_cart,
+    remove_coupon,
+    success,
+    order_history,
+    order_details,
+    download_invoice,
+    delete_account
+)
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -14,7 +32,7 @@ urlpatterns = [
     path('change-password/', change_password, name='change_password'),
     path('shipping-address/', update_shipping_address, name='shipping-address'),
 
-    # Passoword reset urls with django default view.
+    # Password reset urls with django default view.
     path('password_reset/', auth_views.PasswordResetView.as_view(
         template_name='registration/password_reset_form.html',
         email_template_name='registration/password_reset_email.html',

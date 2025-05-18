@@ -1,9 +1,6 @@
 import os
 import json
-# import razorpay
-# Закомментировано, так как не будет использоваться
 import uuid
-# from weasyprint import CSS, HTML
 from products.models import *
 from django.urls import reverse
 from django.conf import settings
@@ -25,8 +22,6 @@ from accounts.forms import UserUpdateForm, UserProfileForm, ShippingAddressForm,
 
 
 # Create your views here.
-
-
 def login_page(request):
     next_url = request.GET.get('next')  # Get the next URL from the query parameter
     if request.method == 'POST':
@@ -105,6 +100,7 @@ def activate_email_account(request, email_token):
         return redirect('login')
     except Exception as e:
         return HttpResponse('Неверный токен email.')
+
 
 @login_required
 def cart(request):
@@ -280,7 +276,7 @@ def change_password(request):
             messages.warning(request, 'Пожалуйста, исправьте ошибки ниже.')
     else:
         form = CustomPasswordChangeForm(request.user)
-    return render(request, 'accounts/change_password.html', {'form': form})
+        return render(request, 'accounts/change_password.html', {'form': form})
 
 
 @login_required
@@ -336,13 +332,13 @@ def create_order(cart):
         OrderItem.objects.create(
             order=order,
             product=cart_item.product,
-            kit_variant=cart_item.kit_variant,
+            kit_variant=cart_item.kit_variant,  # Копируем kit_variant
             color_variant=cart_item.color_variant,
-            quantity=cart_item.quantity,
-            product_price=cart_item.get_product_price(),
             carpet_color=cart_item.carpet_color,
             border_color=cart_item.border_color,
-            has_podpyatnik=cart_item.has_podpyatnik
+            has_podpyatnik=cart_item.has_podpyatnik,
+            quantity=cart_item.quantity,
+            product_price=cart_item.get_product_price(),
         )
 
     return order
@@ -373,9 +369,12 @@ def delete_account(request):
         messages.success(request, "Ваш аккаунт успешно удален.")
         return redirect('index')
 
+# accounts/views.py
+
+# accounts/views.py
 
 @login_required
-def add_to_cart(request, uid):  # ← ВНЕ delete_account
+def add_to_cart(request, uid):
     try:
         kit_code = request.POST.get('kit')
         carpet_color_id = request.POST.get('carpet_color')

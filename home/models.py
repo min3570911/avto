@@ -5,7 +5,8 @@ from django.db import models
 from django import forms
 from django_countries.fields import CountryField
 
-# Create your models here.
+# Модели здесь.
+
 
 class ShippingAddress(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -25,8 +26,9 @@ class ShippingAddress(BaseModel):
     def get_absolute_url(self):
         return reverse('shipping-address')
 
+
 class ShippingAddressForm(forms.ModelForm):
-    save_address = forms.BooleanField(required=False, label='Save the billing addres')
+    save_address = forms.BooleanField(required=False, label='Сохранить адрес для выставления счета')  # Save the billing addres -> Сохранить адрес для выставления счета
 
     class Meta:
         model = ShippingAddress
