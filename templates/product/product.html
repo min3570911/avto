@@ -5,761 +5,859 @@
 <style>
 /* Стили для зума изображений */
 #mainImage {
-    transition: transform 0.25s ease;
-    cursor: zoom-in;
+max-width: 100%;
+height: auto;
+object-fit: contain;
+transition: transform 0.25s ease;
+cursor: zoom-in;
 }
 
 .zoomed-in {
-    transform: scale(2);
-    cursor: zoom-out;
+transform: scale(2);
+cursor: zoom-out;
 }
 
 /* Стили для кнопок лайков/дизлайков */
 .like-btn {
-    background-color: #59ee8d;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 0.4rem 1rem;
-    transition: all 0.3s ease;
-    font-weight: bold;
+background-color: #59ee8d;
+color: #fff;
+border: none;
+border-radius: 20px;
+padding: 0.4rem 1rem;
+transition: all 0.3s ease;
+font-weight: bold;
 }
 
 .like-btn:hover {
-    background-color: #45c16b;
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(89, 238, 141, 0.5);
+background-color: #45c16b;
+transform: scale(1.1);
+box-shadow: 0 0 10px rgba(89, 238, 141, 0.5);
 }
 
 .dislike-btn {
-    background-color: #ff7675;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 0.4rem 1rem;
-    transition: all 0.3s ease;
-    font-weight: bold;
+background-color: #ff7675;
+color: #fff;
+border: none;
+border-radius: 20px;
+padding: 0.4rem 1rem;
+transition: all 0.3s ease;
+font-weight: bold;
 }
 
 .dislike-btn:hover {
-    background-color: #d65a5a;
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(255, 118, 117, 0.5);
+background-color: #d65a5a;
+transform: scale(1.1);
+box-shadow: 0 0 10px rgba(255, 118, 117, 0.5);
 }
 
 @media (max-width: 768px) {
-    .like-btn,
-    .dislike-btn {
-        padding: 0.3rem 0.8rem;
-        font-size: 0.9rem;
-    }
+.like-btn,
+.dislike-btn {
+padding: 0.3rem 0.8rem;
+font-size: 0.9rem;
+}
 }
 
-/* Стили для визуализатора ковриков - ОБНОВЛЕНО */
-.product-visualizer {
-    position: relative;
-    width: 100%;
-    max-width: 600px; /* Увеличено с 500px */
-    margin: 20px auto;
-    min-height: 350px; /* Увеличено с 300px */
+/* Уменьшенное расстояние между блоками - в 2 раза меньше */
+.content-body > div,
+.content-body > form {
+margin-bottom: 10px; /* Уменьшено с 20px */
 }
 
-.product-visualizer img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    transition: all 0.3s ease;
+.content-body label {
+margin-bottom: 5px; /* Уменьшено с 10px */
 }
 
-.kit-base-image {
-    z-index: 1;
-    border: none !important; /* Удаляем рамку */
-}
-
-.matcolor {
-    z-index: 2;
-}
-
-.bordercolor {
-    z-index: 3;
-}
-
-.podpicon {
-    z-index: 4;
-}
-
-/* Стили для комплектаций */
 .kit-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
+gap: 5px; /* Уменьшено с 10px */
+ margin-bottom: 10px; /* Уменьшено с 20px */
 }
 
 .kit-option-label {
-    cursor: pointer;
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    transition: all 0.2s ease;
-    flex: 1 0 calc(50% - 10px);
-    display: flex;
-    align-items: center;
+margin-bottom: 5px; /* Уменьшено с 10px */
+ padding: 5px 10px; /* Уменьшено с 10px 15px */
+}
+
+.form-group {
+margin-bottom: 10px; /* Уменьшено с 20px */
+}
+
+hr {
+margin-top: 10px; /* Уменьшено с 20px */
+ margin-bottom: 10px; /* Уменьшено с 20px */
+}
+
+/* Уменьшенные стили для визуализатора ковриков */
+.product-visualizer {
+position: relative;
+width: 100%;
+max-width: 380px;
+margin: 10px auto; /* Уменьшено с 15px */
+ min-height: 220px;
+}
+
+.product-visualizer img {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: auto;
+transition: all 0.3s ease;
+}
+
+.kit-base-image {
+z-index: 1;
+border: none !important;
+}
+
+.matcolor {
+z-index: 2;
+}
+
+.bordercolor {
+z-index: 3;
+}
+
+.podpicon {
+z-index: 4;
+}
+
+/* Стили для комплектаций - в два столбца */
+.kit-options-container {
+display: flex;
+}
+
+.kit-options {
+flex: 1; /* Занимает половину ширины контейнера */
+ display: flex;
+flex-direction: column;
+gap: 5px;
+margin-bottom: 10px;
+}
+
+.kit-option-label {
+cursor: pointer;
+padding: 5px 10px;
+border: 1px solid #ccc;
+border-radius: 5px;
+transition: all 0.2s ease;
+flex: 1 0 100%;
+display: flex;
+align-items: center;
+margin-bottom: 5px;
+position: relative;
 }
 
 .kit-option-label:hover {
-    border-color: #999;
-    background-color: #f8f8f8;
+border-color: #999;
+background-color: #f8f8f8;
 }
 
 .kit-option-label.active {
-    border-color: #007bff;
-    background-color: #e6f2ff;
+border-color: #007bff;
+background-color: #e6f2ff;
 }
 
 .kit-option-label input {
-    margin-right: 8px;
+margin-right: 8px;
 }
 
-/* Стили для выбора цветов с горизонтальной прокруткой */
+.kit-option-label.active::after {
+content: "✓";
+position: absolute;
+right: 10px;
+color: #007bff;
+font-weight: bold;
+}
+
+/* Стили для выбора цветов */
 .color-wrapper {
-    position: relative;
-    margin-bottom: 15px;
+position: relative;
+margin-bottom: 8px;
 }
 
 .color-picker {
-    display: flex;
-    flex-wrap: nowrap;
-    margin-bottom: 10px;
+display: flex;
+flex-wrap: nowrap;
+margin-bottom: 5px;
 }
 
-/* Для десктопа - стандартная сетка */
 @media (min-width: 768px) {
-    .color-picker {
-        flex-wrap: wrap;
-    }
-
-    .scroll-indicator {
-        display: none;
-    }
+.color-picker {
+flex-wrap: wrap;
 }
 
-/* Для мобильных - горизонтальная прокрутка */
+.scroll-indicator {
+display: none;
+}
+}
+
 @media (max-width: 767px) {
-    .color-wrapper {
-        position: relative;
-        overflow: hidden;
-    }
+.color-wrapper {
+position: relative;
+overflow: hidden;
+}
 
-    .color-picker {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 10px 5px;
-        margin: -10px -5px 0;
-        scrollbar-width: none; /* Firefox */
-    }
+.color-picker {
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+padding: 5px 3px;
+margin: -5px -3px 0;
+scrollbar-width: none;
+}
 
-    .color-picker::-webkit-scrollbar {
-        display: none; /* Chrome, Safari */
-    }
+.color-picker::-webkit-scrollbar {
+display: none;
+}
 
-    .scroll-indicator {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-    }
+.scroll-indicator {
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 12px;
+color: #666;
+margin-top: 3px;
+}
 
-    .scroll-indicator i {
-        margin: 0 5px;
-    }
+.scroll-indicator i {
+margin: 0 3px;
+}
 
-    /* Увеличиваем размеры интерактивных элементов для удобства на мобильных */
-    .kit-option-label {
-        padding: 12px;
-        font-size: 1.1em;
-        display: block;
-        width: 100%;
-        margin-bottom: 10px;
-    }
+.kit-option-label {
+padding: 6px;
+font-size: 1em;
+margin-bottom: 5px;
+}
 }
 
 .color-selection {
-    flex: 0 0 auto;
-    margin: 0 8px;
-    text-align: center;
+flex: 0 0 auto;
+margin: 0 2px; /* Уменьшено расстояние между кружками */
+ text-align: center;
 }
 
 @media (min-width: 768px) {
-    .color-selection {
-        margin: 0 12px 10px 0;
-    }
+.color-selection {
+margin: 0 6px 5px 0;
+}
 }
 
 .color-item {
-    display: inline-block;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #ccc;
-    transition: all 0.2s ease;
-    margin: 0 auto;
+display: inline-block;
+width: 28px; /* Уменьшен размер кружков */
+height: 28px; /* Уменьшен размер кружков */
+border-radius: 50%;
+cursor: pointer;
+border: 2px solid #ccc;
+transition: all 0.2s ease;
+margin: 0 auto;
 }
 
 .color-item:hover {
-    transform: scale(1.1);
-    border-color: #999;
+transform: scale(1.1);
+border-color: #999;
 }
 
 .color-item.active {
-    border: 2px solid #FFEB3B;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+border: 2px solid #FFEB3B;
+box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
 .color-name {
-    font-size: 12px;
-    margin-top: 4px;
-    text-align: center;
-    min-width: 60px;
+font-size: 10px; /* Уменьшен размер текста */
+margin-top: 2px;
+text-align: center;
+min-width: 50px; /* Уменьшена минимальная ширина */
 }
 
 @media (max-width: 767px) {
-    .color-item {
-        width: 32px;
-        height: 32px;
-    }
-
-    .color-name {
-        font-size: 11px;
-        min-width: 50px;
-    }
+.color-item {
+width: 32px;
+height: 32px;
 }
 
-/* Стили для галереи товара - НОВЫЕ */
+.color-name {
+font-size: 11px;
+min-width: 50px;
+}
+}
+
+/* Стили для галереи товара */
 .img-big-wrap {
-    margin-bottom: 20px;
-    text-align: center;
+margin-bottom: 10px;
+text-align: center;
 }
 
 .carousel-item {
-    display: none;
+display: none;
 }
 
 .carousel-item.active {
-    display: block;
+display: block;
 }
 
 .carousel-inner {
-    position: relative;
+position: relative;
 }
 
 .thumbs-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 15px;
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+margin-top: 8px;
 }
 
 .item-thumb {
-    margin: 0 5px;
-    cursor: pointer;
+margin: 0 3px;
+cursor: pointer;
 }
 
 .item-thumb img {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+width: 50px;
+height: 50px;
+object-fit: cover;
+border: 1px solid #ddd;
+border-radius: 4px;
+transition: all 0.2s ease;
 }
 
 .item-thumb img:hover {
-    border-color: #007bff;
-    transform: scale(1.05);
+border-color: #007bff;
+transform: scale(1.05);
 }
 
-/* Улучшенные стили для визуализатора */
-.kit-base-image {
-    z-index: 1;
-    border: none !important;
-    max-width: 100%;
-    height: auto;
+/* Скрыть галерею на мобильных устройствах */
+@media (max-width: 767px) {
+.gallery-wrap {
+display: none;
+}
+}
+
+/* Стили для блока описания */
+.product-description-block {
+background-color: #f9f9f9;
+border-radius: 8px;
+padding: 10px;
+margin: 10px 0;
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.product-description-block h4 {
+color: #333;
+border-bottom: 1px solid #ddd;
+padding-bottom: 5px;
+margin-bottom: 8px;
+}
+
+/* Стили для блока количества и цены */
+.quantity-price-block {
+border-top: 1px solid #eee;
+border-bottom: 1px solid #eee;
+padding: 8px 0;
+margin: 8px 0;
+background-color: #f8f8f8;
+border-radius: 5px;
+}
+
+/* Стили для изображения комплектации */
+.kit-configuration-image {
+max-width: 300px;
+width: 100%;
+height: auto;
+margin: 5px auto;
+border: 1px solid #eee;
+border-radius: 5px;
+}
+
+/* Стили для нового расположения количества и цены */
+.quantity-and-price {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-top: 15px;
+}
+
+.quantity-selector {
+display: flex;
+align-items: center;
+}
+
+.quantity-selector button {
+border: none;
+background-color: #f0f0f0;
+padding: 5px 10px;
+cursor: pointer;
+}
+
+.quantity-selector input {
+width: 40px;
+text-align: center;
+border: 1px solid #ccc;
+margin: 0 5px;
+}
+
+.final-price {
+font-size: 1.2em;
+font-weight: bold;
 }
 </style>
 
 <section class="section-content padding-y">
-    <div class="container mt-3">
-    {% include 'base/alert.html' %}
-    <!-- ============================ COMPONENT Product Details ================================= -->
-    <div class="card">
-        <div class="row no-gutters">
-            <aside class="col-md-6">
-                <!-- Gallery-Wrap -->
-                <article class="gallery-wrap">
-                    <div class="text-center mt-2 ml-3 mr-3 img-big-wrap">
-                        <div class="carousel-inner">
-                            {% for image in product.product_images.all %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <img
-                                id="mainImage"
-                                src="/media/{{ image.image }}"
-                                alt="{{ product.product_name }}"
-                                />
-                            </div>
-                            {% endfor %}
-                        </div>
+ <div class="container mt-3">
+ {% include 'base/alert.html' %}
+<!-- ============================ COMPONENT Product Details ================================= -->
+ <div class="card">
+ <div class="row no-gutters">
+ <aside class="col-md-4">
+ <!-- Визуализатор ковриков перемещен наверх, перед галереей -->
+ <div class="product-visualizer mx-auto mt-4 mb-4">
+ <!-- Слои изображений -->
+ <img class="matcolor" src="/media/images/schema/sota1.png" alt="Коврик">
+ <img class="bordercolor" src="/media/images/schema/border211.png" alt="Окантовка">
+ <img class="podpicon" src="/media/images/schema/podp.png" alt="Подпятник" style="display: none;">
+ </div>
 
-                        <!-- Thumbnails-Wrap -->
-                        <div class="form-row thumbs-wrap mt-5 d-flex justify-content-center">
-                            {% for image in product.product_images.all %}
-                            <p class="item-thumb mx-2">
-                                <img
-                                src="/media/{{image.image}}"
-                                class="img-thumbnail"
-                                onclick="updateMainImage(this.src)"
-                                />
-                            </p>
-                            {% endfor %}
-                        </div>
-                        <!-- Thumbnails-Wrap End -->
-                    </div>
-                </article>
-                <!-- Gallery-Wrap End -->
-            </aside>
+ <!-- Gallery-Wrap - перемещен под визуализатор -->
+ <article class="gallery-wrap">
+ <div class="text-center mt-2 ml-3 mr-3 img-big-wrap">
+ <div class="carousel-inner">
+ {% for image in product.product_images.all %}
+<div class="carousel-item {% if forloop.first %}active{% endif %}">
+ <img
+ id="mainImage"
+ src="/media/{{ image.image }}"
+ alt="{{ product.product_name }}"
+ />
+ </div>
+ {% endfor %}
+</div>
 
-            <main class="col-md-6 border-left">
-                <article class="content-body">
-                    <h2 class="title">{{product.product_name}}</h2>
-                    <h6 class="text-muted">{{product.category}}</h6>
+ <!-- Thumbnails-Wrap -->
+ <div class="form-row thumbs-wrap mt-5 d-flex justify-content-center">
+ {% for image in product.product_images.all %}
+<p class="item-thumb mx-2">
+ <img
+ src="/media/{{image.image}}"
+ class="img-thumbnail"
+ onclick="updateMainImage(this.src)"
+ />
+ </p>
+ {% endfor %}
+</div>
+ <!-- Thumbnails-Wrap End -->
+ </div>
+ </article>
+ <!-- Gallery-Wrap End -->
+ </aside>
 
-                    <div class="rating-wrap my-3">
-                        <small class="label-rating text-muted">{{ product.get_rating }}</small>
-                        <ul class="rating-stars">
-                            <li style="width: {{ rating_percentage }}%" class="stars-active">
-                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                            </li>
-                            <li>
-                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i> <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                            </li>
-                        </ul>
-                        <small class="label-rating text-muted">{{ product.reviews.count }} отзывов</small>
-                        <small class="label-rating text-success">
-                            <i class="fa fa-clipboard-check"></i> 154 заказов
-                        </small>
-                    </div>
-                    <!-- rating-wrap -->
+ <main class="col-md-8 border-left">
+ <article class="content-body">
+ <h2 class="title">{{product.product_name}}</h2>
+ <h6 class="text-muted">{{product.category}}</h6>
 
-                    <div class="mb-3">
-                        <var class="price h4" id="totalPrice">₹{{ product.price }}.00</var>
-                    </div>
-                    <!-- price-detail-wrap -->
-
-                    <p style="line-height: 2rem; margin-top: revert; text-align: justify">
-                        {{product.product_desription}}
-                    </p>
-
-                    <dl class="row">
-                        <dt class="col-sm-3">Доставка</dt>
-                        <dd class="col-sm-9">Во все регионы России!</dd>
-                    </dl>
-
-                    <hr />
-                    <div class="form-row">
-                        <div class="form-group mr-3">
-                            <label>Количество</label>
-                            <div class="input-group mb-3 input-spinner">
-                                <div class="input-group-prepend">
-                                    <button
-                                        class="btn btn-light"
-                                        type="button"
-                                        id="button-plus"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <input type="text" class="form-control" value="1" id="quantity" />
-                                <div class="input-group-append">
-                                    <button
-                                        class="btn btn-light"
-                                        type="button"
-                                        id="button-minus"
-                                    >
-                                        -
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Комплектация -->
-                    <div class="form-group" id="kit-configuration">
-                        <label><strong>Комплектация</strong></label>
-                        <div class="kit-options">
-                            {% for kit in sorted_kit_variants %}
-                            <label class="kit-option-label {% if forloop.first %}active{% endif %}" for="kit-{{ kit.code }}">
-                                <input
-                                    type="radio"
-                                    name="selected_kit"
-                                    value="{{ kit.code }}"
-                                    onchange="updateConfig('{{ kit.code }}');"
-                                    id="kit-{{ kit.code }}"
-                                    {% if forloop.first %}checked{% endif %}
-                                    class="custom-control-input"
-                                />
-                                {{ kit.name }} (+{{ kit.price_modifier }} руб.)
-                            </label>
-                            {% endfor %}
-                        </div>
-
-                        <!-- Подпятник (перемещен под комплектацию) -->
-                        <div class="form-check mt-3">
-                            <input class="form-check-input" type="checkbox" id="podp_check"
-                                data-attr-id="7" data-attr-value="1"
-                                onchange="updateConfig();">
-                            <label class="form-check-label" for="podp_check">
-                                Подпятник (+15.00 руб.)
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Визуализатор модели коврика (перемещен между комплектацией и цветами) -->
-                    <div class="product-visualizer mt-4 mb-4">
+ <div class="rating-wrap my-3">
+ <small class="label-rating text-muted">{{ product.get_rating }}</small>
+ <ul class="rating-stars">
+ <li style="width: {{ rating_percentage }}%" class="stars-active">
+ <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+ <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+ <i class="fa fa-star"></i>
+ </li>
+ <li>
+ <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+ <i class="fa fa-star"></i> <i class="fa fa-star"></i>
+ <i class="fa fa-star"></i>
+ </li>
+ </ul>
+ <small class="label-rating text-muted">{{ product.reviews.count }} отзывов</small>
+ <small class="label-rating text-success">
+ <i class="fa fa-clipboard-check"></i> 154 заказов
+</small>
+ </div>
+ <!-- rating-wrap -->
 
 
-                        <!-- Слои изображений -->
-                        <img class="matcolor" src="/media/images/schema/sota1.png" alt="Коврик">
-                        <img class="bordercolor" src="/media/images/schema/border211.png" alt="Окантовка">
-                        <img class="podpicon" src="/media/images/schema/podp.png" alt="Подпятник" style="display: none;">
-                    </div>
+ <hr />
+<label><strong>СОБЕРИ СВОЙ ЗАКАЗ:</strong></label>
+ <!-- Выбор цвета коврика -->
+ <div class="form-group">
+ <label><strong>Цвет коврика</strong></label>
+ <div class="color-wrapper">
+ <div class="color-picker" data-color-type="carpet">
+ <div class="color-selection">
+ <div class="color-item active" data-color-id="color-1" data-attr-id="1" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Черный</div>
+ </div>
 
-                    <!-- Выбор цвета коврика -->
-                    <div class="form-group">
-                        <label><strong>Цвет коврика</strong></label>
-                        <div class="color-wrapper">
-                            <div class="color-picker" data-color-type="carpet">
-                                <div class="color-selection">
-                                    <div class="color-item active" data-color-id="color-1" data-attr-id="1" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Черный</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-2" data-attr-id="1" data-attr-value="2" title="Красный" style="background-color: #FF0000;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Красный</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-2" data-attr-id="1" data-attr-value="2" title="Красный" style="background-color: #FF0000;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Красный</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-3" data-attr-id="1" data-attr-value="3" title="Серый" style="background-color: #AAAAAA;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Серый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-3" data-attr-id="1" data-attr-value="3" title="Серый" style="background-color: #AAAAAA;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Серый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-4" data-attr-id="1" data-attr-value="4" title="Темно-синий" style="background-color: #0000A0;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Темно-синий</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-4" data-attr-id="1" data-attr-value="4" title="Темно-синий" style="background-color: #0000A0;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Темно-синий</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-5" data-attr-id="1" data-attr-value="5" title="Коричневый" style="background-color: #663300;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Коричневый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-5" data-attr-id="1" data-attr-value="5" title="Коричневый" style="background-color: #663300;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Коричневый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-6" data-attr-id="1" data-attr-value="6" title="Бежевый" style="background-color: #DDBB88;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Бежевый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-6" data-attr-id="1" data-attr-value="6" title="Бежевый" style="background-color: #DDBB88;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Бежевый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-7" data-attr-id="1" data-attr-value="7" title="Синий" style="background-color: #0000FF;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Синий</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-7" data-attr-id="1" data-attr-value="7" title="Синий" style="background-color: #0000FF;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Синий</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-8" data-attr-id="1" data-attr-value="8" title="Салатовый" style="background-color: #33CC33;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Салатовый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-8" data-attr-id="1" data-attr-value="8" title="Салатовый" style="background-color: #33CC33;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Салатовый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-9" data-attr-id="1" data-attr-value="9" title="Фиолетовый" style="background-color: #800080;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Фиолетовый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-9" data-attr-id="1" data-attr-value="9" title="Фиолетовый" style="background-color: #800080;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Фиолетовый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-10" data-attr-id="1" data-attr-value="10" title="Оранжевый" style="background-color: #FF8800;" onclick="activateColor(this, 'carpet');"></div>
+ <div class="color-name">Оранжевый</div>
+ </div>
+ </div>
+ <div class="scroll-indicator d-md-none">
+ <i class="fas fa-chevron-left"></i>
+ <span>Прокрутите для выбора</span>
+ <i class="fas fa-chevron-right"></i>
+ </div>
+ </div>
+ <input type="hidden" name="carpet_color" id="carpet_color_input" value="color-1">
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-10" data-attr-id="1" data-attr-value="10" title="Оранжевый" style="background-color: #FF8800;" onclick="activateColor(this, 'carpet');"></div>
-                                    <div class="color-name">Оранжевый</div>
-                                </div>
-                            </div>
-                            <div class="scroll-indicator d-md-none">
-                                <i class="fas fa-chevron-left"></i>
-                                <span>Прокрутите для выбора</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                        </div>
-                        <input type="hidden" name="carpet_color" id="carpet_color_input" value="color-1">
-                    </div>
+ <!-- Выбор цвета окантовки -->
+ <div class="form-group">
+ <label><strong>Цвет окантовки</strong></label>
+ <div class="color-wrapper">
+ <div class="color-picker" data-color-type="border">
+ <div class="color-selection">
+ <div class="color-item active" data-color-id="color-1" data-attr-id="2" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Черный</div>
+ </div>
 
-                    <!-- Выбор цвета окантовки -->
-                    <div class="form-group">
-                        <label><strong>Цвет окантовки</strong></label>
-                        <div class="color-wrapper">
-                            <div class="color-picker" data-color-type="border">
-                                <div class="color-selection">
-                                    <div class="color-item active" data-color-id="color-1" data-attr-id="2" data-attr-value="1" title="Черный" style="background-color: #000000; border: 2px solid #FFEB3B;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Черный</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-2" data-attr-id="2" data-attr-value="2" title="Серый" style="background-color: #AAAAAA;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Серый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-2" data-attr-id="2" data-attr-value="2" title="Серый" style="background-color: #AAAAAA;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Серый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-3" data-attr-id="2" data-attr-value="3" title="Коричневый" style="background-color: #663300;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Коричневый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-3" data-attr-id="2" data-attr-value="3" title="Коричневый" style="background-color: #663300;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Коричневый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-4" data-attr-id="2" data-attr-value="4" title="Бежевый" style="background-color: #DDBB88;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Бежевый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-4" data-attr-id="2" data-attr-value="4" title="Бежевый" style="background-color: #DDBB88;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Бежевый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-5" data-attr-id="2" data-attr-value="5" title="Синий" style="background-color: #0000FF;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Синий</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-5" data-attr-id="2" data-attr-value="5" title="Синий" style="background-color: #0000FF;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Синий</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-6" data-attr-id="2" data-attr-value="6" title="Темно-синий" style="background-color: #0000A0;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Темно-синий</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-6" data-attr-id="2" data-attr-value="6" title="Темно-синий" style="background-color: #0000A0;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Темно-синий</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-7" data-attr-id="2" data-attr-value="7" title="Красный" style="background-color: #FF0000;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Красный</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-7" data-attr-id="2" data-attr-value="7" title="Красный" style="background-color: #FF0000;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Красный</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-8" data-attr-id="2" data-attr-value="8" title="Бордовый" style="background-color: #800000;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Бордовый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-8" data-attr-id="2" data-attr-value="8" title="Бордовый" style="background-color: #800000;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Бордовый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-9" data-attr-id="2" data-attr-value="9" title="Желтый" style="background-color: #FFFF00;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Желтый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-9" data-attr-id="2" data-attr-value="9" title="Желтый" style="background-color: #FFFF00;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Желтый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-10" data-attr-id="2" data-attr-value="10" title="Зеленый" style="background-color: #008000;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Зеленый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-10" data-attr-id="2" data-attr-value="10" title="Зеленый" style="background-color: #008000;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Зеленый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-11" data-attr-id="2" data-attr-value="11" title="Темно-зеленый" style="background-color: #006400;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Темно-зеленый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-11" data-attr-id="2" data-attr-value="11" title="Темно-зеленый" style="background-color: #006400;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Темно-зеленый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-12" data-attr-id="2" data-attr-value="12" title="Фиолетовый" style="background-color: #800080;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Фиолетовый</div>
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-12" data-attr-id="2" data-attr-value="12" title="Фиолетовый" style="background-color: #800080;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Фиолетовый</div>
-                                </div>
+ <div class="color-selection">
+ <div class="color-item" data-color-id="color-13" data-attr-id="2" data-attr-value="13" title="Оранжевый" style="background-color: #FF8800;" onclick="activateColor(this, 'border');"></div>
+ <div class="color-name">Оранжевый</div>
+ </div>
+ </div>
+ <div class="scroll-indicator d-md-none">
+ <i class="fas fa-chevron-left"></i>
+ <span>Прокрутите для выбора</span>
+ <i class="fas fa-chevron-right"></i>
+ </div>
+ </div>
+ <input type="hidden" name="border_color" id="border_color_input" value="color-1">
+ </div>
 
-                                <div class="color-selection">
-                                    <div class="color-item" data-color-id="color-13" data-attr-id="2" data-attr-value="13" title="Оранжевый" style="background-color: #FF8800;" onclick="activateColor(this, 'border');"></div>
-                                    <div class="color-name">Оранжевый</div>
-                                </div>
-                            </div>
-                            <div class="scroll-indicator d-md-none">
-                                <i class="fas fa-chevron-left"></i>
-                                <span>Прокрутите для выбора</span>
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                        </div>
-                        <input type="hidden" name="border_color" id="border_color_input" value="color-1">
-                    </div>
+ <!-- Комплектация в два столбца -->
+ <div>
+ <h6 class="font-weight-bold text-uppercase mb-2">КОМПЛЕКТАЦИЯ</h6>
+ <div class="row">
+ <div class="col-md-6">
+ <div class="kit-options">
+ {% for kit in sorted_kit_variants %}
+<label class="kit-option-label {% if forloop.first %}active{% endif %}" for="kit-{{ kit.code }}">
+ <input
+ type="radio"
+ name="selected_kit"
+ value="{{ kit.code }}"
+ onchange="updateConfig('{{ kit.code }}');"
+ id="kit-{{ kit.code }}"
+ {% if forloop.first %}checked{% endif %}
+class="custom-control-input"
+ />
+ {{ kit.name }} (+{{ kit.price_modifier }} руб.)
+</label>
+ {% endfor %}
 
-                    <!-- Кнопки добавления в корзину и избранное -->
-                    <div class="form-group d-flex justify-content-start mt-4">
-                        <div class="d-sm-flex mr-2">
-                            <div class="mb-2 mb-sm-0 mr-0 mr-sm-3">
-                                <form method="POST" action="{% url 'add_to_wishlist' product.uid %}" id="wishlist-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="kit" id="wishlist-kit" value="">
-                                    <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="">
-                                    <input type="hidden" name="border_color" id="wishlist-border-color" value="">
-                                    <input type="hidden" name="podp" id="wishlist-podp" value="0">
-                                    <input type="hidden" name="quantity" id="wishlist-quantity" value="1">
-                                    <button type="submit" class="btn btn-outline-primary">
-                                        <i class="fas fa-heart"></i> В избранное
-                                    </button>
-                                </form>
-                            </div>
+<!-- Подпятник (под комплектацией) -->
+ <div class="form-check mt-3">
+ <input class="form-check-input" type="checkbox" id="podp_check"
+ data-attr-id="7" data-attr-value="1"
+ onchange="updateConfig();">
+ <label class="form-check-label" for="podp_check">
+ Подпятник (+15.00 руб.)
+</label>
+ </div>
+ </div>
+ </div>
 
-                            <form method="POST" action="{% url 'add_to_cart' product.uid %}" id="cart-form">
-                                {% csrf_token %}
-                                <input type="hidden" name="kit" id="cart-kit" value="">
-                                <input type="hidden" name="carpet_color" id="cart-carpet-color" value="">
-                                <input type="hidden" name="border_color" id="cart-border-color" value="">
-                                <input type="hidden" name="podp" id="cart-podp" value="0">
-                                <input type="hidden" name="quantity" id="cart-quantity" value="1">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-shopping-bag mr-1"></i>
-                                    <span>В корзину</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </article>
-            </main>
-        </div>
-    </div>
+ <!-- Добавлено изображение комплектации -->
+ <div class="col-md-6">
+ <img id="kit-image" src="/media/images/schema/salon.png" alt="Комплектация" class="kit-configuration-image mb-2">
+ </div>
+ </div>
+ </div>
 
-    <!-- Related Products Section -->
-    <h3 class="title padding-y-sm">Похожие товары</h3>
-    {% if related_products %}
-    {% with related_products as list_products %}
-    {% include 'product_parts/product_list.html' %}
-    {% endwith %}
-    {% else %}
-    <p>Похожих товаров не найдено.</p>
-    {% endif %}
-    <!-- Related Products Section End -->
+ <!-- Блок количества и цены перемещен под комплектацию -->
+ <div class="quantity-and-price">
+ <div class="quantity-selector">
+ <button type="button" id="button-minus">-</button>
+ <input type="text" value="1" id="quantity" />
+ <button type="button" id="button-plus">+</button>
+ </div>
 
-    <hr />
+ <div class="final-price">
+ Итоговая стоимость: <span class="font-weight-bold" id="finalPrice">₹{{ product.price }}.00</span>
+ </div>
+ </div>
 
-    <!-- Product Review Section -->
-    <h3 class="title padding-bottom-sm">Отзывы</h3>
+ <!-- Кнопки добавления в корзину и избранное -->
+ <div class="form-group d-flex justify-content-start mt-3">
+ <div class="d-sm-flex">
+ <div class="mb-2 mb-sm-0 mr-0 mr-sm-2">
+ <form method="POST" action="{% url 'add_to_wishlist' product.uid %}" id="wishlist-form">
+ {% csrf_token %}
+<input type="hidden" name="kit" id="wishlist-kit" value="">
+ <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="">
+ <input type="hidden" name="border_color" id="wishlist-border-color" value="">
+ <input type="hidden" name="podp" id="wishlist-podp" value="0">
+ <input type="hidden" name="quantity" id="wishlist-quantity" value="1">
+ <button type="submit" class="btn btn-outline-primary">
+ <i class="fas fa-heart"></i> В избранное
+</button>
+ </form>
+ </div>
 
-    {% for review in product.reviews.all %}
-    <div class="card mb-3">
-        <div class="card-body" style="background-color: #59ee8d91">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p>
-                        <strong>Дата: </strong>{{ review.date_added|date:"Y-m-d" }} от
-                        <strong>{{ review.user.get_full_name }}</strong><br />
-                        <strong>Оценка: </strong>{{ review.stars }}/5<br />
-                        <strong>Комментарий: </strong>{{ review.content }}
-                    </p>
-                </div>
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    {% if request.user.is_authenticated %}
-                    <!-- Like Button -->
-                    <button
-                        class="btn like-btn d-flex align-items-center"
-                        onclick="toggleLike('{{ review.uid }}')"
-                    >
-                        <i class="fas fa-thumbs-up me-2"></i>
-                        <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
-                    </button>
+ <form method="POST" action="{% url 'add_to_cart' product.uid %}" id="cart-form">
+ {% csrf_token %}
+<input type="hidden" name="kit" id="cart-kit" value="">
+ <input type="hidden" name="carpet_color" id="cart-carpet-color" value="">
+ <input type="hidden" name="border_color" id="cart-border-color" value="">
+ <input type="hidden" name="podp" id="cart-podp" value="0">
+ <input type="hidden" name="quantity" id="cart-quantity" value="1">
+ <button type="submit" class="btn btn-primary">
+ <i class="fas fa-shopping-bag mr-1"></i>
+ <span>В корзину</span>
+ </button>
+ </form>
+ </div>
+ </div>
+ </article>
+ </main>
+ </div>
+ </div>
 
-                    <!-- Dislike Button -->
-                    <button
-                        class="btn dislike-btn d-flex align-items-center"
-                        onclick="toggleDislike('{{ review.uid }}')"
-                    >
-                        <i class="fas fa-thumbs-down me-2"></i>
-                        <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
-                    </button>
+ <!-- Описание товара -->
+ <div class="product-description-block mt-4 mb-4">
+ <h4>Описание товара</h4>
+ <p style="line-height: 2rem; margin-top: revert; text-align: justify">
+ {{product.product_desription}}
+</p>
+ </div>
 
-                    {% else %}
-                    <button class="btn like-btn d-flex align-items-center">
-                        <i class="fas fa-thumbs-up me-2"></i>
-                        <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
-                    </button>
+ <!-- Related Products Section -->
+ <h3 class="title padding-y-sm">Похожие товары</h3>
+ {% if related_products %}
+{% with related_products as list_products %}
+{% include 'product_parts/product_list.html' %}
+{% endwith %}
+{% else %}
+<p>Похожих товаров не найдено.</p>
+ {% endif %}
+<!-- Related Products Section End -->
 
-                    <button class="btn dislike-btn d-flex align-items-center">
-                        <i class="fas fa-thumbs-down me-2"></i>
-                        <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
-                    </button>
-                    {% endif %}
+ <hr />
 
-                    <!-- Delete Button -->
-                    {% if review.user == request.user %}
-                    <button
-                        class="btn btn-link p-0 text-danger ms-auto"
-                        title="Удалить отзыв"
-                        data-bs-toggle="modal"
-                        data-bs-target="#deleteReviewModal"
-                        onclick="setDeleteAction('{% url 'delete_review' product.slug review.uid %}')"
-                        type="button"
-                    >
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% empty %}
-    <p class="padding-bottom-sm">Отзывов пока нет...</p>
-    {% endfor %}
+ <!-- Product Review Section -->
+ <h3 class="title padding-bottom-sm">Отзывы</h3>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="form-group">
-                {% if request.user.is_authenticated %}
-                <form method="POST" action="">
-                    {% csrf_token %} {{ review_form|crispy }}
-                    <button class="btn btn-success">Отправить</button>
-                </form>
-                {% else %}
-                <p>Пожалуйста, <a href="{% url 'login' %}">войдите</a> чтобы оставить отзыв!</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <!-- Product Review Section End-->
-    <!-- ============================ COMPONENT Product Details End ================================= -->
-    </div>
+ {% for review in product.reviews.all %}
+<div class="card mb-3">
+ <div class="card-body" style="background-color: #59ee8d91">
+ <div class="d-flex justify-content-between align-items-center">
+ <div>
+ <p>
+ <strong>Дата: </strong>{{ review.date_added|date:"Y-m-d" }} от
+<strong>{{ review.user.get_full_name }}</strong><br />
+ <strong>Оценка: </strong>{{ review.stars }}/5<br />
+ <strong>Комментарий: </strong>{{ review.content }}
+</p>
+ </div>
+ <div class="d-flex flex-wrap align-items-center gap-2">
+ {% if request.user.is_authenticated %}
+<!-- Like Button -->
+ <button
+ class="btn like-btn d-flex align-items-center"
+ onclick="toggleLike('{{ review.uid }}')"
+ >
+ <i class="fas fa-thumbs-up me-2"></i>
+ <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
+ </button>
 
-    <!-- Delete Review Confirmation Modal -->
-    <div
-        class="modal fade"
-        id="deleteReviewModal"
-        tabindex="-1"
-        aria-labelledby="deleteReviewModalLabel"
-        aria-hidden="true"
-    >
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteReviewModalLabel">
-                        Подтверждение удаления
-                    </h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                    ></button>
-                </div>
-                <div class="modal-body">
-                    Вы уверены, что хотите удалить этот отзыв?
-                </div>
-                <div class="modal-footer">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-bs-dismiss="modal"
-                    >
-                        Отмена
-                    </button>
-                    <form id="deleteReviewForm" method="POST" style="display: inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Удалить</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+ <!-- Dislike Button -->
+ <button
+ class="btn dislike-btn d-flex align-items-center"
+ onclick="toggleDislike('{{ review.uid }}')"
+ >
+ <i class="fas fa-thumbs-down me-2"></i>
+ <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
+ </button>
+
+ {% else %}
+<button class="btn like-btn d-flex align-items-center">
+ <i class="fas fa-thumbs-up me-2"></i>
+ <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
+ </button>
+
+ <button class="btn dislike-btn d-flex align-items-center">
+ <i class="fas fa-thumbs-down me-2"></i>
+ <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
+ </button>
+ {% endif %}
+
+<!-- Delete Button -->
+ {% if review.user == request.user %}
+<button
+ class="btn btn-link p-0 text-danger ms-auto"
+ title="Удалить отзыв"
+ data-bs-toggle="modal"
+ data-bs-target="#deleteReviewModal"
+ onclick="setDeleteAction('{% url 'delete_review' product.slug review.uid %}')"
+ type="button"
+ >
+ <i class="fas fa-trash-alt"></i>
+ </button>
+ {% endif %}
+</div>
+ </div>
+ </div>
+ </div>
+ {% empty %}
+<p class="padding-bottom-sm">Отзывов пока нет...</p>
+ {% endfor %}
+
+<div class="card mb-3">
+ <div class="card-body">
+ <div class="form-group">
+ {% if request.user.is_authenticated %}
+<form method="POST" action="">
+ {% csrf_token %} {{ review_form|crispy }}
+<button class="btn btn-success">Отправить</button>
+ </form>
+ {% else %}
+<p>Пожалуйста, <a href="{% url 'login' %}">войдите</a> чтобы оставить отзыв!</p>
+ {% endif %}
+</div>
+ </div>
+ </div>
+ <!-- Product Review Section End-->
+ <!-- ============================ COMPONENT Product Details End ================================= -->
+ </div>
+
+ <!-- Delete Review Confirmation Modal -->
+ <div
+ class="modal fade"
+ id="deleteReviewModal"
+ tabindex="-1"
+ aria-labelledby="deleteReviewModalLabel"
+ aria-hidden="true"
+ >
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header">
+ <h5 class="modal-title" id="deleteReviewModalLabel">
+ Подтверждение удаления
+</h5>
+ <button
+ type="button"
+ class="btn-close"
+ data-bs-dismiss="modal"
+ aria-label="Close"
+ ></button>
+ </div>
+ <div class="modal-body">
+ Вы уверены, что хотите удалить этот отзыв?
+</div>
+ <div class="modal-footer">
+ <button
+ type="button"
+ class="btn btn-secondary"
+ data-bs-dismiss="modal"
+ >
+ Отмена
+</button>
+ <form id="deleteReviewForm" method="POST" style="display: inline">
+ {% csrf_token %}
+<button type="submit" class="btn btn-danger">Удалить</button>
+ </form>
+ </div>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- Скрытое поле для базовой цены продукта -->
@@ -768,20 +866,19 @@
 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 <!-- Скрытые поля для хранения данных комплектаций -->
 <div id="kit-variant-data" style="display: none;">
-    {% for kit in sorted_kit_variants %}
-    <div
-        data-kit-code="{{ kit.code }}"
-        data-kit-image="{% if kit.image %}{{ kit.image.url }}{% else %}/media/images/schema/salon.png{% endif %}"
-        data-kit-price="{{ kit.price_modifier }}"
-    ></div>
-    {% endfor %}
-    <div
-        data-option-code="podpyatnik"
-        data-option-price="15"
-    ></div>
+ {% for kit in sorted_kit_variants %}
+<div
+ data-kit-code="{{ kit.code }}"
+ data-kit-image="{% if kit.image %}{{ kit.image.url }}{% else %}/media/images/schema/salon.png{% endif %}"
+ data-kit-price="{{ kit.price_modifier }}"
+ ></div>
+ {% endfor %}
+<div
+ data-option-code="podpyatnik"
+ data-option-price="15"
+ ></div>
 </div>
 
 <!-- Подключаем JavaScript-файл -->
 <script src="/media/js/product.js" type="text/javascript"></script>
-
 {% endblock %}

@@ -6,10 +6,6 @@ from home.models import ShippingAddress
 from django.conf import settings
 import os
 
-
-# Create your models here.
-
-
 class Profile(BaseModel):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="profile")
