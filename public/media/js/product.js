@@ -1,22 +1,23 @@
 /**
  * Скрипт для управления цветом ковриков и окантовки, а также выбором комплектации
+ * 🎨 Управляет интерактивными элементами на странице продукта
  */
 
-// Инициализация при загрузке страницы
+// 🚀 Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
   // Инициализируем начальный выбор комплектации
   const selectedKitRadio = document.querySelector('input[name="selected_kit"]:checked');
   if (selectedKitRadio) {
-    updateConfig(selectedKitRadio.value); // Handles price, active class for kit, etc.
-    updateKitImage(selectedKitRadio.value); // Updates kit image
+    updateConfig(selectedKitRadio.value); // Обрабатывает цену, активный класс для комплектации
+    updateKitImage(selectedKitRadio.value); // Обновляет изображение комплектации
   } else {
-    console.warn("No kit initially selected.");
+    console.warn("Не выбрана начальная комплектация.");
   }
 
   // Инициализируем обработчики событий
   setupEventHandlers();
 
-  // Обновляем все скрытые поля форм (wishlist, cart) на основе текущих (уже обновленных) значений
+  // Обновляем все скрытые поля форм (избранное, корзина) на основе текущих (уже обновленных) значений
   updateHiddenFields();
 
   // Первичный расчет цены на основе выбранных по умолчанию опций
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * Устанавливает обработчики событий для интерактивных элементов
+ * 🔄 Связывает пользовательские действия с функциями обновления конфигурации
  */
 function setupEventHandlers() {
   // Обработчики для выбора комплектации
@@ -45,24 +47,6 @@ function setupEventHandlers() {
       updateHiddenFields(); // Обновляет скрытые поля форм
     });
   }
-
-  // Обработчики для выбора цвета коврика
-  document.querySelectorAll('.color-picker[data-color-type="carpet"] .color-item').forEach(item => {
-    if (item.dataset.isAvailable !== 'false') {
-      item.addEventListener('click', function() {
-        activateColor(this, 'carpet');
-      });
-    }
-  });
-
-  // Обработчики для выбора цвета окантовки
-  document.querySelectorAll('.color-picker[data-color-type="border"] .color-item').forEach(item => {
-    if (item.dataset.isAvailable !== 'false') {
-      item.addEventListener('click', function() {
-        activateColor(this, 'border');
-      });
-    }
-  });
 
   // Обработчики для кнопок количества
   const plusBtn = document.getElementById('button-plus');
@@ -100,6 +84,7 @@ function setupEventHandlers() {
     });
   }
 
+  // Обработчик для увеличения главного изображения при клике
   const mainImage = document.getElementById('mainImage');
   if (mainImage) {
     mainImage.addEventListener('click', function() {
@@ -107,7 +92,7 @@ function setupEventHandlers() {
     });
   }
 
-  // Проверка доступности цветов перед отправкой формы
+  // ⚠️ Проверка доступности цветов перед отправкой формы в корзину
   const addToCartForm = document.getElementById('cart-form');
   if (addToCartForm) {
     addToCartForm.addEventListener('submit', function(event) {
@@ -137,7 +122,7 @@ function setupEventHandlers() {
     });
   }
 
-  // То же самое для формы избранного
+  // ⚠️ То же самое для формы избранного
   const wishlistForm = document.getElementById('wishlist-form');
   if (wishlistForm) {
     wishlistForm.addEventListener('submit', function(event) {
@@ -170,8 +155,15 @@ function setupEventHandlers() {
 /**
  * Обновляет конфигурацию при выборе комплектации (стили активной опции)
  * @param {string} kitCode - Код выбранной комплектации
+ * 🔄 Обновляет стили и данные согласно выбранной комплектации
+ */
+/**
+ * Обновляет конфигурацию при выборе комплектации (стили активной опции)
+ * @param {string} kitCode - Код выбранной комплектации
+ * 🔄 Обновляет стили и данные согласно выбранной комплектации
  */
 function updateConfig(kitCode) {
+  // Обновляем визуальное состояние элементов выбора комплектации
   document.querySelectorAll('.kit-option-label').forEach(label => {
     const radio = label.querySelector('input[type="radio"]');
     if (radio && radio.value === kitCode) {
@@ -181,11 +173,12 @@ function updateConfig(kitCode) {
     }
   });
   updatePrice(); // Цена зависит от комплектации
-  updateHiddenFields(); // Скрытые поля тоже
+  updateHiddenFields(); // Обновляем скрытые поля в формах
 }
 
 /**
  * Обновляет отображение подпятника (иконку)
+ * 👟 Переключает видимость элемента подпятника
  */
 function updatePodp() {
   const podpElement = document.querySelector('.podpicon');
@@ -199,9 +192,10 @@ function updatePodp() {
  * Активирует выбранный цвет, обновляет изображение предпросмотра и скрытые поля.
  * @param {HTMLElement} element - Элемент цвета, который был нажат
  * @param {string} type - Тип цвета ('carpet' или 'border')
+ * 🎨 Обрабатывает выбор цвета пользователем
  */
 function activateColor(element, type) {
-  // Проверяем доступность цвета
+  // ⚠️ Проверяем доступность цвета
   const isAvailable = element.dataset.isAvailable === 'true';
   if (!isAvailable) {
     console.warn('Попытка выбора недоступного цвета');
@@ -261,6 +255,7 @@ function activateColor(element, type) {
 
 /**
  * Обновляет цену на основе выбранной комплектации, подпятника и количества
+ * 💰 Рассчитывает итоговую стоимость товара
  */
 function updatePrice() {
   const selectedKitRadio = document.querySelector('input[name="selected_kit"]:checked');
@@ -271,7 +266,7 @@ function updatePrice() {
 
   const kitDataContainer = document.getElementById('kit-variant-data');
   if (!kitDataContainer) {
-    console.error("updatePrice: kit-variant-data element not found.");
+    console.error("updatePrice: не найден элемент kit-variant-data.");
     return;
   }
 
@@ -280,21 +275,21 @@ function updatePrice() {
   if (kitDataElement && kitDataElement.dataset.kitPrice) {
     kitPriceModifier = parseFloat(kitDataElement.dataset.kitPrice);
     if (isNaN(kitPriceModifier)) {
-      console.warn(`updatePrice: Kit price modifier for "${kitCode}" is NaN. Using 0.`);
+      console.warn(`updatePrice: Модификатор цены для комплектации "${kitCode}" не число. Используем 0.`);
       kitPriceModifier = 0;
     }
   } else {
-    console.warn(`updatePrice: Data or price for kit code "${kitCode}" not found. Using 0 for modifier.`);
+    console.warn(`updatePrice: Данные или цена для кода комплектации "${kitCode}" не найдены. Используем 0 для модификатора.`);
   }
 
   const basePriceMeta = document.querySelector('meta[name="product-price"]');
   if (!basePriceMeta) {
-    console.error("updatePrice: meta tag with product-price not found.");
+    console.error("updatePrice: не найден мета-тег с базовой ценой товара.");
     return;
   }
   let basePrice = parseFloat(basePriceMeta.content);
   if (isNaN(basePrice)) {
-    console.error("updatePrice: Base product price is NaN. Using 0.");
+    console.error("updatePrice: Базовая цена товара не число. Используем 0.");
     basePrice = 0;
   }
 
@@ -307,10 +302,10 @@ function updatePrice() {
       if (!isNaN(optionPrice)) {
         podpPrice = optionPrice;
       } else {
-        console.warn("updatePrice: Podpyatnik option price is NaN. Using 0.");
+        console.warn("updatePrice: Цена подпятника не число. Используем 0.");
       }
     } else {
-      console.warn("updatePrice: Podpyatnik option data or price not found. Using 0 for podpyatnik.");
+      console.warn("updatePrice: Данные о подпятнике или его цена не найдены. Используем 0 для подпятника.");
     }
   }
 
@@ -333,6 +328,7 @@ function updatePrice() {
 
 /**
  * Обновляет все скрытые поля форм (для корзины и избранного)
+ * 📋 Синхронизирует данные на формах
  */
 function updateHiddenFields() {
   const selectedKitRadio = document.querySelector('input[name="selected_kit"]:checked');
@@ -340,8 +336,8 @@ function updateHiddenFields() {
   const cartKitInput = document.getElementById('cart-kit');
   const kitCode = selectedKitRadio ? selectedKitRadio.value : (cartKitInput ? cartKitInput.value : 'salon');
 
-  const carpetColor = document.getElementById('carpet_color_input').value; // Должен быть UUID или ""
-  const borderColor = document.getElementById('border_color_input').value; // Должен быть UUID или ""
+  const carpetColor = document.getElementById('carpet_color_input').value;
+  const borderColor = document.getElementById('border_color_input').value;
 
   const podpCheck = document.getElementById('podp_check');
   const hasPodp = podpCheck && podpCheck.checked ? '1' : '0';
@@ -349,7 +345,7 @@ function updateHiddenFields() {
   const quantityInput = document.getElementById('quantity');
   const quantity = quantityInput ? (quantityInput.value || '1') : '1';
 
-  // Wishlist form fields
+  // Поля формы избранного
   const wishlistFields = {
     'wishlist-kit': kitCode,
     'wishlist-carpet-color': carpetColor,
@@ -362,7 +358,7 @@ function updateHiddenFields() {
     if (el) el.value = wishlistFields[id];
   }
 
-  // Cart form fields
+  // Поля формы корзины
   const cartFields = {
     'cart-kit': kitCode,
     'cart-carpet-color': carpetColor,
@@ -379,6 +375,7 @@ function updateHiddenFields() {
 /**
  * Обновляет главное изображение продукта при клике на миниатюру
  * @param {string} src - Путь к изображению
+ * 🖼️ Обновляет отображение главного изображения
  */
 function updateMainImage(src) {
   const mainImage = document.getElementById('mainImage');
@@ -391,6 +388,7 @@ function updateMainImage(src) {
 /**
  * Устанавливает URL для формы удаления отзыва
  * @param {string} actionUrl - URL действия формы
+ * 🗑️ Подготавливает форму для удаления отзыва
  */
 function setDeleteAction(actionUrl) {
   const deleteForm = document.getElementById('deleteReviewForm');
@@ -402,17 +400,17 @@ function setDeleteAction(actionUrl) {
 /**
  * Отправляет лайк/дизлайк для отзыва (общая функция)
  * @param {string} reviewId - ID отзыва
- * @param {string} actionType - 'like' or 'dislike'
+ * @param {string} actionType - 'like' или 'dislike'
+ * 👍 Обрабатывает реакции на отзывы
  */
 function toggleReviewReaction(reviewId, actionType) {
   const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
   if (!csrfTokenInput) {
-    console.error("CSRF token input not found.");
+    console.error("CSRF token не найден.");
     return;
   }
   const csrfToken = csrfTokenInput.value;
 
-  // Убедитесь, что URL формируется правильно. Пример: /product/like-review/UUID/
   fetch(`/product/${actionType}-review/${reviewId}/`, {
     method: 'POST',
     headers: {
@@ -422,9 +420,8 @@ function toggleReviewReaction(reviewId, actionType) {
   })
   .then(response => {
     if (!response.ok) {
-      // Попытка получить текст ошибки от сервера, если есть
       return response.text().then(text => {
-        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. Server said: ${text}`);
+        throw new Error(`Ошибка сети: ${response.status} ${response.statusText}. Сервер ответил: ${text}`);
       });
     }
     return response.json();
@@ -436,14 +433,24 @@ function toggleReviewReaction(reviewId, actionType) {
     if (dislikeCountEl) dislikeCountEl.innerText = data.dislikes !== undefined ? data.dislikes : 'N/A';
   })
   .catch(error => {
-    console.error(`Error during ${actionType} review for ${reviewId}:`, error);
+    console.error(`Ошибка при ${actionType === 'like' ? 'лайке' : 'дизлайке'} отзыва ${reviewId}:`, error);
   });
 }
 
+/**
+ * Обработчик для кнопки лайка отзыва
+ * @param {string} reviewId - ID отзыва
+ * 👍 Обрабатывает лайк отзыва
+ */
 function toggleLike(reviewId) {
   toggleReviewReaction(reviewId, 'like');
 }
 
+/**
+ * Обработчик для кнопки дизлайка отзыва
+ * @param {string} reviewId - ID отзыва
+ * 👎 Обрабатывает дизлайк отзыва
+ */
 function toggleDislike(reviewId) {
   toggleReviewReaction(reviewId, 'dislike');
 }
@@ -451,13 +458,14 @@ function toggleDislike(reviewId) {
 /**
  * Обновляет изображение комплектации в соответствии с выбранным кодом комплектации
  * @param {string} kitCode - Код выбранной комплектации
+ * 🖼️ Обновляет изображение схемы комплектации
  */
 function updateKitImage(kitCode) {
   const kitDataContainer = document.getElementById('kit-variant-data');
   const kitImageElement = document.getElementById('kit-image');
 
   if (!kitImageElement) {
-    console.error("updateKitImage: kit-image img element not found.");
+    console.error("updateKitImage: не найдено изображение комплектации.");
     return;
   }
   // Путь по умолчанию, если информация не найдена или изображение не указано
@@ -471,7 +479,7 @@ function updateKitImage(kitCode) {
       }
     }
   } else {
-    console.warn("updateKitImage: kit-variant-data element not found. Using default image for kit.");
+    console.warn("updateKitImage: не найден контейнер данных о комплектациях. Используем изображение по умолчанию.");
   }
 
   kitImageElement.src = imagePath;

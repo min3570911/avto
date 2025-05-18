@@ -12,14 +12,30 @@ from .forms import ReviewForm
 
 # -----------------------------  карточка товара  ----------------------------- #
 def get_product(request, slug):
+    """
+    🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
+
+    Получает товар по слагу и подготавливает все необходимые данные:
+    - варианты комплектации, цветов, опций
+    - цены и описания
+    - системы отзывов
+    - связанные товары
+
+    🔍 Разделяет цвета на типы (для коврика и окантовки)
+    """
     product = get_object_or_404(Product, slug=slug)
 
     # варианты комплектов
     sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
-    additional_options  = KitVariant.objects.filter(is_option=True ).order_by('order')
+    additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
 
-    # цвета
-    colors = Color.objects.all().order_by('display_order')
+    # 🎨 разделяем цвета на типы для коврика и окантовки
+    carpet_colors = Color.objects.filter(color_type='carpet').order_by('display_order')
+    border_colors = Color.objects.filter(color_type='border').order_by('display_order')
+
+    # Определяем первый доступный цвет для каждого типа (для начального выбора)
+    initial_carpet_color = carpet_colors.filter(is_available=True).first() or carpet_colors.first()
+    initial_border_color = border_colors.filter(is_available=True).first() or border_colors.first()
 
     # похожие товары
     related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
@@ -27,7 +43,8 @@ def get_product(request, slug):
         related_products = random.sample(related_products, 4)
 
     # рейтинг / отзыв текущего пользователя
-    review = ProductReview.objects.filter(product=product, user=request.user).first() if request.user.is_authenticated else None
+    review = ProductReview.objects.filter(product=product,
+                                          user=request.user).first() if request.user.is_authenticated else None
     rating_percentage = (product.get_rating() / 5) * 100 if product.reviews.exists() else 0
     review_form = ReviewForm(request.POST or None, instance=review)
 
@@ -48,31 +65,37 @@ def get_product(request, slug):
     # ----------  цена и комплект по умолчанию  ----------
     selected_kit, updated_price = None, product.price
     default_kit = sorted_kit_variants.filter(code='salon').first()
-    kit_code    = request.GET.get('kit') or (default_kit.code if default_kit else None)
+    kit_code = request.GET.get('kit') or (default_kit.code if default_kit else None)
 
     if kit_code:
         selected_kit = kit_code
         updated_price = product.get_product_price_by_kit(kit_code)
 
     context = {
-        'product'              : product,
-        'sorted_kit_variants'  : sorted_kit_variants,
-        'additional_options'   : additional_options,
-        'related_products'     : related_products,
-        'review_form'          : review_form,
-        'rating_percentage'    : rating_percentage,
-        'in_wishlist'          : Wishlist.objects.filter(user=request.user, product=product).exists() if request.user.is_authenticated else False,
-        'colors'               : colors,
-        'in_cart'              : in_cart,
-        'selected_kit'         : selected_kit,
-        'updated_price'        : updated_price,
+        'product': product,
+        'sorted_kit_variants': sorted_kit_variants,
+        'additional_options': additional_options,
+        'related_products': related_products,
+        'review_form': review_form,
+        'rating_percentage': rating_percentage,
+        'in_wishlist': Wishlist.objects.filter(user=request.user,
+                                               product=product).exists() if request.user.is_authenticated else False,
+        'carpet_colors': carpet_colors,  # 🎨 Добавляем цвета ковриков
+        'border_colors': border_colors,  # 🎨 Добавляем цвета окантовки
+        'initial_carpet_color': initial_carpet_color,  # 🎨 Начальный цвет коврика
+        'initial_border_color': initial_border_color,  # 🎨 Начальный цвет окантовки
+        'in_cart': in_cart,
+        'selected_kit': selected_kit,
+        'updated_price': updated_price,
     }
 
     return render(request, 'product/product.html', context)
 
+
 # Product Review view
 @login_required
 def product_reviews(request):
+    """📝 Отображение всех отзывов пользователя"""
     reviews = ProductReview.objects.filter(
         user=request.user).select_related('product').order_by('-date_added')
     return render(request, 'product/all_product_reviews.html', {'reviews': reviews})
@@ -81,6 +104,7 @@ def product_reviews(request):
 # Edit Review view
 @login_required
 def edit_review(request, review_uid):
+    """✏️ Редактирование отзыва пользователя"""
     review = ProductReview.objects.filter(uid=review_uid, user=request.user).first()
     if not review:
         return JsonResponse({"detail": "Отзыв не найден"}, status=404)
@@ -99,6 +123,7 @@ def edit_review(request, review_uid):
 
 # Like and Dislike review view
 def like_review(request, review_uid):
+    """👍 Обработка лайка отзыва"""
     review = ProductReview.objects.filter(uid=review_uid).first()
 
     if request.user in review.likes.all():
@@ -110,6 +135,7 @@ def like_review(request, review_uid):
 
 
 def dislike_review(request, review_uid):
+    """👎 Обработка дизлайка отзыва"""
     review = ProductReview.objects.filter(uid=review_uid).first()
 
     if request.user in review.dislikes.all():
@@ -122,6 +148,7 @@ def dislike_review(request, review_uid):
 
 # delete review view
 def delete_review(request, slug, review_uid):
+    """🗑️ Удаление отзыва"""
     if not request.user.is_authenticated:
         messages.warning(request, "Необходимо войти в систему, чтобы удалить отзыв.")
         return redirect('login')
@@ -140,15 +167,28 @@ def delete_review(request, slug, review_uid):
 # Add a product to Wishlist
 @login_required
 def add_to_wishlist(request, uid):
-    kit_code = request.GET.get('kit')
-    carpet_color_id = request.GET.get('carpet_color')
-    border_color_id = request.GET.get('border_color')
-    has_podp = request.GET.get('podp') == '1'
+    """❤️ Добавление товара в избранное с выбранными цветами и опциями"""
+    # Получаем параметры из POST-запроса (для формы на странице товара)
+    kit_code = request.POST.get('kit')
+    carpet_color_id = request.POST.get('carpet_color')
+    border_color_id = request.POST.get('border_color')
+    has_podp = request.POST.get('podp') == '1'
+
+    # Также проверяем параметры из GET-запроса (для обратной совместимости)
+    if not kit_code:
+        kit_code = request.GET.get('kit')
+    if not carpet_color_id:
+        carpet_color_id = request.GET.get('carpet_color')
+    if not border_color_id:
+        border_color_id = request.GET.get('border_color')
+    if not has_podp:
+        has_podp = request.GET.get('podp') == '1'
 
     if not kit_code:
         messages.warning(request, 'Пожалуйста, выберите комплектацию перед добавлением в избранное!')
         return redirect(request.META.get('HTTP_REFERER'))
 
+    # Получаем объекты из БД
     product = get_object_or_404(Product, uid=uid)
     kit_variant = get_object_or_404(KitVariant, code=kit_code)
 
@@ -159,6 +199,17 @@ def add_to_wishlist(request, uid):
         carpet_color = get_object_or_404(Color, uid=carpet_color_id)
     if border_color_id:
         border_color = get_object_or_404(Color, uid=border_color_id)
+
+    # ⚠️ Проверяем доступность выбранных цветов перед добавлением
+    if carpet_color and not carpet_color.is_available:
+        messages.warning(request,
+                         f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+        return redirect(request.META.get('HTTP_REFERER'))
+
+    if border_color and not border_color.is_available:
+        messages.warning(request,
+                         f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+        return redirect(request.META.get('HTTP_REFERER'))
 
     # Проверяем, есть ли уже такой товар в избранном
     wishlist_item = Wishlist.objects.filter(
@@ -192,6 +243,7 @@ def add_to_wishlist(request, uid):
 # Remove product from wishlist
 @login_required
 def remove_from_wishlist(request, uid):
+    """🗑️ Удаление товара из избранного"""
     product = get_object_or_404(Product, uid=uid)
     kit_code = request.GET.get('kit')
 
@@ -209,12 +261,15 @@ def remove_from_wishlist(request, uid):
 # Wishlist View
 @login_required
 def wishlist_view(request):
+    """❤️ Отображение списка избранных товаров с выбранными цветами и опциями"""
     wishlist_items = Wishlist.objects.filter(user=request.user)
     return render(request, 'product/wishlist.html', {'wishlist_items': wishlist_items})
 
 
 # Move to cart functionality on wishlist page.
+@login_required
 def move_to_cart(request, uid):
+    """🛒 Перемещение товара из избранного в корзину"""
     product = get_object_or_404(Product, uid=uid)
     wishlist = Wishlist.objects.filter(user=request.user, product=product).first()
 
@@ -227,6 +282,18 @@ def move_to_cart(request, uid):
     border_color = wishlist.border_color
     has_podpyatnik = wishlist.has_podpyatnik
 
+    # ⚠️ Проверяем доступность выбранных цветов перед добавлением в корзину
+    if carpet_color and not carpet_color.is_available:
+        messages.warning(request,
+                         f'Цвет коврика "{carpet_color.name}" временно недоступен. Товар не может быть добавлен в корзину.')
+        return redirect('wishlist')
+
+    if border_color and not border_color.is_available:
+        messages.warning(request,
+                         f'Цвет окантовки "{border_color.name}" временно недоступен. Товар не может быть добавлен в корзину.')
+        return redirect('wishlist')
+
+    # После проверок можно удалить из избранного
     wishlist.delete()
 
     cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
@@ -261,8 +328,8 @@ def move_to_cart(request, uid):
 
 
 @login_required
-@login_required
 def add_to_cart(request, uid):
+    """🛒 Добавление товара в корзину с выбранными цветами и опциями"""
     try:
         kit_code = request.POST.get('kit')
         carpet_color_id = request.POST.get('carpet_color')
@@ -272,11 +339,27 @@ def add_to_cart(request, uid):
 
         product = get_object_or_404(Product, uid=uid)
         kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
-        carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
-        border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
+
+        # Получаем объекты цвета и проверяем их доступность
+        carpet_color = None
+        if carpet_color_id:
+            carpet_color = get_object_or_404(Color, uid=carpet_color_id)
+            if not carpet_color.is_available:
+                messages.warning(request,
+                                 f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                return redirect(request.META.get('HTTP_REFERER'))
+
+        border_color = None
+        if border_color_id:
+            border_color = get_object_or_404(Color, uid=border_color_id)
+            if not border_color.is_available:
+                messages.warning(request,
+                                 f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                return redirect(request.META.get('HTTP_REFERER'))
 
         cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
 
+        # Проверяем, есть ли уже такой товар в корзине
         item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
