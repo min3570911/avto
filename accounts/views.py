@@ -1,6 +1,8 @@
 import os
 import json
 import uuid
+import requests
+import logging
 from products.models import *
 from django.urls import reverse
 from django.conf import settings
@@ -8,7 +10,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from home.models import ShippingAddress
 from django.contrib.auth.models import User
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 from accounts.models import Profile, Cart, CartItem, Order, OrderItem
 from base.emails import send_account_activation_email
 from django.views.decorators.http import require_POST
@@ -19,9 +21,23 @@ from django.contrib.auth import authenticate, login, logout
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.shortcuts import redirect, render, get_object_or_404
 from accounts.forms import UserUpdateForm, UserProfileForm, ShippingAddressForm, CustomPasswordChangeForm
+from django.core.mail import send_mail
+from django.utils.html import strip_tags
+
+# Импорт для генерации PDF
+try:
+    from xhtml2pdf import pisa
+
+    PDF_ENABLED = True
+except ImportError:
+    PDF_ENABLED = False
+
+# Настройка логгера
+logger = logging.getLogger(__name__)
 
 
-# Create your views here.
+# Создаем views
+
 def login_page(request):
     next_url = request.GET.get('next')  # Get the next URL from the query parameter
     if request.method == 'POST':
@@ -102,17 +118,16 @@ def activate_email_account(request, email_token):
         return HttpResponse('Неверный токен email.')
 
 
-@login_required
 def cart(request):
+    """Отображение корзины с формой оформления заказа"""
     cart_obj = None
-    payment = None
-    user = request.user
 
     try:
-        cart_obj = Cart.objects.get(is_paid=False, user=user)
+        # Получаем корзину для текущего пользователя/сессии
+        cart_obj = Cart.get_cart(request)
 
     except Exception as e:
-        messages.warning(request, "Ваша корзина пуста. Пожалуйста, добавьте товар в корзину.", str(e))
+        messages.warning(request, "Ваша корзина пуста. Пожалуйста, добавьте товар в корзину.")
         return redirect(reverse('index'))
 
     if request.method == 'POST':
@@ -142,19 +157,34 @@ def cart(request):
             messages.success(request, 'Купон успешно применен.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    context = {'cart': cart_obj, 'payment': payment, 'quantity_range': range(1, 6), }
+    # Предзаполняем данные, если пользователь авторизован
+    initial_data = {}
+    if request.user.is_authenticated:
+        initial_data = {
+            'customer_name': f"{request.user.first_name} {request.user.last_name}".strip(),
+            'customer_email': request.user.email
+        }
+
+    context = {
+        'cart': cart_obj,
+        'quantity_range': range(1, 11),  # Для выбора количества товаров
+        'initial_data': initial_data
+    }
     return render(request, 'accounts/cart.html', context)
 
 
 @require_POST
-@login_required
 def update_cart_item(request):
     try:
         data = json.loads(request.body)
         cart_item_id = data.get("cart_item_id")
         quantity = int(data.get("quantity"))
 
-        cart_item = CartItem.objects.get(uid=cart_item_id, cart__user=request.user, cart__is_paid=False)
+        # Получаем корзину пользователя/сессии
+        cart = Cart.get_cart(request)
+
+        # Находим элемент корзины
+        cart_item = CartItem.objects.get(uid=cart_item_id, cart=cart, cart__is_paid=False)
         cart_item.quantity = quantity
         cart_item.save()
 
@@ -165,8 +195,13 @@ def update_cart_item(request):
 
 def remove_cart(request, uid):
     try:
-        cart_item = get_object_or_404(CartItem, uid=uid)
+        # Получаем корзину пользователя/сессии
+        cart = Cart.get_cart(request)
+
+        # Находим и удаляем элемент корзины
+        cart_item = CartItem.objects.get(uid=uid, cart=cart)
         cart_item.delete()
+
         messages.success(request, 'Товар удален из корзины.')
 
     except Exception as e:
@@ -177,7 +212,13 @@ def remove_cart(request, uid):
 
 
 def remove_coupon(request, cart_id):
-    cart = Cart.objects.get(uid=cart_id)
+    # Проверяем, что корзина принадлежит текущему пользователю/сессии
+    cart = Cart.get_cart(request)
+
+    if str(cart.uid) != cart_id:
+        messages.warning(request, 'Ошибка доступа к корзине.')
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
     cart.coupon = None
     cart.save()
 
@@ -185,55 +226,186 @@ def remove_coupon(request, cart_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-# Упрощенная версия без Razorpay
-@login_required
-def success(request):
-    # Просто создаем заказ из корзины
-    cart = Cart.objects.get(is_paid=False, user=request.user)
+def send_telegram_notification(order):
+    """
+    🤖 Отправляет уведомление о новом заказе в Telegram
+    """
+    try:
+        # Конфигурация Telegram бота
+        telegram_token = settings.TELEGRAM_BOT_TOKEN
+        telegram_chat_id = settings.TELEGRAM_CHAT_ID
+
+        # URL для отправки сообщения
+        url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+
+        # Формируем текст сообщения
+        items_text = ""
+        for item in OrderItem.objects.filter(order=order):
+            variant_info = f", {item.kit_variant.name}" if item.kit_variant else ""
+            items_text += f"• {item.product.product_name}{variant_info} x {item.quantity} = {item.product_price} BYN\n"
+
+        message = f"""
+🛍️ *НОВЫЙ ЗАКАЗ #{order.order_id}*
+
+👤 *Клиент:* {order.customer_name}
+📱 *Телефон:* {order.customer_phone}
+📧 *Email:* {order.customer_email}
+
+🚚 *Способ доставки:* {order.get_delivery_method_display()}
+📍 *Адрес:* {order.shipping_address}
+
+📝 *Товары:*
+{items_text}
+
+💰 *Итого:* {order.grand_total} BYN
+
+🗒️ *Примечание:* {order.order_notes or "Нет"}
+        """
+
+        # Параметры запроса
+        params = {
+            "chat_id": telegram_chat_id,
+            "text": message,
+            "parse_mode": "Markdown"
+        }
+
+        # Отправляем запрос
+        response = requests.post(url, params=params)
+
+        # Проверяем результат
+        if response.status_code != 200 or not response.json().get("ok"):
+            logger.error(f"Ошибка при отправке уведомления в Telegram: {response.text}")
+
+    except Exception as e:
+        logger.error(f"Ошибка при отправке уведомления в Telegram: {str(e)}")
+
+
+def send_order_notification(order):
+    """Отправляет уведомления о заказе на email и в Telegram"""
+    try:
+        # Подготовка данных для уведомления
+        order_items = OrderItem.objects.filter(order=order)
+
+        # Email уведомление клиенту
+        subject = f'Ваш заказ #{order.order_id} успешно оформлен'
+        message = render_to_string('emails/order_confirmation.html', {
+            'order': order,
+            'order_items': order_items,
+        })
+        send_mail(
+            subject,
+            strip_tags(message),
+            settings.DEFAULT_FROM_EMAIL,
+            [order.customer_email],
+            html_message=message,
+            fail_silently=False,
+        )
+
+        # Отправка уведомления в Telegram
+        send_telegram_notification(order)
+
+    except Exception as e:
+        # Логируем ошибку, но не прерываем процесс
+        logger.error(f"Ошибка при отправке уведомления о заказе #{order.order_id}: {str(e)}")
+
+
+def place_order(request):
+    """Обработка оформления заказа без регистрации"""
+    if request.method != 'POST':
+        return redirect('cart')
+
+    # Получаем корзину пользователя или сессии
+    cart = Cart.get_cart(request)
+
+    # Проверяем, есть ли товары в корзине
+    if not cart.cart_items.exists():
+        messages.warning(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
+        return redirect('index')
+
+    # Получаем данные формы
+    customer_name = request.POST.get('customer_name')
+    customer_phone = request.POST.get('customer_phone')
+    customer_email = request.POST.get('customer_email')
+    delivery_method = request.POST.get('delivery_method')
+    shipping_address = request.POST.get('shipping_address')
+    order_notes = request.POST.get('order_notes', '')
+
+    # Проверяем обязательные поля
+    if not all([customer_name, customer_phone, customer_email, delivery_method, shipping_address]):
+        messages.error(request, "Пожалуйста, заполните все обязательные поля.")
+        return redirect('cart')
+
+    # Создаем уникальный ID заказа
+    order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+
+    # Создаем заказ
+    order = Order.objects.create(
+        user=request.user if request.user.is_authenticated else None,
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_email=customer_email,
+        delivery_method=delivery_method,
+        shipping_address=shipping_address,
+        order_notes=order_notes,
+        order_id=order_id,
+        payment_status="Новый",
+        order_total_price=cart.get_cart_total(),
+        coupon=cart.coupon,
+        grand_total=cart.get_cart_total_price_after_coupon()
+    )
+
+    # Создаем элементы заказа из корзины
+    cart_items = cart.cart_items.all()
+    for cart_item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            product=cart_item.product,
+            kit_variant=cart_item.kit_variant,
+            color_variant=cart_item.color_variant,
+            carpet_color=cart_item.carpet_color,
+            border_color=cart_item.border_color,
+            has_podpyatnik=cart_item.has_podpyatnik,
+            quantity=cart_item.quantity,
+            product_price=cart_item.get_product_price(),
+        )
 
     # Отмечаем корзину как оплаченную
     cart.is_paid = True
     cart.save()
 
-    # Создаем заказ
-    order = create_order(cart)
+    # Отправляем уведомление на email и Telegram
+    send_order_notification(order)
 
-    context = {'order_id': order.order_id}
-    return render(request, 'payment_success/payment_success.html', context)
-
-
-# HTML to PDF Conversion
-def render_to_pdf(template_src, context_dict={}):
-    template = get_template(template_src)
-    html = template.render(context_dict)
-
-    static_root = settings.STATIC_ROOT
-    css_files = [
-        os.path.join(static_root, 'css', 'bootstrap.css'),
-        os.path.join(static_root, 'css', 'responsive.css'),
-        os.path.join(static_root, 'css', 'ui.css'),
-    ]
-    css_objects = [CSS(filename=css_file) for css_file in css_files]
-    pdf_file = HTML(string=html).write_pdf(stylesheets=css_objects)
-
-    response = HttpResponse(pdf_file, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="invoice_{context_dict["order"].order_id}.pdf"'
-    return response
+    # Перенаправляем на страницу успешного оформления
+    return redirect('success', order_id=order_id)
 
 
-def download_invoice(request, order_id):
-    order = Order.objects.filter(order_id=order_id).first()
-    order_items = order.order_items.all()
+def success(request, order_id=None):
+    """📦 Страница успешного оформления заказа"""
+    # Если order_id не передан, пытаемся получить последний заказ пользователя
+    if not order_id:
+        if request.user.is_authenticated:
+            latest_order = Order.objects.filter(user=request.user).order_by('-created_at').first()
+        else:
+            # Для анонимных пользователей используем сессию для поиска заказа
+            session_id = request.session.session_key
+            cart = Cart.objects.filter(session_id=session_id, is_paid=True).order_by('-created_at').first()
+            latest_order = Order.objects.filter(cart=cart).first() if cart else None
+
+        if latest_order:
+            order_id = latest_order.order_id
+        else:
+            messages.warning(request, "Заказ не найден.")
+            return redirect('index')
+
+    # Получаем заказ
+    order = get_object_or_404(Order, order_id=order_id)
 
     context = {
         'order': order,
-        'order_items': order_items,
+        'order_id': order_id
     }
-
-    pdf = render_to_pdf('accounts/order_pdf_generate.html', context)
-    if pdf:
-        return pdf
-    return HttpResponse("Ошибка генерации PDF", status=400)
+    return render(request, 'payment_success/payment_success.html', context)
 
 
 @login_required
@@ -310,40 +482,6 @@ def order_history(request):
     return render(request, 'accounts/order_history.html', {'orders': orders})
 
 
-# Create an order view - simplified without Razorpay
-def create_order(cart):
-    # Создаем уникальный ID заказа, так как Razorpay не используется
-    order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
-
-    order = Order.objects.create(
-        user=cart.user,
-        order_id=order_id,
-        payment_status="Оплачен",  # Можно изменить на "В ожидании" или другой статус
-        shipping_address=cart.user.profile.shipping_address,
-        payment_mode="Напрямую",  # Заменили на прямую оплату
-        order_total_price=cart.get_cart_total(),
-        coupon=cart.coupon,
-        grand_total=cart.get_cart_total_price_after_coupon(),
-    )
-
-    # Create OrderItem instances for each item in the cart
-    cart_items = CartItem.objects.filter(cart=cart)
-    for cart_item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            product=cart_item.product,
-            kit_variant=cart_item.kit_variant,  # Копируем kit_variant
-            color_variant=cart_item.color_variant,
-            carpet_color=cart_item.carpet_color,
-            border_color=cart_item.border_color,
-            has_podpyatnik=cart_item.has_podpyatnik,
-            quantity=cart_item.quantity,
-            product_price=cart_item.get_product_price(),
-        )
-
-    return order
-
-
 # Order Details view
 @login_required
 def order_details(request, order_id):
@@ -352,14 +490,60 @@ def order_details(request, order_id):
     context = {
         'order': order,
         'order_items': order_items,
-        'order_total_price': sum(item.get_total_price() for item in order_items),
+        'order_total_price': order.order_total_price,
         'coupon_discount': order.coupon.discount_amount if order.coupon else 0,
-        'grand_total': order.get_order_total_price()
+        'grand_total': order.grand_total
     }
     return render(request, 'accounts/order_details.html', context)
 
 
-# Delete user account feature
+# Функция для генерации PDF
+def render_to_pdf(template_src, context_dict={}):
+    """Генерирует PDF из HTML шаблона"""
+    if not PDF_ENABLED:
+        return HttpResponse("PDF генерация недоступна. Установите xhtml2pdf.", status=400)
+
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    response = HttpResponse(content_type='application/pdf')
+    response[
+        'Content-Disposition'] = f'attachment; filename="invoice_{context_dict.get("order", {}).get("order_id", "order")}.pdf"'
+
+    # Создаем PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+
+    # В случае ошибки
+    if pisa_status.err:
+        return HttpResponse('Ошибка при создании PDF', status=400)
+    return response
+
+
+# Download invoice view
+@login_required
+def download_invoice(request, order_id):
+    order = Order.objects.filter(order_id=order_id).first()
+
+    # Проверяем доступ - только владелец заказа или админ
+    if request.user.is_authenticated:
+        if not (order.user == request.user or request.user.is_staff):
+            messages.error(request, "У вас нет доступа к этому заказу.")
+            return redirect('index')
+    else:
+        # Для неавторизованных нужен специальный токен/хэш (можно добавить позже)
+        messages.error(request, "Для доступа к заказу необходимо авторизоваться.")
+        return redirect('login')
+
+    order_items = order.order_items.all()
+
+    context = {
+        'order': order,
+        'order_items': order_items,
+    }
+
+    return render_to_pdf('accounts/order_pdf_generate.html', context)
+
+
+# Delete account feature
 @login_required
 def delete_account(request):
     if request.method == 'POST':
@@ -369,43 +553,17 @@ def delete_account(request):
         messages.success(request, "Ваш аккаунт успешно удален.")
         return redirect('index')
 
-# accounts/views.py
 
-# accounts/views.py
+# Проверка наличия товара в корзине (AJAX)
+def check_cart_item(request, product_id):
+    if request.method == 'GET':
+        try:
+            cart = Cart.get_cart(request)
+            product = get_object_or_404(Product, uid=product_id)
+            in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
 
-@login_required
-def add_to_cart(request, uid):
-    try:
-        kit_code = request.POST.get('kit')
-        carpet_color_id = request.POST.get('carpet_color')
-        border_color_id = request.POST.get('border_color')
-        has_podp = request.POST.get('podp') == '1'
-        quantity = int(request.POST.get('quantity') or 1)
+            return JsonResponse({'in_cart': in_cart})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
 
-        product = get_object_or_404(Product, uid=uid)
-        kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
-        carpet_color = get_object_or_404(Color, uid=carpet_color_id) if carpet_color_id else None
-        border_color = get_object_or_404(Color, uid=border_color_id) if border_color_id else None
-
-        cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
-
-        item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            kit_variant=kit_variant,
-            carpet_color=carpet_color,
-            border_color=border_color,
-            has_podpyatnik=has_podp,
-            defaults={'quantity': quantity},
-        )
-
-        if not created:
-            item.quantity += quantity
-            item.save()
-
-        messages.success(request, 'Товар добавлен в корзину!')
-
-    except Exception as e:
-        messages.error(request, f'Ошибка при добавлении в корзину: {str(e)}')
-
-    return redirect('cart')
+    return JsonResponse({'error': 'Invalid request method'}, status=405)

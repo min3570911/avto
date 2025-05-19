@@ -227,3 +227,10 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 
 DEFAULT_DOMAIN = '127.0.0.1:8000'
 DEFAULT_HTTP_PROTOCOL = 'http'
+
+# Настройки для Telegram-бота
+TELEGRAM_BOT_TOKEN = config("TELEGRAM_BOT_TOKEN", default="YOUR_TELEGRAM_BOT_TOKEN")  # Токен бота в Telegram
+TELEGRAM_CHAT_ID = config("TELEGRAM_CHAT_ID", default="YOUR_TELEGRAM_CHAT_ID")  # ID чата для уведомлений
+
+# Создаем директорию для шаблонов писем
+TEMPLATES[0]['DIRS'] += [os.path.join(BASE_DIR, 'templates/emails')]

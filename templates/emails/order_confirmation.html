@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение заказа</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .order-details {
+            margin: 20px 0;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .order-number {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .order-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .order-total {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Ваш заказ успешно оформлен!</h2>
+        </div>
+
+        <div class="content">
+            <p>Здравствуйте, <strong>{{ order.customer_name }}</strong>!</p>
+
+            <p>Спасибо за ваш заказ. Ниже приведены детали вашего заказа:</p>
+
+            <div class="order-details">
+                <p class="order-number">Номер заказа: {{ order.order_id }}</p>
+                <p>Дата заказа: {{ order.order_date|date:"d.m.Y H:i" }}</p>
+                <p>Способ доставки: {{ order.get_delivery_method_display }}</p>
+                <p>Адрес доставки: {{ order.shipping_address }}</p>
+
+                <h3>Ваш заказ:</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Кол-во</th>
+                            <th>Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>
+                                {{ item.product.product_name }}
+                                {% if item.kit_variant %}<br><small>{{ item.kit_variant.name }}</small>{% endif %}
+                                {% if item.carpet_color %}<br><small>Цвет коврика: {{ item.carpet_color.name }}</small>{% endif %}
+                                {% if item.border_color %}<br><small>Цвет окантовки: {{ item.border_color.name }}</small>{% endif %}
+                                {% if item.has_podpyatnik %}<br><small>С подпятником</small>{% endif %}
+                            </td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹ {{ item.product_price }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="order-total">
+                    <p>Сумма заказа: ₹ {{ order.order_total_price }}</p>
+                    {% if order.coupon %}
+                    <p>Скидка по купону: -₹ {{ order.coupon.discount_amount }}</p>
+                    {% endif %}
+                    <p>Итого к оплате: <strong>₹ {{ order.grand_total }}</strong></p>
+                </div>
+            </div>
+
+            <p>Наш менеджер свяжется с вами в ближайшее время для подтверждения заказа.</p>
+
+            <p>Если у вас есть вопросы о вашем заказе, пожалуйста, свяжитесь с нами по телефону или email.</p>
+        </div>
+
+        <div class="footer">
+            <p>Это автоматическое письмо, пожалуйста, не отвечайте на него.</p>
+            <p>© 2025 Автоковрики. Все права защищены.</p>
+        </div>
+    </div>
+</body>
+</html>

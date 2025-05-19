@@ -1,3 +1,5 @@
+# accounts/urls.py
+
 from django.urls import path
 from accounts.views import (
     login_page,
@@ -8,15 +10,16 @@ from accounts.views import (
     change_password,
     update_shipping_address,
     cart,
-    add_to_cart,
     update_cart_item,
     remove_cart,
     remove_coupon,
+    place_order,  # 🛒 Новый view для размещения заказа
     success,
     order_history,
     order_details,
     download_invoice,
-    delete_account
+    delete_account,
+    check_cart_item,  # 🛒 Проверка наличия товара в корзине
 )
 from django.contrib.auth import views as auth_views
 
@@ -47,15 +50,19 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 
-    # Cart functionality with add-to-cart, update-cart, remove-cart, and remove-coupon urls.
+    # Cart functionality with update-cart, remove-cart, and remove-coupon urls.
     path('cart/', cart, name="cart"),
-    path('add-to-cart/<uid>/', add_to_cart, name="add_to_cart"),
     path('update_cart_item/', update_cart_item, name='update_cart_item'),
     path('remove-cart/<uid>/', remove_cart, name="remove_cart"),
     path('remove-coupon/<cart_id>/', remove_coupon, name="remove_coupon"),
+    path('check-cart-item/<str:product_id>/', check_cart_item, name="check_cart_item"),
+
+    # Checkout and order placement
+    path('place-order/', place_order, name="place_order"),
 
     # Success url after payment is done.
     path('success/', success, name="success"),
+    path('success/<str:order_id>/', success, name="success"),
 
     # Order history and details urls
     path('order-history/', order_history, name='order_history'),

@@ -1,4 +1,4 @@
-{% extends "base/base.html" %}
+{% extends "base/base.html"%}
 {% block title %}Корзина{% endblock %}
 {% block start %} {% load static %}
 
@@ -6,7 +6,8 @@
     <div class="container">
         {% include 'base/alert.html' %}
         <div class="row">
-            <main class="col-md-9">
+            <!-- Левая колонка - Товары в корзине -->
+            <main class="col-md-8">
                 <div class="card">
                     <table class="table table-borderless table-shopping-cart">
                         <thead class="text-muted">
@@ -62,10 +63,8 @@
                                                 С подпятником<br />
                                                 {% endif %}
 
-                                                {% if cart_item.color_variant.exists %}
-                                                {% for color in cart_item.color_variant.all %}
-                                                Цвет: {{ color.color_name }}<br />
-                                                {% endfor %}
+                                                {% if cart_item.color_variant %}
+                                                Цвет: {{ cart_item.color_variant.color_name }}<br />
                                                 {% endif %}
                                             </p>
                                         </figcaption>
@@ -103,11 +102,6 @@
                     </table>
 
                     <div class="card-body border-top">
-                        <!-- Заменена кнопка Razorpay на обычную форму оформления заказа -->
-                        <a href="{% url 'success' %}" class="btn btn-primary float-md-right">
-                            Оформить заказ <i class="fa fa-chevron-right"></i>
-                        </a>
-
                         <a href="{% url 'index' %}" class="btn btn-light">
                             <i class="fa fa-chevron-left"></i> Продолжить покупки
                         </a>
@@ -122,7 +116,10 @@
                 </div>
             </main>
             <!-- col.// -->
-            <aside class="col-md-3">
+
+            <!-- Правая колонка - Оформление заказа -->
+            <aside class="col-md-4">
+                <!-- Купон -->
                 <div class="card mb-3">
                     <div class="card-body">
                         <form method="POST">
@@ -138,17 +135,17 @@
                             </div>
 
                             {% if cart.coupon %}
-
                             <a href="{% url 'remove_coupon' cart.uid %}" class="btn btn-success">
                                 {{ cart.coupon.coupon_code }}
                             </a>
-
                             {% endif %}
                         </form>
                     </div>
                     <!-- card-body.// -->
                 </div>
                 <!-- card .// -->
+
+                <!-- Итого заказа -->
                 <div class="card">
                     <div class="card-body">
                         <dl class="dlist-align">
@@ -160,7 +157,7 @@
                         {% if cart.coupon %}
                         <dl class="dlist-align">
                             <dt>Скидка:</dt>
-                            <dd class="text-right">₹{{ cart.coupon.discount_amount }}</dd>
+                            <dd class="text-right text-danger">-₹{{ cart.coupon.discount_amount }}</dd>
                         </dl>
                         <dl class="dlist-align">
                             <dt>Итого:</dt>
@@ -177,6 +174,72 @@
                     <!-- card-body.// -->
                 </div>
                 <!-- card .// -->
+
+                <!-- Форма оформления заказа -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Оформление заказа</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'place_order' %}" id="orderForm">
+                            {% csrf_token %}
+
+                            <!-- Контактная информация -->
+                            <div class="form-group">
+                                <label for="customer_name">Имя</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" required
+                                    value="{{ initial_data.customer_name|default:'' }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer_phone">Контактный телефон</label>
+                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="customer_email">Email для связи</label>
+                                <input type="email" class="form-control" id="customer_email" name="customer_email" required
+                                    value="{{ initial_data.customer_email|default:'' }}">
+                            </div>
+
+                            <!-- Способ доставки -->
+                            <div class="form-group">
+                                <label>Способ доставки</label>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input type="radio" id="delivery_europochta" name="delivery_method" value="europochta" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="delivery_europochta">Европочта по Беларуси</label>
+                                </div>
+                                <div class="custom-control custom-radio mb-2">
+                                    <input type="radio" id="delivery_belpochta" name="delivery_method" value="belpochta" class="custom-control-input">
+                                    <label class="custom-control-label" for="delivery_belpochta">Белпочта по Беларуси</label>
+                                </div>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="delivery_yandex" name="delivery_method" value="yandex" class="custom-control-input">
+                                    <label class="custom-control-label" for="delivery_yandex">Яндекс курьер по Минску</label>
+                                </div>
+                            </div>
+
+                            <!-- Адрес доставки -->
+                            <div class="form-group">
+                                <label for="shipping_address">Адрес доставки</label>
+                                <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required
+                                    placeholder="Для Европочты/Белпочты: отделение и город. Для курьера: полный адрес в Минске"></textarea>
+                            </div>
+
+                            <!-- Примечание к заказу -->
+                            <div class="form-group">
+                                <label for="order_notes">Примечание к заказу</label>
+                                <textarea class="form-control" id="order_notes" name="order_notes" rows="2"></textarea>
+                            </div>
+
+                            <!-- Кнопка оформления заказа -->
+                            <button type="submit" class="btn btn-primary btn-block" id="placeOrderBtn">
+                                Оформить заказ
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- Форма оформления заказа .// -->
             </aside>
             <!-- col.// -->
         </div>
@@ -204,9 +267,57 @@
                 if (data.success) {
                     window.location.reload();
                 } else {
-                    alert("Ошибка обновления корзины"); // Error updating cart -> Ошибка обновления корзины
+                    alert("Ошибка обновления корзины");
                 }
             });
     }
+
+    // Валидация формы перед отправкой
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        // Получаем значения полей
+        const name = document.getElementById('customer_name').value.trim();
+        const phone = document.getElementById('customer_phone').value.trim();
+        const email = document.getElementById('customer_email').value.trim();
+        const address = document.getElementById('shipping_address').value.trim();
+
+        let hasErrors = false;
+
+        // Проверяем обязательные поля
+        if (!name) {
+            alert('Пожалуйста, укажите ваше имя');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        if (!phone) {
+            alert('Пожалуйста, укажите контактный телефон');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        if (!email) {
+            alert('Пожалуйста, укажите email для связи');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        if (!address) {
+            alert('Пожалуйста, укажите адрес доставки');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        // Если есть ошибки, останавливаем отправку формы
+        if (hasErrors) {
+            return false;
+        }
+
+        // Блокируем кнопку после отправки, чтобы избежать двойной отправки
+        if (!hasErrors) {
+            const btn = document.getElementById('placeOrderBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Оформляем заказ...';
+        }
+    });
 </script>
 {% endblock %}

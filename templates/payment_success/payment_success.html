@@ -1,5 +1,5 @@
 {% extends 'base/base.html' %}
-{% block title %}Payment Successful!{% endblock %}
+{% block title %}Заказ успешно оформлен{% endblock %}
 {% block start %}
 
 <!-- ============================ COMPONENT Payment Success ================================= -->
@@ -9,20 +9,24 @@
       <div class="col-xl-5">
         <div class="card mb-4">
           <div class="card-header" style="text-align: center; font-size: 25px">
-            Payment Successful!
+            Заказ успешно оформлен!
           </div>
           <div class="card-body text-center">
+            <div class="text-success mb-4">
+              <i class="fa fa-check-circle" style="font-size: 4em;"></i>
+            </div>
+            <h4 class="mb-3">Спасибо за ваш заказ!</h4>
             <p>
-              Your order with Order ID: <strong>{{ order_id }} </strong> has
-              been successfully processed.
+              Номер вашего заказа: <strong>{{ order.order_id }}</strong>
             </p>
-            <p>Thank you for shopping with us!</p>
-            <a href="{% url 'index' %}" class="btn btn-primary mt-3 mb-3 mr-3">
-              Continue Shopping
-            </a>
-            <a href="{% url 'order_details' order_id=order_id %}" class="btn btn-warning">
-              View Order Details
-            </a>
+            <p>Мы отправили подтверждение на ваш email: {{ order.customer_email }}</p>
+            <p>Наш менеджер свяжется с вами в ближайшее время для подтверждения деталей.</p>
+
+            <div class="mt-4 pt-3 border-top">
+              <a href="{% url 'index' %}" class="btn btn-primary">
+                Вернуться на главную
+              </a>
+            </div>
           </div>
         </div>
       </div>
