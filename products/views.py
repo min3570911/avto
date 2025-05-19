@@ -327,7 +327,7 @@ def move_to_cart(request, uid):
     return redirect('cart')
 
 
-@login_required
+# Убираем декоратор @login_required
 def add_to_cart(request, uid):
     """🛒 Добавление товара в корзину с выбранными цветами и опциями"""
     try:
@@ -346,7 +346,7 @@ def add_to_cart(request, uid):
             carpet_color = get_object_or_404(Color, uid=carpet_color_id)
             if not carpet_color.is_available:
                 messages.warning(request,
-                                 f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                                f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
                 return redirect(request.META.get('HTTP_REFERER'))
 
         border_color = None
@@ -354,10 +354,11 @@ def add_to_cart(request, uid):
             border_color = get_object_or_404(Color, uid=border_color_id)
             if not border_color.is_available:
                 messages.warning(request,
-                                 f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                                f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
                 return redirect(request.META.get('HTTP_REFERER'))
 
-        cart, _ = Cart.objects.get_or_create(user=request.user, is_paid=False)
+        # Получаем корзину для текущего пользователя/сессии
+        cart = Cart.get_cart(request)
 
         # Проверяем, есть ли уже такой товар в корзине
         item, created = CartItem.objects.get_or_create(

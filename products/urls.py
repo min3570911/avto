@@ -9,7 +9,11 @@ urlpatterns = [
     path('product-reviews/', product_reviews, name='product_reviews'),
     path('product-reviews/edit/<uuid:review_uid>/', edit_review, name='edit_review'),
     path('like-review/<review_uid>/', like_review, name='like_review'),
-    path('dislike-review/<review_uid>/',dislike_review, name='dislike_review'),
+    path('dislike-review/<review_uid>/', dislike_review, name='dislike_review'),
+
+    # Добавляем URL для add_to_cart выше паттерна со слагом, чтобы избежать конфликтов
+    path('add-to-cart/<uid>/', add_to_cart, name='add_to_cart'),
+
     path('<slug>/', get_product, name='get_product'),
     path('<slug>/<review_uid>/delete/', delete_review, name='delete_review'),
 ]

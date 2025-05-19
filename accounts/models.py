@@ -16,6 +16,8 @@ class Profile(BaseModel):
     email_token = models.CharField(max_length=100, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile', null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
+    shipping_address = models.ForeignKey(ShippingAddress, on_delete=models.SET_NULL,
+                                         related_name="shipping_address", null=True, blank=True)
 
     def __str__(self):
         return self.user.username
@@ -29,11 +31,12 @@ class Profile(BaseModel):
             try:
                 old_profile = Profile.objects.get(pk=self.pk)
                 if old_profile.profile_image and old_profile.profile_image != self.profile_image:
-                    old_image_path = os.path.join(settings.MEDIA_ROOT, old_profile.profile_image.path)
-                    if os.path.exists(old_image_path):
-                        os.remove(old_image_path)
-            except Profile.DoesNotExist:
-                # Profile does not exist, so nothing to do
+                    if old_profile.profile_image.path:
+                        old_image_path = os.path.join(settings.MEDIA_ROOT, old_profile.profile_image.path)
+                        if os.path.exists(old_image_path):
+                            os.remove(old_image_path)
+            except (Profile.DoesNotExist, ValueError, FileNotFoundError):
+                # Обрабатываем различные возможные ошибки
                 pass
 
         super(Profile, self).save(*args, **kwargs)
@@ -124,10 +127,10 @@ class Order(BaseModel):
     # Убираем обязательную связь с пользователем
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="orders", null=True, blank=True)
 
-    # Добавляем поля для контактной информации
-    customer_name = models.CharField(max_length=100, verbose_name="Имя клиента")
-    customer_phone = models.CharField(max_length=20, verbose_name="Контактный телефон")
-    customer_email = models.EmailField(verbose_name="Email клиента")
+    # Добавляем поля для контактной информации (делаем их необязательными для миграции)
+    customer_name = models.CharField(max_length=100, verbose_name="Имя клиента", null=True, blank=True)
+    customer_phone = models.CharField(max_length=20, verbose_name="Контактный телефон", null=True, blank=True)
+    customer_email = models.EmailField(verbose_name="Email клиента", null=True, blank=True)
 
     # Информация о доставке
     delivery_method = models.CharField(
@@ -137,9 +140,11 @@ class Order(BaseModel):
             ('belpochta', 'Белпочта по Беларуси'),
             ('yandex', 'Яндекс курьер по Минску')
         ],
-        verbose_name="Способ доставки"
+        verbose_name="Способ доставки",
+        null=True,  # Разрешаем null для миграции
+        blank=True
     )
-    shipping_address = models.TextField(verbose_name="Адрес доставки")
+    shipping_address = models.TextField(verbose_name="Адрес доставки", blank=True, null=True)
     order_notes = models.TextField(blank=True, null=True, verbose_name="Примечание к заказу")
 
     # Основные поля заказа (оставляем как есть)
@@ -155,12 +160,31 @@ class Order(BaseModel):
     tracking_code = models.CharField(max_length=50, blank=True, null=True, verbose_name="Код отслеживания")
 
     def __str__(self):
-        return f"Заказ #{self.order_id} от {self.customer_name}"
+        if self.customer_name:
+            return f"Заказ #{self.order_id} от {self.customer_name}"
+        return f"Заказ #{self.order_id}"
 
     def get_delivery_method_display(self):
         """Возвращает читаемое название способа доставки"""
         method_dict = dict(self._meta.get_field('delivery_method').choices)
         return method_dict.get(self.delivery_method, self.delivery_method)
+
+    def save(self, *args, **kwargs):
+        """Автоматически заполняем поля клиента на основе данных пользователя"""
+        if self.user and not self.customer_name:
+            full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+            self.customer_name = full_name if full_name else self.user.username
+
+        if self.user and not self.customer_email and self.user.email:
+            self.customer_email = self.user.email
+
+        if self.user and not self.customer_phone:
+            # Попытка получить телефон из профиля пользователя, если есть
+            profile = Profile.objects.filter(user=self.user).first()
+            if profile and hasattr(profile, 'phone') and profile.phone:
+                self.customer_phone = profile.phone
+
+        super().save(*args, **kwargs)
 
 
 class OrderItem(BaseModel):
@@ -180,11 +204,13 @@ class OrderItem(BaseModel):
         return f"{self.product.product_name} - {self.quantity}"
 
     def get_total_price(self):
-        # Use the get_product_price method from CartItem
+        # Используем метод get_product_price из CartItem с учетом всех полей
         cart_item = CartItem(
             product=self.product,
             kit_variant=self.kit_variant,
             color_variant=self.color_variant,
+            carpet_color=self.carpet_color,  # Добавляем цвет коврика
+            border_color=self.border_color,  # Добавляем цвет окантовки
             quantity=self.quantity,
             has_podpyatnik=self.has_podpyatnik
         )
