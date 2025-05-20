@@ -157,11 +157,6 @@ function setupEventHandlers() {
  * @param {string} kitCode - Код выбранной комплектации
  * 🔄 Обновляет стили и данные согласно выбранной комплектации
  */
-/**
- * Обновляет конфигурацию при выборе комплектации (стили активной опции)
- * @param {string} kitCode - Код выбранной комплектации
- * 🔄 Обновляет стили и данные согласно выбранной комплектации
- */
 function updateConfig(kitCode) {
   // Обновляем визуальное состояние элементов выбора комплектации
   document.querySelectorAll('.kit-option-label').forEach(label => {
@@ -270,29 +265,20 @@ function updatePrice() {
     return;
   }
 
+  // Получаем ПОЛНУЮ стоимость комплектации (не модификатор)
   const kitDataElement = kitDataContainer.querySelector(`div[data-kit-code="${kitCode}"]`);
-  let kitPriceModifier = 0;
+  let kitPrice = 0;
   if (kitDataElement && kitDataElement.dataset.kitPrice) {
-    kitPriceModifier = parseFloat(kitDataElement.dataset.kitPrice);
-    if (isNaN(kitPriceModifier)) {
-      console.warn(`updatePrice: Модификатор цены для комплектации "${kitCode}" не число. Используем 0.`);
-      kitPriceModifier = 0;
+    kitPrice = parseFloat(kitDataElement.dataset.kitPrice);
+    if (isNaN(kitPrice)) {
+      console.warn(`updatePrice: Цена для комплектации "${kitCode}" не число. Используем 0.`);
+      kitPrice = 0;
     }
   } else {
-    console.warn(`updatePrice: Данные или цена для кода комплектации "${kitCode}" не найдены. Используем 0 для модификатора.`);
+    console.warn(`updatePrice: Данные или цена для кода комплектации "${kitCode}" не найдены. Используем 0.`);
   }
 
-  const basePriceMeta = document.querySelector('meta[name="product-price"]');
-  if (!basePriceMeta) {
-    console.error("updatePrice: не найден мета-тег с базовой ценой товара.");
-    return;
-  }
-  let basePrice = parseFloat(basePriceMeta.content);
-  if (isNaN(basePrice)) {
-    console.error("updatePrice: Базовая цена товара не число. Используем 0.");
-    basePrice = 0;
-  }
-
+  // Стоимость подпятника из опции (не хардкод)
   let podpPrice = 0;
   const podpCheck = document.getElementById('podp_check');
   if (podpCheck && podpCheck.checked) {
@@ -319,7 +305,8 @@ function updatePrice() {
     }
   }
 
-  const totalPrice = (basePrice + kitPriceModifier + podpPrice) * quantity;
+  // Расчет цены: используем ТОЛЬКО стоимость комплектации + подпятник
+  const totalPrice = (kitPrice + podpPrice) * quantity;
   const priceElement = document.getElementById('finalPrice');
   if (priceElement) {
     priceElement.textContent = `₹${totalPrice.toFixed(2)}`;

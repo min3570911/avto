@@ -553,7 +553,7 @@ font-weight: bold;
  {% if forloop.first %}checked{% endif %}
 class="custom-control-input"
  />
- {{ kit.name }} (+{{ kit.price_modifier }} руб.)
+ {{ kit.name }} ({{ kit.price_modifier }} руб.)
 </label>
  {% endfor %}
 
@@ -562,7 +562,7 @@ class="custom-control-input"
  data-attr-id="7" data-attr-value="1"
  {# onchange="updateConfig();" #} >
  <label class="form-check-label" for="podp_check">
- Подпятник (+15.00 руб.) </label>
+ Подпятник ({{ podpyatnik_option.price_modifier|default:"100.00" }} руб.) </label>
  </div>
  </div>
  </div>
@@ -768,9 +768,9 @@ class="custom-control-input"
  data-kit-price="{{ kit.price_modifier }}"
  ></div>
  {% endfor %}
-<div {# Этот div должен содержать цену подпятника, если она не фиксирована #}
+<div
  data-option-code="podpyatnik"
- data-option-price="15" {# Цена подпятника, если она фиксирована. Иначе, ее нужно получать из модели KitVariant #}
+ data-option-price="{{ podpyatnik_option.price_modifier|default:'100' }}"
  ></div>
 </div>
 <script src="/media/js/product.js" type="text/javascript"></script>
