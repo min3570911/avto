@@ -2,252 +2,297 @@
 {% block title %}Корзина{% endblock %}
 {% block start %} {% load static %}
 
+<style>
+  /* Стили для мобильной версии */
+  @media (max-width: 576px) {
+    .table-shopping-cart thead {
+      display: none;
+    }
+
+    .table-shopping-cart,
+    .table-shopping-cart tbody,
+    .table-shopping-cart tr,
+    .table-shopping-cart td {
+      display: block;
+      width: 100%;
+    }
+
+    .table-shopping-cart tr {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+    }
+
+    .itemside {
+      display: flex;
+      align-items: center;
+    }
+
+    .price-wrap {
+      margin: 10px 0;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+  }
+
+  /* Стили для скрытия/показа блока доставки */
+  .delivery-section {
+    display: none;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+  }
+
+  .delivery-section.active {
+    display: block;
+  }
+
+  /* Улучшения для чекбокса */
+  .custom-checkbox-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .custom-checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+  }
+
+  /* Стили для суммы итого */
+  .total-amount-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 20px 0;
+  }
+
+  .total-amount-label {
+    font-size: 22px;
+    font-weight: bold;
+    margin-right: 15px;
+  }
+
+  .total-amount-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #dc3545;
+  }
+</style>
+
 <section class="section-content padding-y">
     <div class="container">
         {% include 'base/alert.html' %}
-        <div class="row">
-            <!-- Левая колонка - Товары в корзине -->
-            <main class="col-md-8">
-                <div class="card">
-                    <table class="table table-borderless table-shopping-cart">
-                        <thead class="text-muted">
-                            <tr class="small text-uppercase">
-                                <th scope="col">Товар</th>
-                                <th scope="col" width="120">Количество</th>
-                                <th scope="col" width="120">Цена</th>
-                                <th scope="col" class="text-right" width="200"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for cart_item in cart.cart_items.all %}
-                            <tr>
-                                <td>
-                                    <figure class="itemside">
-                                        <div class="aside">
-                                            {% if cart_item.kit_variant and cart_item.kit_variant.image %}
-                                            <img src="{{ cart_item.kit_variant.image.url }}" class="img-sm"
-                                                alt="{{ cart_item.kit_variant.name }}" />
-                                            {% else %}
-                                            <img src="/media/{{ cart_item.product.product_images.first.image }}"
-                                                class="img-sm" alt="{{ cart_item.product.product_name }}" />
-                                            {% endif %}
-                                        </div>
-                                        <figcaption class="info">
-                                            <a href="{% url 'get_product' cart_item.product.slug %}"
-                                                class="title text-dark">
-                                                {{ cart_item.product.product_name }}
-                                            </a>
 
-                                            <p class="text-muted small">
-                                                {% if cart_item.kit_variant %}
-                                                Комплектация: {{ cart_item.kit_variant.name }}<br />
-                                                {% else %}
-                                                Комплектация: Н/Д <br />
-                                                {% endif %}
-
-                                                {% if cart_item.carpet_color %}
-                                                Цвет коврика:
-                                                <span
-                                                    style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
-                                                {{ cart_item.carpet_color.name }}<br />
-                                                {% endif %}
-
-                                                {% if cart_item.border_color %}
-                                                Цвет окантовки:
-                                                <span
-                                                    style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
-                                                {{ cart_item.border_color.name }}<br />
-                                                {% endif %}
-
-                                                {% if cart_item.has_podpyatnik %}
-                                                С подпятником<br />
-                                                {% endif %}
-
-                                                {% if cart_item.color_variant %}
-                                                Цвет: {{ cart_item.color_variant.color_name }}<br />
-                                                {% endif %}
-                                            </p>
-                                        </figcaption>
-                                    </figure>
-                                </td>
-                                <td>
-                                    <select class="form-control"
-                                        onchange="updateCartItem(this, '{{ cart_item.uid }}')">
-                                        {% for i in quantity_range %}
-                                        <option value="{{ i }}" {% if cart_item.quantity == i %}selected{% endif %}>
-                                            {{ i }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td>
-                                    <div class="price-wrap">
-                                        <var class="price">₹{{ cart_item.get_product_price }} </var>
-                                    </div>
-                                    <!-- price-wrap .// -->
-                                </td>
-                                <td class="text-right">
-                                    <a data-original-title="Добавить в избранное" title="" href="" class="btn btn-light"
-                                        data-toggle="tooltip">
-                                        <i class="fa fa-heart"></i>
-                                    </a>
-                                    <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
-                                        Удалить
-                                    </a>
-                                </td>
-                            </tr>
-
-                            {% endfor %}
-                        </tbody>
-                    </table>
-
-                    <div class="card-body border-top">
-                        <a href="{% url 'index' %}" class="btn btn-light">
-                            <i class="fa fa-chevron-left"></i> Продолжить покупки
-                        </a>
-                    </div>
-                </div>
-                <!-- card.// -->
-
-                <div class="alert alert-success mt-3">
-                    <p class="icontext">
-                        <i class="icon text-success fa fa-truck"></i> Бесплатная доставка в течение 1-2 недель
-                    </p>
-                </div>
-            </main>
-            <!-- col.// -->
-
-            <!-- Правая колонка - Оформление заказа -->
-            <aside class="col-md-4">
-                <!-- Купон -->
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <form method="POST">
-                            {% csrf_token %}
-                            <div class="form-group">
-                                <label>Есть купон?</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" name="coupon" placeholder="Код купона" />
-                                    <span class="input-group-append">
-                                        <button type="submit" class="btn btn-primary">Применить</button>
-                                    </span>
+        <!-- Блок с товарами в корзине -->
+        <div class="card mb-3">
+            <table class="table table-borderless table-shopping-cart">
+                <thead class="text-muted">
+                    <tr class="small text-uppercase">
+                        <th scope="col">Товар</th>
+                        <th scope="col" width="120">Количество</th>
+                        <th scope="col" width="120">Цена</th>
+                        <th scope="col" class="text-right" width="100"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cart_item in cart.cart_items.all %}
+                    <tr>
+                        <td>
+                            <figure class="itemside">
+                                <div class="aside">
+                                    {% if cart_item.kit_variant and cart_item.kit_variant.image %}
+                                    <img src="{{ cart_item.kit_variant.image.url }}" class="img-sm"
+                                        alt="{{ cart_item.kit_variant.name }}" />
+                                    {% else %}
+                                    <img src="/media/{{ cart_item.product.product_images.first.image }}"
+                                        class="img-sm" alt="{{ cart_item.product.product_name }}" />
+                                    {% endif %}
                                 </div>
-                            </div>
+                                <figcaption class="info">
+                                    <a href="{% url 'get_product' cart_item.product.slug %}"
+                                        class="title text-dark">
+                                        {{ cart_item.product.product_name }}
+                                    </a>
 
-                            {% if cart.coupon %}
-                            <a href="{% url 'remove_coupon' cart.uid %}" class="btn btn-success">
-                                {{ cart.coupon.coupon_code }}
+                                    <p class="text-muted small mb-0">
+                                        {% if cart_item.kit_variant %}
+                                        Комплектация: {{ cart_item.kit_variant.name }}<br />
+                                        {% endif %}
+
+                                        {% if cart_item.carpet_color %}
+                                        Цвет коврика:
+                                        <span
+                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+                                        {{ cart_item.carpet_color.name }}<br />
+                                        {% endif %}
+
+                                        {% if cart_item.border_color %}
+                                        Цвет окантовки:
+                                        <span
+                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+                                        {{ cart_item.border_color.name }}<br />
+                                        {% endif %}
+
+                                        {% if cart_item.has_podpyatnik %}
+                                        С подпятником<br />
+                                        {% endif %}
+                                    </p>
+                                </figcaption>
+                            </figure>
+                        </td>
+                        <td>
+                            <select class="form-control"
+                                onchange="updateCartItem(this, '{{ cart_item.uid }}')">
+                                {% for i in quantity_range %}
+                                <option value="{{ i }}" {% if cart_item.quantity == i %}selected{% endif %}>
+                                    {{ i }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <div class="price-wrap">
+                                <var class="price">₹{{ cart_item.get_product_price }}</var>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
+                                Удалить
                             </a>
-                            {% endif %}
-                        </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Блок с кнопкой продолжить покупки -->
+            <div class="card-body border-top">
+                <a href="{% url 'index' %}" class="btn btn-light">
+                    <i class="fa fa-chevron-left"></i> Продолжить покупки
+                </a>
+            </div>
+        </div>
+
+        <!-- Блок с информацией о доставке -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <i class="fa fa-truck text-success mr-2"></i> Отправление по предоплате или наложенным платежом. Стоимость зависит от веса и дальности региона РБ. Сроки доставки: 2-3 дня.
+            </div>
+        </div>
+
+        <!-- ФОРМА ОФОРМЛЕНИЯ ЗАКАЗА -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Оформление заказа</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'place_order' %}" id="orderForm">
+                    {% csrf_token %}
+
+                    <!-- Основная информация -->
+                    <div class="form-group">
+                        <label for="customer_name">Имя</label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
                     </div>
-                    <!-- card-body.// -->
-                </div>
-                <!-- card .// -->
 
-                <!-- Итого заказа -->
-                <div class="card">
-                    <div class="card-body">
-                        <dl class="dlist-align">
-                            <dt>Общая стоимость:</dt>
-                            <dd class="text-right">
-                                <strong>₹{{ cart.get_cart_total }}</strong>
-                            </dd>
-                        </dl>
-                        {% if cart.coupon %}
-                        <dl class="dlist-align">
-                            <dt>Скидка:</dt>
-                            <dd class="text-right text-danger">-₹{{ cart.coupon.discount_amount }}</dd>
-                        </dl>
-                        <dl class="dlist-align">
-                            <dt>Итого:</dt>
-                            <dd class="text-right h5">
-                                <strong>₹{{ cart.get_cart_total_price_after_coupon }}</strong>
-                            </dd>
-                        </dl>
-                        {% endif %}
-                        <hr />
-                        <p class="text-center mb-3">
-                            <img src="{% static 'images/misc/payments.png' %}" height="26" />
-                        </p>
+                    <div class="form-group">
+                        <label for="customer_phone">Контактный телефон</label>
+                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
                     </div>
-                    <!-- card-body.// -->
-                </div>
-                <!-- card .// -->
 
-                <!-- Форма оформления заказа -->
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Оформление заказа</h5>
+                    <div class="form-group">
+                        <label for="customer_city">Город</label>
+                        <input type="text" class="form-control" id="customer_city" name="customer_city" required>
                     </div>
-                    <div class="card-body">
-                        <form method="POST" action="{% url 'place_order' %}" id="orderForm">
-                            {% csrf_token %}
 
-                            <!-- Контактная информация -->
-                            <div class="form-group">
-                                <label for="customer_name">Имя</label>
-                                <input type="text" class="form-control" id="customer_name" name="customer_name" required
-                                    value="{{ initial_data.customer_name|default:'' }}">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="customer_phone">Контактный телефон</label>
-                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="customer_email">Email для связи</label>
-                                <input type="email" class="form-control" id="customer_email" name="customer_email" required
-                                    value="{{ initial_data.customer_email|default:'' }}">
-                            </div>
-
-                            <!-- Способ доставки -->
-                            <div class="form-group">
-                                <label>Способ доставки</label>
-                                <div class="custom-control custom-radio mb-2">
-                                    <input type="radio" id="delivery_europochta" name="delivery_method" value="europochta" class="custom-control-input" checked>
-                                    <label class="custom-control-label" for="delivery_europochta">Европочта по Беларуси</label>
-                                </div>
-                                <div class="custom-control custom-radio mb-2">
-                                    <input type="radio" id="delivery_belpochta" name="delivery_method" value="belpochta" class="custom-control-input">
-                                    <label class="custom-control-label" for="delivery_belpochta">Белпочта по Беларуси</label>
-                                </div>
-                                <div class="custom-control custom-radio">
-                                    <input type="radio" id="delivery_yandex" name="delivery_method" value="yandex" class="custom-control-input">
-                                    <label class="custom-control-label" for="delivery_yandex">Яндекс курьер по Минску</label>
-                                </div>
-                            </div>
-
-                            <!-- Адрес доставки -->
-                            <div class="form-group">
-                                <label for="shipping_address">Адрес доставки</label>
-                                <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3" required
-                                    placeholder="Для Европочты/Белпочты: отделение и город. Для курьера: полный адрес в Минске"></textarea>
-                            </div>
-
-                            <!-- Примечание к заказу -->
-                            <div class="form-group">
-                                <label for="order_notes">Примечание к заказу</label>
-                                <textarea class="form-control" id="order_notes" name="order_notes" rows="2"></textarea>
-                            </div>
-
-                            <!-- Кнопка оформления заказа -->
-                            <button type="submit" class="btn btn-primary btn-block" id="placeOrderBtn">
-                                Оформить заказ
-                            </button>
-                        </form>
+                    <!-- Чекбокс для доставки -->
+                    <div class="custom-checkbox-container">
+                        <input type="checkbox" id="need_delivery" name="need_delivery"
+                               onclick="toggleDeliverySection()">
+                        <label for="need_delivery">
+                            🚚 Нужна доставка (оплачивается отдельно)
+                        </label>
                     </div>
-                </div>
-                <!-- Форма оформления заказа .// -->
-            </aside>
-            <!-- col.// -->
+
+                    <!-- Скрываемая секция доставки -->
+                    <div id="deliverySection" class="delivery-section">
+                        <!-- Способ доставки -->
+                        <div class="form-group">
+                            <label>Способ доставки</label>
+                            <div class="custom-control custom-radio mb-2">
+                                <input type="radio" id="delivery_europochta" name="delivery_method" value="europochta" class="custom-control-input" checked>
+                                <label class="custom-control-label" for="delivery_europochta">Европочта по Беларуси</label>
+                            </div>
+                            <div class="custom-control custom-radio mb-2">
+                                <input type="radio" id="delivery_belpochta" name="delivery_method" value="belpochta" class="custom-control-input">
+                                <label class="custom-control-label" for="delivery_belpochta">Белпочта по Беларуси</label>
+                            </div>
+                            <div class="custom-control custom-radio">
+                                <input type="radio" id="delivery_yandex" name="delivery_method" value="yandex" class="custom-control-input">
+                                <label class="custom-control-label" for="delivery_yandex">Яндекс курьер по Минску</label>
+                            </div>
+                        </div>
+
+                        <!-- Адрес доставки -->
+                        <div class="form-group">
+                            <label for="shipping_address">Адрес доставки</label>
+                            <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3"
+                                placeholder="Для Европочты/Белпочты: отделение и город. Для курьера: полный адрес в Минске"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Примечание к заказу -->
+                    <div class="form-group">
+                        <label for="order_notes">Примечание к заказу</label>
+                        <textarea class="form-control" id="order_notes" name="order_notes" rows="2"></textarea>
+                    </div>
+
+                    <!-- Согласие с условиями -->
+                    <div class="custom-checkbox-container">
+                        <input type="checkbox" id="terms_agree" name="terms_agree" required>
+                        <label for="terms_agree">
+                            Оформляя заказ, я подтверждаю свое согласие с
+                            <a href="/terms/" target="_blank">Условиями использования сайта</a> и
+                            <a href="/return-policy/" target="_blank">Условиями возврата товара</a>
+                        </label>
+                    </div>
+
+                    <!-- Итоговая стоимость (увеличенная и перемещенная) -->
+                    <div class="total-amount-container">
+                        <span class="total-amount-label">ИТОГО:</span>
+                        <span class="total-amount-value">₹{{ cart.get_cart_total }}</span>
+                    </div>
+
+                    <!-- Кнопка оформления заказа -->
+                    <button type="submit" class="btn btn-primary btn-block" id="placeOrderBtn">
+                        Оформить заказ
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-    <!-- container .// -->
 </section>
 
 <script>
+    // Функция для переключения видимости секции доставки
+    function toggleDeliverySection() {
+        const deliverySection = document.getElementById('deliverySection');
+        const needDelivery = document.getElementById('need_delivery').checked;
+
+        if (needDelivery) {
+            deliverySection.classList.add('active');
+            document.getElementById('shipping_address').setAttribute('required', 'required');
+        } else {
+            deliverySection.classList.remove('active');
+            document.getElementById('shipping_address').removeAttribute('required');
+        }
+    }
+
+    // Функция обновления количества товара
     function updateCartItem(selectElement, cartItemId) {
         const quantity = selectElement.value;
 
@@ -262,14 +307,14 @@
                 "quantity": quantity
             })
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert("Ошибка обновления корзины");
-                }
-            });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert("Ошибка обновления корзины");
+            }
+        });
     }
 
     // Валидация формы перед отправкой
@@ -277,8 +322,9 @@
         // Получаем значения полей
         const name = document.getElementById('customer_name').value.trim();
         const phone = document.getElementById('customer_phone').value.trim();
-        const email = document.getElementById('customer_email').value.trim();
-        const address = document.getElementById('shipping_address').value.trim();
+        const city = document.getElementById('customer_city').value.trim();
+        const termsAgree = document.getElementById('terms_agree').checked;
+        const needDelivery = document.getElementById('need_delivery').checked;
 
         let hasErrors = false;
 
@@ -295,16 +341,26 @@
             hasErrors = true;
         }
 
-        if (!email) {
-            alert('Пожалуйста, укажите email для связи');
+        if (!city) {
+            alert('Пожалуйста, укажите город');
             e.preventDefault();
             hasErrors = true;
         }
 
-        if (!address) {
-            alert('Пожалуйста, укажите адрес доставки');
+        if (!termsAgree) {
+            alert('Необходимо согласиться с условиями');
             e.preventDefault();
             hasErrors = true;
+        }
+
+        // Проверяем поля доставки, если она выбрана
+        if (needDelivery) {
+            const address = document.getElementById('shipping_address').value.trim();
+            if (!address) {
+                alert('Пожалуйста, укажите адрес доставки');
+                e.preventDefault();
+                hasErrors = true;
+            }
         }
 
         // Если есть ошибки, останавливаем отправку формы
@@ -312,12 +368,10 @@
             return false;
         }
 
-        // Блокируем кнопку после отправки, чтобы избежать двойной отправки
-        if (!hasErrors) {
-            const btn = document.getElementById('placeOrderBtn');
-            btn.disabled = true;
-            btn.innerHTML = 'Оформляем заказ...';
-        }
+        // Блокируем кнопку после отправки
+        const btn = document.getElementById('placeOrderBtn');
+        btn.disabled = true;
+        btn.innerHTML = 'Оформляем заказ...';
     });
 </script>
 {% endblock %}
