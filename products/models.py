@@ -77,12 +77,18 @@ class Product(BaseModel):
     def __str__(self) -> str:
         return self.product_name
 
-    def get_product_price_by_kit(self, kit_code):
+    def get_product_price_by_kit(self, kit_code='salon'):
+        """
+        🛒 Получает цену товара с учетом выбранной комплектации
+
+        @param kit_code: код комплектации, по умолчанию 'salon'
+        @return: полную стоимость комплектации, а не модификатор к базовой цене
+        """
         # Получаем комплектацию из справочника
         kit = KitVariant.objects.filter(code=kit_code).first()
         if kit:
-            return self.price + float(kit.price_modifier)
-        return self.price
+            return float(kit.price_modifier)  # Возвращаем полную стоимость комплектации
+        return float(self.price)  # Запасной вариант - базовая цена
 
     def get_rating(self):
         total = sum(int(review['stars']) for review in self.reviews.values())

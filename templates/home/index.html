@@ -24,16 +24,110 @@
     animation-timeline: view();
     animation-range: entry 0% cover 40%;
   }
+  
+  /* Стили для карточек категорий */
+  .category-section {
+    margin-bottom: 40px;
+  }
+  
+  .category-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    position: relative;
+    display: inline-block;
+  }
+  
+  .category-title:after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background-color: #2a41e8;
+  }
+  
+  .category-card {
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+  }
+  
+  .category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .category-card .img-wrap {
+    height: 180px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+  }
+  
+  .category-card .img-wrap img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease;
+  }
+  
+  .category-card:hover .img-wrap img {
+    transform: scale(1.05);
+  }
+  
+  .category-card .category-name {
+    padding: 15px;
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+  }
+  
+  .category-card a {
+    text-decoration: none;
+    display: block;
+  }
 </style>
+
 <div class="container mt-3 pt-3">
   {% include 'base/alert.html' %}
+
+  <!-- Секция категорий - НОВЫЙ БЛОК -->
+  <div class="category-section">
+    <h2 class="category-title">Категории ковриков</h2>
+    <div class="row">
+      {% for category in categories %}
+      <div class="col-md-3 col-sm-6">
+        <div class="category-card">
+          <a href="{% url 'category' category.slug %}">
+            <div class="img-wrap">
+              <img src="/media/{{category.category_image}}" alt="{{category.category_name}}">
+            </div>
+            <div class="category-name">
+              {{category.category_name}}
+            </div>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <!-- Конец секции категорий -->
+  
   <!-- Filter Section -->
   <div class="filter-section mb-3">
     <form method="GET" class="row">
       <div class="form-group col-md-6">
-        <label for="category">Category:</label>
+        <label for="category">Категория:</label>
         <select id="category" name="category" class="form-control" onchange="this.form.submit()">
-          <option value="">All</option>
+          <option value="">Все</option>
           {% for category in categories %}
           <option value="{{ category.category_name }}" {% if selected_category == category.category_name %} selected {% endif %}>
             {{ category.category_name }}
@@ -44,12 +138,12 @@
       
       <!-- Sort Section -->
       <div class="form-group col-md-6">
-        <label for="sort">Sort by:</label>
+        <label for="sort">Сортировать по:</label>
         <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
-          <option value="">Select</option>
-          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest</option>
-          <option value="priceAsc" {% if selected_sort == 'priceAsc' %}selected{% endif %}>Price: Low-High</option>
-          <option value="priceDesc" {% if selected_sort == 'priceDesc' %}selected{% endif %}>Price: High-Low</option>
+          <option value="">Выбрать</option>
+          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Сначала новые</option>
+          <option value="priceAsc" {% if selected_sort == 'priceAsc' %}selected{% endif %}>Цена: по возрастанию</option>
+          <option value="priceDesc" {% if selected_sort == 'priceDesc' %}selected{% endif %}>Цена: по убыванию</option>
         </select>
       </div>
     </form>
@@ -79,12 +173,12 @@
       {% if products.has_previous %}
       <li class="page-item">
         <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
-          <span aria-hidden="true">&laquo; Previous</span>
+          <span aria-hidden="true">&laquo; Предыдущая</span>
         </a>
       </li>
       {% else %}
       <li class="page-item disabled">
-        <a class="page-link">Previous</a>
+        <a class="page-link">Предыдущая</a>
       </li>
       {% endif %}
 
@@ -97,12 +191,12 @@
       {% if products.has_next %}
       <li class="page-item">
         <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
-          <span aria-hidden="true">Next &raquo;</span>
+          <span aria-hidden="true">Следующая &raquo;</span>
         </a>
       </li>
       {% else %}
       <li class="page-item disabled">
-        <a class="page-link">Next</a>
+        <a class="page-link">Следующая</a>
       </li>
       {% endif %}
     </ul>

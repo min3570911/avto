@@ -1,3 +1,4 @@
+# home/urls.py
 from django.urls import path
 from home.views import *
 
@@ -8,4 +9,6 @@ urlpatterns = [
     path('about/', about, name='about'),
     path('terms-and-conditions/', terms_and_conditions, name='terms-and-conditions'),
     path('privacy-policy/', privacy_policy, name='privacy-policy'),
+    # Добавляем URL для категорий
+    path('category/<slug:slug>/', category_view, name='category'),
 ]

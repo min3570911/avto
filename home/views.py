@@ -1,78 +1,141 @@
-from django.db.models import Q
-from django.shortcuts import render
-from products.models import Product, Category
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from products.models import Product
-print("Количество продуктов в базе данных:", Product.objects.count())
-# Create your views here.
+# home/views.py
+from django.shortcuts import render, get_object_or_404
+from products.models import Product, Category, KitVariant
+from django.core.paginator import Paginator
 
 
 def index(request):
-    query = Product.objects.all()
+    """📱 Отображение главной страницы с товарами"""
+    # Получаем параметры фильтрации из GET-запроса
+    category_filter = request.GET.get('category')
+    sort_option = request.GET.get('sort')
+
+    # Базовый запрос всех товаров
+    products_query = Product.objects.filter(parent=None)
+
+    # Применяем фильтр по категории, если выбран
+    if category_filter:
+        categories = Category.objects.filter(category_name=category_filter)
+        if categories.exists():
+            products_query = products_query.filter(category__in=categories)
+
+    # Применяем сортировку, если выбрана
+    if sort_option == 'newest':
+        products_query = products_query.filter(newest_product=True)
+    elif sort_option == 'priceAsc':
+        products_query = products_query.order_by('price')
+    elif sort_option == 'priceDesc':
+        products_query = products_query.order_by('-price')
+
+    # Получение данных для фильтра категорий
     categories = Category.objects.all()
-    selected_sort = request.GET.get('sort')
-    selected_category = request.GET.get('category')
 
-    if selected_category:
-        query = query.filter(category__category_name=selected_category)
+    # Получаем комплектацию "Салон"
+    salon_kit = KitVariant.objects.filter(code='salon').first()
 
-    if selected_sort:
-        if selected_sort == 'newest':
-            query = query.filter(newest_product=True).order_by('category_id')
-        elif selected_sort == 'priceAsc':
-            query = query.order_by('price')
-        elif selected_sort == 'priceDesc':
-            query = query.order_by('-price')
-
+    # Пагинация
     page = request.GET.get('page', 1)
-    # Перед созданием пагинатора добавьте сортировку
-    query = query.order_by('uid')  # Сортировка по UID
-    paginator = Paginator(query, 20)
-
-    try:
-        products = paginator.page(page)
-    except PageNotAnInteger:
-        products = paginator.page(1)
-    except EmptyPage:
-        products = paginator.page(paginator.num_pages)
-    except Exception as e:
-        print(e)
+    paginator = Paginator(products_query, 8)  # 8 товаров на страницу
+    products = paginator.get_page(page)
 
     context = {
         'products': products,
         'categories': categories,
-        'selected_category': selected_category,
-        'selected_sort': selected_sort,
+        'selected_category': category_filter,
+        'selected_sort': sort_option,
+        'salon_kit': salon_kit,  # Передаем информацию о комплектации в шаблон
     }
+
     return render(request, 'home/index.html', context)
 
 
+def category_view(request, slug):
+    """
+    🛍️ Отображение страницы категории с товарами
+
+    Args:
+        request: HTTP-запрос
+        slug: Слаг категории из URL
+
+    Returns:
+        Отрендеренный шаблон со списком товаров выбранной категории и описанием внизу
+    """
+    # Получаем категорию или возвращаем 404
+    category = get_object_or_404(Category, slug=slug)
+
+    # Получаем все продукты этой категории
+    products_query = Product.objects.filter(category=category, parent=None)
+
+    # Сортировка товаров (аналогично index view)
+    sort_option = request.GET.get('sort')
+    if sort_option == 'newest':
+        products_query = products_query.filter(newest_product=True)
+    elif sort_option == 'priceAsc':
+        products_query = products_query.order_by('price')
+    elif sort_option == 'priceDesc':
+        products_query = products_query.order_by('-price')
+
+    # Пагинация
+    page = request.GET.get('page', 1)
+    paginator = Paginator(products_query, 12)  # 12 товаров на странице
+    products = paginator.get_page(page)
+
+    # Получаем все категории для фильтра
+    categories = Category.objects.all()
+
+    # Здесь можно добавить получение описания категории из базы данных или CMS
+    # Например, если бы у модели Category было поле description:
+    # category_description = category.description
+    category_description = None  # Пока используем значение по умолчанию в шаблоне
+
+    # Получаем комплектацию "Салон"
+    salon_kit = KitVariant.objects.filter(code='salon').first()
+
+    context = {
+        'category': category,
+        'products': products,
+        'categories': categories,
+        'selected_sort': sort_option,
+        'category_description': category_description,
+        'salon_kit': salon_kit,
+    }
+
+    return render(request, 'home/category.html', context)
+
+
+# ВАЖНО: Здесь функция называется product_search в соответствии с urls.py
 def product_search(request):
+    """🔍 Поиск товаров по запросу"""
     query = request.GET.get('q', '')
+    products = None
 
     if query:
-        # Search for products that contain the query string in their product_name field
-        products = Product.objects.filter(Q(product_name__icontains=query) | Q(
-            product_name__istartswith=query))
-    else:
-        products = Product.objects.none()
+        products = Product.objects.filter(product_name__icontains=query)
 
-    context = {'query': query, 'products': products}
+    context = {
+        'query': query,
+        'products': products,
+    }
+
     return render(request, 'home/search.html', context)
 
 
 def contact(request):
-    context = {"form_id": "xgvvlrvn"}
-    return render(request, 'home/contact.html', context)
+    """📞 Страница контактов"""
+    form_id = "xrgpdzwe"  # ID формы Formspree
+    return render(request, 'home/contact.html', {'form_id': form_id})
 
 
 def about(request):
+    """ℹ️ Страница о нас"""
     return render(request, 'home/about.html')
 
 
-def terms_and_conditions(request):
-    return render(request, 'home/terms_and_conditions.html')
-
-
 def privacy_policy(request):
+    """📜 Страница политики конфиденциальности"""
     return render(request, 'home/privacy_policy.html')
+
+
+def terms_and_conditions(request):
+    """📄 Страница условий использования"""
+    return render(request, 'home/terms_and_conditions.html')
