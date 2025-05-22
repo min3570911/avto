@@ -11,33 +11,31 @@
   @keyframes appear {
     from {
       opacity: 0;
-      scale: 0.5;
+      transform: scale(0.8);
     }
     to {
       opacity: 1;
-      scale: 1;
+      transform: scale(1);
     }
   }
 
   .card {
-    animation: appear linear;
-    animation-timeline: view();
-    animation-range: entry 0% cover 40%;
+    animation: appear 0.5s ease-out;
   }
-  
-  /* Стили для карточек категорий */
+
+  /* Стили для круглых иконок категорий */
   .category-section {
     margin-bottom: 40px;
   }
-  
+
   .category-title {
     font-size: 24px;
     font-weight: 600;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     position: relative;
     display: inline-block;
   }
-  
+
   .category-title:after {
     content: '';
     position: absolute;
@@ -47,52 +45,100 @@
     height: 3px;
     background-color: #2a41e8;
   }
-  
-  .category-card {
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    overflow: hidden;
+
+  .category-item {
     text-align: center;
+    margin-bottom: 25px;
+    padding: 10px;
+    transition: all 0.3s ease;
   }
-  
-  .category-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-  }
-  
-  .category-card .img-wrap {
-    height: 180px;
-    overflow: hidden;
+
+  .category-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f8f9fa;
+    margin: 0 auto 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
   }
-  
-  .category-card .img-wrap img {
-    object-fit: cover;
-    width: 100%;
-    height: 100%;
+
+  .category-item:hover .category-icon {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .category-icon img {
+    width: 65px;
+    height: 65px;
+    object-fit: contain;
     transition: transform 0.3s ease;
   }
-  
-  .category-card:hover .img-wrap img {
+
+  .category-item:hover .category-icon img {
     transform: scale(1.05);
   }
-  
-  .category-card .category-name {
-    padding: 15px;
-    font-weight: 600;
-    font-size: 16px;
-    color: #333;
-    background-color: #fff;
-  }
-  
-  .category-card a {
+
+  .category-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    margin-top: 8px;
     text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .category-item:hover .category-name {
+    color: #333;
+  }
+
+  .category-item a {
+    text-decoration: none;
+    color: inherit;
     display: block;
+  }
+
+  .category-item a:hover {
+    text-decoration: none;
+  }
+
+  /* Адаптивные размеры для мобильных */
+  @media (max-width: 768px) {
+    .category-icon {
+      width: 80px;
+      height: 80px;
+    }
+
+    .category-icon img {
+      width: 55px;
+      height: 55px;
+    }
+
+    .category-name {
+      font-size: 13px;
+    }
+
+    .category-item {
+      margin-bottom: 20px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .category-icon {
+      width: 70px;
+      height: 70px;
+    }
+
+    .category-icon img {
+      width: 45px;
+      height: 45px;
+    }
   }
 </style>
 
@@ -104,15 +150,13 @@
     <h2 class="category-title">Категории ковриков</h2>
     <div class="row">
       {% for category in categories %}
-      <div class="col-md-3 col-sm-6">
-        <div class="category-card">
+      <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+        <div class="category-item">
           <a href="{% url 'category' category.slug %}">
-            <div class="img-wrap">
+            <div class="category-icon">
               <img src="/media/{{category.category_image}}" alt="{{category.category_name}}">
             </div>
-            <div class="category-name">
-              {{category.category_name}}
-            </div>
+            <div class="category-name">{{category.category_name}}</div>
           </a>
         </div>
       </div>

@@ -309,77 +309,165 @@ def send_order_notification(order):
         logger.error(f"Ошибка при отправке уведомления о заказе #{order.order_id}: {str(e)}")
 
 
+# accounts/views.py - замените функцию place_order() на эту:
+
 def place_order(request):
-    """Обработка оформления заказа без регистрации"""
+    """🛒 Обработка оформления заказа - ИСПРАВЛЕНО под текущую форму"""
+
+    print("🔍 Начинаем обработку заказа...")  # Отладочная информация
+
     if request.method != 'POST':
+        print("❌ Неверный метод запроса")
         return redirect('cart')
 
-    # Получаем корзину пользователя или сессии
-    cart = Cart.get_cart(request)
+    try:
+        # Получаем корзину пользователя или сессии
+        cart = Cart.get_cart(request)
+        print(f"🛒 Корзина получена: {cart.uid}")
 
-    # Проверяем, есть ли товары в корзине
-    if not cart.cart_items.exists():
-        messages.warning(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
-        return redirect('index')
+        # Проверяем, есть ли товары в корзине
+        if not cart.cart_items.exists():
+            print("❌ Корзина пуста")
+            messages.warning(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
+            return redirect('index')
 
-    # Получаем данные формы
-    customer_name = request.POST.get('customer_name')
-    customer_phone = request.POST.get('customer_phone')
-    customer_email = request.POST.get('customer_email')
-    delivery_method = request.POST.get('delivery_method')
-    shipping_address = request.POST.get('shipping_address')
-    order_notes = request.POST.get('order_notes', '')
+        # 📝 Получаем данные формы (ИСПРАВЛЕНО под текущую структуру)
+        customer_name = request.POST.get('customer_name', '').strip()
+        customer_phone = request.POST.get('customer_phone', '').strip()
+        customer_city = request.POST.get('customer_city', '').strip()  # 🆕 НОВОЕ ПОЛЕ
+        need_delivery = request.POST.get('need_delivery') == 'on'  # 🆕 ЧЕКБОКС
+        terms_agree = request.POST.get('terms_agree') == 'on'  # 🆕 ЧЕКБОКС
+        order_notes = request.POST.get('order_notes', '').strip()
 
-    # Проверяем обязательные поля
-    if not all([customer_name, customer_phone, customer_email, delivery_method, shipping_address]):
-        messages.error(request, "Пожалуйста, заполните все обязательные поля.")
-        return redirect('cart')
+        print(f"📝 Данные формы:")
+        print(f"  - customer_name: '{customer_name}'")
+        print(f"  - customer_phone: '{customer_phone}'")
+        print(f"  - customer_city: '{customer_city}'")
+        print(f"  - need_delivery: {need_delivery}")
+        print(f"  - terms_agree: {terms_agree}")
 
-    # Создаем уникальный ID заказа
-    order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+        # 🚚 Поля доставки (только если нужна доставка)
+        delivery_method = 'pickup'  # По умолчанию самовывоз
+        shipping_address = ''
 
-    # Создаем заказ
-    order = Order.objects.create(
-        user=request.user if request.user.is_authenticated else None,
-        customer_name=customer_name,
-        customer_phone=customer_phone,
-        customer_email=customer_email,
-        delivery_method=delivery_method,
-        shipping_address=shipping_address,
-        order_notes=order_notes,
-        order_id=order_id,
-        payment_status="Новый",
-        order_total_price=cart.get_cart_total(),
-        coupon=cart.coupon,
-        grand_total=cart.get_cart_total_price_after_coupon()
-    )
+        if need_delivery:
+            delivery_method = request.POST.get('delivery_method', 'europochta')
+            shipping_address = request.POST.get('shipping_address', '').strip()
+            print(f"  - delivery_method: '{delivery_method}'")
+            print(f"  - shipping_address: '{shipping_address}'")
 
-    # Создаем элементы заказа из корзины
-    cart_items = cart.cart_items.all()
-    for cart_item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            product=cart_item.product,
-            kit_variant=cart_item.kit_variant,
-            color_variant=cart_item.color_variant,
-            carpet_color=cart_item.carpet_color,
-            border_color=cart_item.border_color,
-            has_podpyatnik=cart_item.has_podpyatnik,
-            quantity=cart_item.quantity,
-            product_price=cart_item.get_product_price(),
+        # 📧 Генерируем email (так как в форме его нет)
+        if request.user.is_authenticated and request.user.email:
+            customer_email = request.user.email
+        else:
+            # Создаем временный email из телефона
+            phone_clean = customer_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(
+                ')', '')
+            customer_email = f"order_{phone_clean}@temp.local"
+
+        print(f"  - customer_email (сгенерирован): '{customer_email}'")
+
+        # ✅ Проверяем обязательные поля
+        missing_fields = []
+        if not customer_name:
+            missing_fields.append('Имя')
+        if not customer_phone:
+            missing_fields.append('Телефон')
+        if not customer_city:
+            missing_fields.append('Город')
+        if not terms_agree:
+            missing_fields.append('Согласие с условиями')
+
+        # Проверяем поля доставки только если доставка нужна
+        if need_delivery and not shipping_address:
+            missing_fields.append('Адрес доставки')
+
+        if missing_fields:
+            error_msg = f"Не заполнены обязательные поля: {', '.join(missing_fields)}"
+            print(f"❌ {error_msg}")
+            messages.error(request, error_msg)
+            return redirect('cart')
+
+        # 💰 Рассчитываем стоимость
+        order_total = cart.get_cart_total()
+        grand_total = cart.get_cart_total_price_after_coupon()
+        print(f"💰 Стоимость: {order_total}, итого: {grand_total}")
+
+        # 🆔 Создаем уникальный ID заказа
+        order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+        print(f"🆔 ID заказа: {order_id}")
+
+        # 📦 Создаем заказ (БЕЗ новых полей, которых нет в модели)
+        order = Order.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+            customer_email=customer_email,
+            # customer_city=customer_city,  # 🚫 ПОКА НЕ ДОБАВЛЯЕМ (нет в модели)
+            # need_delivery=need_delivery,   # 🚫 ПОКА НЕ ДОБАВЛЯЕМ (нет в модели)
+            delivery_method=delivery_method,
+            shipping_address=shipping_address,
+            order_notes=order_notes,
+            order_id=order_id,
+            payment_status="Новый",
+            order_total_price=order_total,
+            coupon=cart.coupon,
+            grand_total=grand_total
         )
 
-    # Отмечаем корзину как оплаченную
-    cart.is_paid = True
-    cart.save()
+        print(f"✅ Заказ создан в БД: {order.pk}")
 
-    # Отправляем уведомление на email и Telegram
-    send_order_notification(order)
+        # 📋 Создаем элементы заказа из корзины
+        cart_items = cart.cart_items.all()
+        created_items = 0
 
-    # Перенаправляем на страницу успешного оформления
-    return redirect('success', order_id=order_id)
+        for cart_item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=cart_item.product,
+                kit_variant=cart_item.kit_variant,
+                color_variant=cart_item.color_variant,
+                carpet_color=cart_item.carpet_color,
+                border_color=cart_item.border_color,
+                has_podpyatnik=cart_item.has_podpyatnik,
+                quantity=cart_item.quantity,
+                product_price=cart_item.get_product_price(),
+            )
+            created_items += 1
+            print(f"📦 Создан элемент заказа: {cart_item.product.product_name}")
 
+        print(f"✅ Создано элементов заказа: {created_items}")
 
+        # 🔒 Отмечаем корзину как оплаченную
+        cart.is_paid = True
+        cart.save()
+        print(f"🔒 Корзина отмечена как оплаченная")
+
+        # 📧 Отправляем уведомления (если настроены)
+        try:
+            send_order_notification(order)
+            print(f"📧 Уведомления отправлены")
+        except Exception as e:
+            print(f"⚠️ Ошибка отправки уведомлений: {e}")
+            # Не блокируем создание заказа из-за ошибок уведомлений
+
+        # ✅ Показываем сообщение об успехе
+        delivery_text = "с доставкой" if need_delivery else "самовывоз"
+        success_msg = f"🎉 Заказ #{order_id} успешно оформлен ({delivery_text})! Наш менеджер свяжется с вами в ближайшее время."
+        messages.success(request, success_msg)
+        print(f"🎉 {success_msg}")
+
+        # 🔄 Перенаправляем на страницу успешного оформления
+        return redirect('success', order_id=order_id)
+
+    except Exception as e:
+        # 🚨 Обработка ошибок
+        error_msg = f"Произошла ошибка при оформлении заказа: {str(e)}"
+        print(f"❌ ОШИБКА: {error_msg}")
+        print(f"❌ Трейсбек: {e}")
+        messages.error(request,
+                       "Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.")
+        return redirect('cart')
 def success(request, order_id=None):
     """📦 Страница успешного оформления заказа"""
     # Если order_id не передан, пытаемся получить последний заказ пользователя
