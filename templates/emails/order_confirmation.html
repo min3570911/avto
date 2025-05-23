@@ -127,18 +127,18 @@
                                 {% if item.has_podpyatnik %}<br><small>С подпятником</small>{% endif %}
                             </td>
                             <td>{{ item.quantity }}</td>
-                            <td>₹ {{ item.product_price }}</td>
+                            <td>{{ item.product_price }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
 
                 <div class="order-total">
-                    <p>Сумма заказа: ₹ {{ order.order_total_price }}</p>
+                    <p>Сумма заказа: {{ order.order_total_price }}</p>
                     {% if order.coupon %}
-                    <p>Скидка по купону: -₹ {{ order.coupon.discount_amount }}</p>
+                    <p>Скидка по купону: - {{ order.coupon.discount_amount }}</p>
                     {% endif %}
-                    <p>Итого к оплате: <strong>₹ {{ order.grand_total }}</strong></p>
+                    <p>Итого к оплате: <strong>{{ order.grand_total }}</strong></p>
                 </div>
             </div>
 

@@ -1,4 +1,7 @@
+# products/admin.py
+
 from django.contrib import admin
+from django.utils.html import mark_safe
 from .models import *
 
 
@@ -31,10 +34,45 @@ class ColorVariantAdmin(admin.ModelAdmin):
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'price_modifier', 'order', 'is_option']
+    # 💰 ОБНОВЛЕНО: Добавлены поля для удобного управления опциями
+    list_display = ['name', 'code', 'price_modifier', 'order', 'is_option', 'formatted_price']
     list_filter = ['is_option']
     search_fields = ['name', 'code']
-    model = KitVariant
+    list_editable = ['price_modifier', 'order', 'is_option']  # 🎯 Можно редактировать прямо в списке
+    ordering = ['is_option', 'order']  # Сначала комплектации, потом опции
+
+    def formatted_price(self, obj):
+        """Отображает цену в удобном формате"""
+        return f"{obj.price_modifier} руб."
+
+    formatted_price.short_description = "Цена"
+
+    # 🎨 Группировка полей в админке
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'code', 'price_modifier')
+        }),
+        ('Настройки отображения', {
+            'fields': ('order', 'is_option', 'image')
+        }),
+    )
+
+    # 🚨 Дополнительные действия для быстрого управления
+    actions = ['make_option', 'make_kit', 'reset_prices']
+
+    def make_option(self, request, queryset):
+        """Превратить выбранные элементы в опции"""
+        queryset.update(is_option=True, order=100)
+        self.message_user(request, f"Превращено в опции: {queryset.count()} записей")
+
+    make_option.short_description = "Сделать опциями"
+
+    def make_kit(self, request, queryset):
+        """Превратить выбранные элементы в комплектации"""
+        queryset.update(is_option=False)
+        self.message_user(request, f"Превращено в комплектации: {queryset.count()} записей")
+
+    make_kit.short_description = "Сделать комплектациями"
 
 
 @admin.register(Color)
@@ -92,3 +130,8 @@ class WishlistAdmin(admin.ModelAdmin):
 
 admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductImage)
+
+# 🎯 Кастомизация заголовков админки
+admin.site.site_header = "🛒 Админ-панель магазина автоковриков"
+admin.site.site_title = "Автоковрики - Админка"
+admin.site.index_title = "Управление магазином"

@@ -309,7 +309,7 @@ function updatePrice() {
   const totalPrice = (kitPrice + podpPrice) * quantity;
   const priceElement = document.getElementById('finalPrice');
   if (priceElement) {
-    priceElement.textContent = `₹${totalPrice.toFixed(2)}`;
+    priceElement.textContent = `${totalPrice.toFixed(2)}`;
   }
 }
 

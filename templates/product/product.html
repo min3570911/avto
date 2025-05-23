@@ -562,7 +562,7 @@ class="custom-control-input"
  data-attr-id="7" data-attr-value="1"
  {# onchange="updateConfig();" #} >
  <label class="form-check-label" for="podp_check">
- Подпятник ({{ podpyatnik_option.price_modifier|default:"100.00" }} руб.) </label>
+ Подпятник ({{ podpyatnik_option.price_modifier }} руб.) </label>
  </div>
  </div>
  </div>
@@ -581,7 +581,7 @@ class="custom-control-input"
  </div>
 
  <div class="final-price">
- Итоговая стоимость: <span class="font-weight-bold" id="finalPrice">₹{{ product.price|stringformat:".2f" }}</span>
+ Итоговая стоимость: <span class="font-weight-bold" id="finalPrice">{{ product.price|stringformat:".2f" }}</span>
  </div>
  </div>
 
@@ -770,7 +770,7 @@ class="custom-control-input"
  {% endfor %}
 <div
  data-option-code="podpyatnik"
- data-option-price="{{ podpyatnik_option.price_modifier|default:'20' }}"
+ data-option-price="{{ podpyatnik_option.price_modifier }}"
  ></div>
 </div>
 <script src="/media/js/product.js" type="text/javascript"></script>

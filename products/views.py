@@ -1,3 +1,5 @@
+# products/views.py - исправленная функция get_product
+
 import random
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect, JsonResponse
@@ -10,7 +12,6 @@ from accounts.models import Cart, CartItem
 from .forms import ReviewForm
 
 
-# -----------------------------  карточка товара  ----------------------------- #
 def get_product(request, slug):
     """
     🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
@@ -28,6 +29,18 @@ def get_product(request, slug):
     # варианты комплектов
     sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
     additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
+
+    # 💰 ИСПРАВЛЕНО: Получаем цену подпятника из справочника KitVariant
+    podpyatnik_option = KitVariant.objects.filter(code='podpyatnik', is_option=True).first()
+    if not podpyatnik_option:
+        # 🚨 Если записи нет в БД, создаем логирование/предупреждение
+        print("⚠️ ВНИМАНИЕ: Опция 'подпятник' не найдена в справочнике KitVariant!")
+        # Можно создать запись автоматически или использовать дефолтную цену
+        podpyatnik_option = type('obj', (object,), {
+            'name': 'Подпятник',
+            'price_modifier': 15.00,  # Дефолтная цена
+            'code': 'podpyatnik'
+        })
 
     # 🎨 разделяем цвета на типы для коврика и окантовки
     carpet_colors = Color.objects.filter(color_type='carpet').order_by('display_order')
@@ -75,6 +88,7 @@ def get_product(request, slug):
         'product': product,
         'sorted_kit_variants': sorted_kit_variants,
         'additional_options': additional_options,
+        'podpyatnik_option': podpyatnik_option,  # 💰 ДОБАВЛЕНО: передаем опцию подпятника в контекст
         'related_products': related_products,
         'review_form': review_form,
         'rating_percentage': rating_percentage,
@@ -92,6 +106,7 @@ def get_product(request, slug):
     return render(request, 'product/product.html', context)
 
 
+# 🔄 Остальные функции остаются без изменений...
 # Product Review view
 @login_required
 def product_reviews(request):

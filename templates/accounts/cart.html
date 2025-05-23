@@ -3,41 +3,46 @@
 {% block start %} {% load static %}
 
 <style>
-  /* Стили для мобильной версии */
-  @media (max-width: 576px) {
-    .table-shopping-cart thead {
-      display: none;
-    }
+  /* 🛠️ ИСПРАВЛЕНО: Добавил селектор .cart-page для изоляции стилей */
+  .cart-page {
+    /* Стили для мобильной версии */
+    @media (max-width: 576px) {
+      .table-shopping-cart thead {
+        display: none;
+      }
 
-    .table-shopping-cart,
-    .table-shopping-cart tbody,
-    .table-shopping-cart tr,
-    .table-shopping-cart td {
-      display: block;
-      width: 100%;
-    }
+      .table-shopping-cart,
+      .table-shopping-cart tbody,
+      .table-shopping-cart tr,
+      .table-shopping-cart td {
+        display: block;
+        width: 100%;
+      }
 
-    .table-shopping-cart tr {
-      margin-bottom: 15px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 15px;
-    }
+      .table-shopping-cart tr {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+      }
 
-    .itemside {
-      display: flex;
-      align-items: center;
-    }
+      .itemside {
+        display: flex;
+        align-items: center;
+      }
 
-    .price-wrap {
-      margin: 10px 0;
-    }
+      .price-wrap {
+        margin: 10px 0;
+      }
 
-    .action-buttons {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
+      .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
     }
   }
+
+  /* 🎨 УБРАЛ глобальные стили, которые могли влиять на шапку */
 
   /* Стили для скрытия/показа блока доставки */
   .delivery-section {
@@ -45,10 +50,6 @@
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #eee;
-    transition: all 0.3s ease;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 15px;
   }
 
   .delivery-section.active {
@@ -58,14 +59,12 @@
   /* Улучшения для чекбокса */
   .custom-checkbox-container {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 15px;
   }
 
   .custom-checkbox-container input[type="checkbox"] {
     margin-right: 10px;
-    margin-top: 2px;
-    transform: scale(1.2);
   }
 
   /* Стили для суммы итого */
@@ -74,11 +73,6 @@
     justify-content: flex-end;
     align-items: center;
     margin: 20px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #28a745, #20c997);
-    border-radius: 10px;
-    color: white;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
   }
 
   .total-amount-label {
@@ -88,133 +82,33 @@
   }
 
   .total-amount-value {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
-  }
-
-  /* 🚨 Стили для ошибок валидации */
-  .error-message {
     color: #dc3545;
-    font-size: 14px;
-    margin-top: 5px;
-    display: none;
   }
 
-  .form-group.error input,
-  .form-group.error textarea {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-  }
-
-  .form-group.error .error-message {
-    display: block;
-  }
-
-  /* 🔄 УПРОЩЕННЫЕ стили для загрузки БЕЗ вращения */
-  .btn-loading:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-
-  /* ✅ УБИРАЕМ весь вращающийся спиннер! */
-  /* Вместо него - простые точки */
-  .loading-dots {
-    display: inline-block;
-    margin-left: 8px;
-  }
-
-  .loading-dots::after {
-    content: '';
-    animation: dots 1.5s steps(4, end) infinite;
-  }
-
-  @keyframes dots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
-  }
-
-  /* ✅ Стили для успешных полей */
-  .form-group.success input,
-  .form-group.success textarea {
-    border-color: #28a745;
-    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-  }
-
-  /* 📱 Улучшения для мобильных устройств */
-  @media (max-width: 768px) {
-    .total-amount-container {
-      flex-direction: column;
-      text-align: center;
-    }
-
-    .total-amount-label {
-      margin-right: 0;
-      margin-bottom: 10px;
-    }
-  }
-
-  /* 🎨 Дополнительные стили */
-  .required-field {
-    color: #dc3545;
-    font-weight: bold;
-  }
-
-  .section-header {
-    background: linear-gradient(135deg, #007bff, #6610f2);
-    color: white;
-    margin: -15px -15px 15px -15px;
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
-  }
-
-  .form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-  }
-
-  /* 🎯 Простая пульсация вместо вращения (менее навязчиво) */
-  .btn-processing {
-    animation: gentle-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes gentle-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+  /* 🔒 ЗАЩИТА: Убираем влияние на header */
+  .cart-page header,
+  .cart-page nav {
+    background-color: inherit !important;
   }
 </style>
 
+<!-- 🎯 ОБЕРНУЛ весь контент в div с классом cart-page -->
+<div class="cart-page">
 <section class="section-content padding-y">
     <div class="container">
         {% include 'base/alert.html' %}
 
-        <!-- Проверка наличия товаров в корзине -->
-        {% if not cart.cart_items.all %}
-        <div class="card text-center">
-            <div class="card-body py-5">
-                <i class="fa fa-shopping-cart fa-3x text-muted mb-3"></i>
-                <h4>Ваша корзина пуста</h4>
-                <p class="text-muted">Добавьте товары в корзину, чтобы оформить заказ</p>
-                <a href="{% url 'index' %}" class="btn btn-primary">
-                    <i class="fa fa-arrow-left"></i> Перейти к покупкам
-                </a>
-            </div>
-        </div>
-        {% else %}
-
         <!-- Блок с товарами в корзине -->
         <div class="card mb-3">
-            <div class="section-header">
-                <h5 class="mb-0"><i class="fa fa-shopping-cart"></i> Товары в корзине</h5>
-            </div>
             <table class="table table-borderless table-shopping-cart">
                 <thead class="text-muted">
                     <tr class="small text-uppercase">
                         <th scope="col">Товар</th>
                         <th scope="col" width="120">Количество</th>
                         <th scope="col" width="120">Цена</th>
-                        <th scope="col" class="text-right" width="100">Действия</th>
+                        <th scope="col" class="text-right" width="100"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -239,51 +133,48 @@
 
                                     <p class="text-muted small mb-0">
                                         {% if cart_item.kit_variant %}
-                                        <strong>Комплектация:</strong> {{ cart_item.kit_variant.name }}<br />
+                                        Комплектация: {{ cart_item.kit_variant.name }}<br />
                                         {% endif %}
 
                                         {% if cart_item.carpet_color %}
-                                        <strong>Цвет коврика:</strong>
+                                        Цвет коврика:
                                         <span
-                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc; border-radius: 2px;"></span>
+                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
                                         {{ cart_item.carpet_color.name }}<br />
                                         {% endif %}
 
                                         {% if cart_item.border_color %}
-                                        <strong>Цвет окантовки:</strong>
+                                        Цвет окантовки:
                                         <span
-                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc; border-radius: 2px;"></span>
+                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
                                         {{ cart_item.border_color.name }}<br />
                                         {% endif %}
 
                                         {% if cart_item.has_podpyatnik %}
-                                        <strong>Дополнительно:</strong> С подпятником<br />
+                                        С подпятником<br />
                                         {% endif %}
                                     </p>
                                 </figcaption>
                             </figure>
                         </td>
                         <td>
-                            <select class="form-control" title="Выберите количество"
+                            <select class="form-control"
                                 onchange="updateCartItem(this, '{{ cart_item.uid }}')">
                                 {% for i in quantity_range %}
                                 <option value="{{ i }}" {% if cart_item.quantity == i %}selected{% endif %}>
-                                    {{ i }} шт.
+                                    {{ i }}
                                 </option>
                                 {% endfor %}
                             </select>
                         </td>
                         <td>
                             <div class="price-wrap">
-                                <var class="price font-weight-bold">{{ cart_item.get_product_price }} руб.</var>
+                                <var class="price">{{ cart_item.get_product_price }}</var>
                             </div>
                         </td>
                         <td class="text-right">
-                            <a href="{% url 'remove_cart' cart_item.uid %}"
-                               class="btn btn-danger btn-sm"
-                               title="Удалить товар"
-                               onclick="return confirm('Вы уверены, что хотите удалить этот товар из корзины?')">
-                                <i class="fa fa-trash"></i> Удалить
+                            <a href="{% url 'remove_cart' cart_item.uid %}" class="btn btn-danger">
+                                Удалить
                             </a>
                         </td>
                     </tr>
@@ -293,7 +184,7 @@
 
             <!-- Блок с кнопкой продолжить покупки -->
             <div class="card-body border-top">
-                <a href="{% url 'index' %}" class="btn btn-outline-primary">
+                <a href="{% url 'index' %}" class="btn btn-light">
                     <i class="fa fa-chevron-left"></i> Продолжить покупки
                 </a>
             </div>
@@ -301,217 +192,123 @@
 
         <!-- Блок с информацией о доставке -->
         <div class="card mb-3">
-            <div class="card-body bg-light">
-                <div class="d-flex align-items-center">
-                    <i class="fa fa-truck text-success mr-3 fa-2x"></i>
-                    <div>
-                        <h6 class="mb-1">Информация о доставке</h6>
-                        <p class="mb-0 text-muted">
-                            Отправление по предоплате или наложенным платежом.
-                            Стоимость зависит от веса и дальности региона РБ.
-                            <strong>Сроки доставки: 2-3 дня.</strong>
-                        </p>
-                    </div>
-                </div>
+            <div class="card-body">
+                <i class="fa fa-truck text-success mr-2"></i> Отправление по предоплате или наложенным платежом. Стоимость зависит от веса и дальности региона РБ. Сроки доставки: 2-3 дня.
             </div>
         </div>
 
         <!-- ФОРМА ОФОРМЛЕНИЯ ЗАКАЗА -->
         <div class="card mb-4">
-            <div class="section-header">
-                <h5 class="mb-0"><i class="fa fa-file-text"></i> Оформление заказа</h5>
+            <div class="card-header">
+                <h5 class="mb-0">Оформление заказа</h5>
             </div>
             <div class="card-body">
-                <!-- 🚨 Блок для отображения общих ошибок -->
-                <div id="form-errors" class="alert alert-danger" style="display: none;">
-                    <strong><i class="fa fa-exclamation-triangle"></i> Обнаружены ошибки:</strong>
-                    <ul id="error-list" class="mb-0 mt-2"></ul>
-                </div>
-
                 <form method="POST" action="{% url 'place_order' %}" id="orderForm">
                     {% csrf_token %}
 
-                    <!-- Контактная информация -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group" id="name-group">
-                                <label for="customer_name">
-                                    <i class="fa fa-user text-primary"></i> Ваше имя
-                                    <span class="required-field">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="customer_name" name="customer_name"
-                                       required maxlength="100" placeholder="Введите ваше имя"
-                                       title="Обязательное поле">
-                                <div class="error-message" id="name-error"></div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-group" id="phone-group">
-                                <label for="customer_phone">
-                                    <i class="fa fa-phone text-primary"></i> Контактный телефон
-                                    <span class="required-field">*</span>
-                                </label>
-                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone"
-                                       required placeholder="+375 XX XXX XX XX"
-                                       title="Номер телефона для связи">
-                                <div class="error-message" id="phone-error"></div>
-                            </div>
-                        </div>
+                    <!-- Основная информация -->
+                    <div class="form-group">
+                        <label for="customer_name">Имя</label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
                     </div>
 
-                    <div class="form-group" id="city-group">
-                        <label for="customer_city">
-                            <i class="fa fa-map-marker text-primary"></i> Ваш город
-                            <span class="required-field">*</span>
-                        </label>
-                        <input type="text" class="form-control" id="customer_city" name="customer_city"
-                               required maxlength="100" placeholder="Укажите ваш город"
-                               title="Город для расчета доставки">
-                        <div class="error-message" id="city-error"></div>
+                    <div class="form-group">
+                        <label for="customer_phone">Контактный телефон</label>
+                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customer_city">Город</label>
+                        <input type="text" class="form-control" id="customer_city" name="customer_city" required>
                     </div>
 
                     <!-- Чекбокс для доставки -->
                     <div class="custom-checkbox-container">
                         <input type="checkbox" id="need_delivery" name="need_delivery"
                                onclick="toggleDeliverySection()">
-                        <label for="need_delivery" class="font-weight-bold">
+                        <label for="need_delivery">
                             🚚 Нужна доставка (оплачивается отдельно)
                         </label>
                     </div>
 
                     <!-- Скрываемая секция доставки -->
                     <div id="deliverySection" class="delivery-section">
-                        <h6 class="text-primary mb-3">
-                            <i class="fa fa-truck"></i> Параметры доставки
-                        </h6>
-
                         <!-- Способ доставки -->
                         <div class="form-group">
-                            <label class="font-weight-bold">
-                                Способ доставки <span class="required-field">*</span>
-                            </label>
+                            <label>Способ доставки</label>
                             <div class="custom-control custom-radio mb-2">
-                                <input type="radio" id="delivery_europochta" name="delivery_method"
-                                       value="europochta" class="custom-control-input" checked>
-                                <label class="custom-control-label" for="delivery_europochta">
-                                    <strong>Европочта по Беларуси</strong>
-                                    <small class="text-muted d-block">Быстрая доставка в отделения</small>
-                                </label>
+                                <input type="radio" id="delivery_europochta" name="delivery_method" value="europochta" class="custom-control-input" checked>
+                                <label class="custom-control-label" for="delivery_europochta">Европочта по Беларуси</label>
                             </div>
                             <div class="custom-control custom-radio mb-2">
-                                <input type="radio" id="delivery_belpochta" name="delivery_method"
-                                       value="belpochta" class="custom-control-input">
-                                <label class="custom-control-label" for="delivery_belpochta">
-                                    <strong>Белпочта по Беларуси</strong>
-                                    <small class="text-muted d-block">Доставка в почтовые отделения</small>
-                                </label>
+                                <input type="radio" id="delivery_belpochta" name="delivery_method" value="belpochta" class="custom-control-input">
+                                <label class="custom-control-label" for="delivery_belpochta">Белпочта по Беларуси</label>
                             </div>
                             <div class="custom-control custom-radio">
-                                <input type="radio" id="delivery_yandex" name="delivery_method"
-                                       value="yandex" class="custom-control-input">
-                                <label class="custom-control-label" for="delivery_yandex">
-                                    <strong>Яндекс курьер по Минску</strong>
-                                    <small class="text-muted d-block">Доставка курьером до двери</small>
-                                </label>
+                                <input type="radio" id="delivery_yandex" name="delivery_method" value="yandex" class="custom-control-input">
+                                <label class="custom-control-label" for="delivery_yandex">Яндекс курьер по Минску</label>
                             </div>
                         </div>
 
                         <!-- Адрес доставки -->
-                        <div class="form-group" id="address-group">
-                            <label for="shipping_address">
-                                <i class="fa fa-map text-primary"></i> Адрес доставки
-                                <span class="required-field">*</span>
-                            </label>
+                        <div class="form-group">
+                            <label for="shipping_address">Адрес доставки</label>
                             <textarea class="form-control" id="shipping_address" name="shipping_address" rows="3"
-                                placeholder="Для Европочты/Белпочты: укажите номер отделения и город&#10;Для курьера: полный адрес в Минске с подъездом и квартирой"></textarea>
-                            <div class="error-message" id="address-error"></div>
+                                placeholder="Для Европочты/Белпочты: отделение и город. Для курьера: полный адрес в Минске"></textarea>
                         </div>
                     </div>
 
                     <!-- Примечание к заказу -->
                     <div class="form-group">
-                        <label for="order_notes">
-                            <i class="fa fa-comment text-primary"></i> Примечание к заказу
-                        </label>
-                        <textarea class="form-control" id="order_notes" name="order_notes" rows="2"
-                                  placeholder="Дополнительные пожелания, удобное время для звонка и другие комментарии (необязательно)"
-                                  title="Любые дополнительные пожелания"></textarea>
-                        <small class="text-muted">Укажите удобное время для звонка или особые пожелания</small>
+                        <label for="order_notes">Примечание к заказу</label>
+                        <textarea class="form-control" id="order_notes" name="order_notes" rows="2"></textarea>
                     </div>
 
                     <!-- Согласие с условиями -->
-                    <div class="custom-checkbox-container" id="terms-group">
+                    <div class="custom-checkbox-container">
                         <input type="checkbox" id="terms_agree" name="terms_agree" required>
                         <label for="terms_agree">
                             Оформляя заказ, я подтверждаю свое согласие с
-                            <a href="/terms/" target="_blank" class="text-primary">Условиями использования сайта</a> и
-                            <a href="/return-policy/" target="_blank" class="text-primary">Условиями возврата товара</a>
-                            <span class="required-field">*</span>
+                            <a href="/terms/" target="_blank">Условиями использования сайта</a> и
+                            <a href="/return-policy/" target="_blank">Условиями возврата товара</a>
                         </label>
-                        <div class="error-message" id="terms-error"></div>
                     </div>
 
-                    <!-- Итоговая стоимость -->
+                    <!-- Итоговая стоимость (увеличенная и перемещенная) -->
                     <div class="total-amount-container">
-                        <span class="total-amount-label">
-                            <i class="fa fa-calculator"></i> ИТОГО К ОПЛАТЕ:
-                        </span>
-                        <span class="total-amount-value" id="total-amount">
-                            {{ cart.get_cart_total }} руб.
-                        </span>
+                        <span class="total-amount-label">ИТОГО:</span>
+                        <span class="total-amount-value">{{ cart.get_cart_total }}</span>
                     </div>
 
-                    <!-- Кнопка оформления заказа БЕЗ ВРАЩАЮЩЕГОСЯ СПИННЕРА -->
-                    <button type="submit" class="btn btn-success btn-block btn-lg" id="placeOrderBtn">
-                        <span id="btn-text">
-                            <i class="fa fa-check-circle"></i> Оформить заказ
-                        </span>
-                        <span id="btn-loading" style="display: none;">
-                            <i class="fa fa-clock-o"></i> Оформляем заказ<span class="loading-dots"></span>
-                        </span>
+                    <!-- Кнопка оформления заказа -->
+                    <button type="submit" class="btn btn-primary btn-block" id="placeOrderBtn">
+                        Оформить заказ
                     </button>
-
-                    <p class="text-center text-muted mt-3 mb-0">
-                        <small>
-                            <i class="fa fa-shield"></i>
-                            После оформления заказа с вами свяжется наш менеджер для подтверждения
-                        </small>
-                    </p>
                 </form>
             </div>
         </div>
-        {% endif %}
     </div>
 </section>
+</div>
 
 <script>
-    console.log('🛒 Загружаем спокойный скрипт корзины БЕЗ вращений...');
-
-    // 🔧 Функция для переключения видимости секции доставки
+    // Функция для переключения видимости секции доставки
     function toggleDeliverySection() {
         const deliverySection = document.getElementById('deliverySection');
         const needDelivery = document.getElementById('need_delivery').checked;
-        const addressField = document.getElementById('shipping_address');
-
-        console.log('🚚 Переключение доставки:', needDelivery);
 
         if (needDelivery) {
             deliverySection.classList.add('active');
-            addressField.setAttribute('required', 'required');
-            console.log('✅ Секция доставки активирована');
+            document.getElementById('shipping_address').setAttribute('required', 'required');
         } else {
             deliverySection.classList.remove('active');
-            addressField.removeAttribute('required');
-            clearFieldError('address-group');
-            console.log('❌ Секция доставки деактивирована');
+            document.getElementById('shipping_address').removeAttribute('required');
         }
     }
 
-    // 🔄 Функция обновления количества товара
+    // Функция обновления количества товара
     function updateCartItem(selectElement, cartItemId) {
-        const quantity = selectElement.value.replace(' шт.', ''); // Убираем "шт."
-        console.log('🔄 Обновление товара:', cartItemId, 'количество:', quantity);
+        const quantity = selectElement.value;
 
         fetch("{% url 'update_cart_item' %}", {
             method: "POST",
@@ -521,239 +318,74 @@
             },
             body: JSON.stringify({
                 "cart_item_id": cartItemId,
-                "quantity": parseInt(quantity)
+                "quantity": quantity
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('✅ Товар обновлен успешно');
                 window.location.reload();
             } else {
-                console.error('❌ Ошибка обновления:', data.error);
-                alert("Ошибка обновления корзины: " + (data.error || 'Неизвестная ошибка'));
+                alert("Ошибка обновления корзины");
             }
-        })
-        .catch(error => {
-            console.error('❌ Исключение при обновлении:', error);
-            alert("Произошла ошибка при обновлении корзины");
         });
     }
 
-    // 🧹 Функция очистки ошибок поля
-    function clearFieldError(groupId) {
-        const group = document.getElementById(groupId);
-        if (group) {
-            group.classList.remove('error');
-            group.classList.remove('success');
-            const errorMessage = group.querySelector('.error-message');
-            if (errorMessage) {
-                errorMessage.textContent = '';
-            }
-        }
-    }
-
-    // ❌ Функция отображения ошибки поля
-    function showFieldError(groupId, message) {
-        const group = document.getElementById(groupId);
-        if (group) {
-            group.classList.add('error');
-            group.classList.remove('success');
-            const errorMessage = group.querySelector('.error-message');
-            if (errorMessage) {
-                errorMessage.textContent = message;
-            }
-        }
-    }
-
-    // ✅ Функция отображения успеха поля
-    function showFieldSuccess(groupId) {
-        const group = document.getElementById(groupId);
-        if (group) {
-            group.classList.add('success');
-            group.classList.remove('error');
-            const errorMessage = group.querySelector('.error-message');
-            if (errorMessage) {
-                errorMessage.textContent = '';
-            }
-        }
-    }
-
-    // 📱 Валидация телефона
-    function validatePhone(phone) {
-        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{7,15}$/;
-        return phoneRegex.test(phone);
-    }
-
-    // 🏙️ Валидация города
-    function validateCity(city) {
-        return city.length >= 2 && city.length <= 100;
-    }
-
-    // 🔍 Главная функция валидации формы
-    function validateForm() {
-        console.log('🔍 Начинаем валидацию формы...');
-
-        let isValid = true;
-        const errors = [];
-
+    // Валидация формы перед отправкой
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
         // Получаем значения полей
         const name = document.getElementById('customer_name').value.trim();
         const phone = document.getElementById('customer_phone').value.trim();
         const city = document.getElementById('customer_city').value.trim();
-        const needDelivery = document.getElementById('need_delivery').checked;
         const termsAgree = document.getElementById('terms_agree').checked;
-        const address = document.getElementById('shipping_address').value.trim();
+        const needDelivery = document.getElementById('need_delivery').checked;
 
-        console.log('📝 Данные формы:', { name, phone, city, needDelivery, termsAgree });
+        let hasErrors = false;
 
-        // Очищаем предыдущие ошибки
-        ['name-group', 'phone-group', 'city-group', 'address-group', 'terms-group'].forEach(clearFieldError);
-
-        // Валидация имени
+        // Проверяем обязательные поля
         if (!name) {
-            showFieldError('name-group', 'Поле "Имя" обязательно для заполнения');
-            errors.push('Не указано имя клиента');
-            isValid = false;
-        } else if (name.length < 2) {
-            showFieldError('name-group', 'Имя должно содержать минимум 2 символа');
-            errors.push('Имя слишком короткое');
-            isValid = false;
-        } else {
-            showFieldSuccess('name-group');
-        }
-
-        // Валидация телефона
-        if (!phone) {
-            showFieldError('phone-group', 'Поле "Телефон" обязательно для заполнения');
-            errors.push('Не указан контактный телефон');
-            isValid = false;
-        } else if (!validatePhone(phone)) {
-            showFieldError('phone-group', 'Введите корректный номер телефона');
-            errors.push('Неверный формат телефона');
-            isValid = false;
-        } else {
-            showFieldSuccess('phone-group');
-        }
-
-        // Валидация города
-        if (!city) {
-            showFieldError('city-group', 'Поле "Город" обязательно для заполнения');
-            errors.push('Не указан город');
-            isValid = false;
-        } else if (!validateCity(city)) {
-            showFieldError('city-group', 'Название города должно содержать от 2 до 100 символов');
-            errors.push('Неверное название города');
-            isValid = false;
-        } else {
-            showFieldSuccess('city-group');
-        }
-
-        // Валидация условий
-        if (!termsAgree) {
-            showFieldError('terms-group', 'Необходимо согласиться с условиями использования сайта');
-            errors.push('Не дано согласие с условиями');
-            isValid = false;
-        }
-
-        // Валидация полей доставки
-        if (needDelivery) {
-            if (!address) {
-                showFieldError('address-group', 'При выборе доставки необходимо указать адрес');
-                errors.push('Не указан адрес доставки');
-                isValid = false;
-            } else if (address.length < 10) {
-                showFieldError('address-group', 'Адрес доставки должен быть более подробным');
-                errors.push('Слишком короткий адрес доставки');
-                isValid = false;
-            } else {
-                showFieldSuccess('address-group');
-            }
-        }
-
-        // Показываем общие ошибки
-        const formErrors = document.getElementById('form-errors');
-        const errorList = document.getElementById('error-list');
-
-        if (!isValid) {
-            errorList.innerHTML = errors.map(error => `<li>${error}</li>`).join('');
-            formErrors.style.display = 'block';
-            formErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            console.log('❌ Валидация не пройдена:', errors);
-        } else {
-            formErrors.style.display = 'none';
-            console.log('✅ Валидация прошла успешно');
-        }
-
-        return isValid;
-    }
-
-    // 🎯 Автоматическая валидация при вводе
-    document.addEventListener('DOMContentLoaded', function() {
-        const formFields = [
-            { id: 'customer_name', group: 'name-group' },
-            { id: 'customer_phone', group: 'phone-group' },
-            { id: 'customer_city', group: 'city-group' },
-            { id: 'shipping_address', group: 'address-group' }
-        ];
-
-        formFields.forEach(field => {
-            const element = document.getElementById(field.id);
-            if (element) {
-                element.addEventListener('input', function() {
-                    // Очищаем ошибку при начале ввода
-                    clearFieldError(field.group);
-
-                    // Скрываем общие ошибки
-                    if (this.value.trim()) {
-                        document.getElementById('form-errors').style.display = 'none';
-                    }
-                });
-            }
-        });
-
-        console.log('🎯 Автоматическая валидация настроена');
-    });
-
-    // 📝 Обработка отправки формы - УБРАЛИ ВРАЩЕНИЕ!
-    document.getElementById('orderForm').addEventListener('submit', function(e) {
-        console.log('📝 Попытка отправки формы заказа...');
-
-        // Проводим валидацию
-        if (!validateForm()) {
+            alert('Пожалуйста, укажите ваше имя');
             e.preventDefault();
-            console.log('❌ Форма не отправлена из-за ошибок валидации');
+            hasErrors = true;
+        }
+
+        if (!phone) {
+            alert('Пожалуйста, укажите контактный телефон');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        if (!city) {
+            alert('Пожалуйста, укажите город');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        if (!termsAgree) {
+            alert('Необходимо согласиться с условиями');
+            e.preventDefault();
+            hasErrors = true;
+        }
+
+        // Проверяем поля доставки, если она выбрана
+        if (needDelivery) {
+            const address = document.getElementById('shipping_address').value.trim();
+            if (!address) {
+                alert('Пожалуйста, укажите адрес доставки');
+                e.preventDefault();
+                hasErrors = true;
+            }
+        }
+
+        // Если есть ошибки, останавливаем отправку формы
+        if (hasErrors) {
             return false;
         }
 
-        console.log('✅ Валидация прошла успешно, отправляем форму');
-
-        // 🎯 СПОКОЙНАЯ обработка загрузки БЕЗ ВРАЩЕНИЯ
+        // Блокируем кнопку после отправки
         const btn = document.getElementById('placeOrderBtn');
-        const btnText = document.getElementById('btn-text');
-        const btnLoading = document.getElementById('btn-loading');
-
         btn.disabled = true;
-        btn.classList.add('btn-processing'); // Мягкая пульсация
-        btnText.style.display = 'none';
-        btnLoading.style.display = 'inline';
-
-        console.log('🔒 Кнопка заблокирована, показано СПОКОЙНОЕ состояние загрузки');
-
-        // Таймаут для разблокировки (на случай ошибки)
-        setTimeout(() => {
-            if (btn.disabled) {
-                btn.disabled = false;
-                btn.classList.remove('btn-processing');
-                btnText.style.display = 'inline';
-                btnLoading.style.display = 'none';
-                console.log('⏰ Кнопка разблокирована по таймауту');
-            }
-        }, 15000); // 15 секунд
-
-        return true;
+        btn.innerHTML = 'Оформляем заказ...';
     });
-
-    console.log('✅ Спокойный скрипт корзины БЕЗ вращений загружен успешно');
 </script>
 {% endblock %}
