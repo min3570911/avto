@@ -250,29 +250,20 @@ def send_telegram_notification(order):
             total_items += item.quantity
 
             # Информация о комплектации с экранированием специальных символов
-            kit_info = f" ({item.kit_variant.name.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`', '\\`')})" if item.kit_variant else ""
+            kit_info = f" ({item.kit_variant.name})" if item.kit_variant else ""
 
             # Информация о цветах с экранированием специальных символов
             color_info = ""
             if item.carpet_color:
-                carpet_name = item.carpet_color.name.replace('_', '\\_').replace('*', '\\*').replace('[',
-                                                                                                     '\\[').replace('`',
-                                                                                                                    '\\`')
+                carpet_name = item.carpet_color.name
                 color_info += f", коврик: {carpet_name}"
             if item.border_color:
-                border_name = item.border_color.name.replace('_', '\\_').replace('*', '\\*').replace('[',
-                                                                                                     '\\[').replace('`',
-                                                                                                                    '\\`')
+                border_name = item.border_color.name
                 color_info += f", окантовка: {border_name}"
             if item.has_podpyatnik:
                 color_info += ", с подпятником"
 
-            # Экранирование названия продукта
-            product_name = item.product.product_name.replace('_', '\\_').replace('*', '\\*').replace('[',
-                                                                                                     '\\[').replace('`',
-                                                                                                                    '\\`')
-
-            items_text += f"• {product_name}{kit_info}{color_info}\n"
+            items_text += f"• {item.product.product_name}{kit_info}{color_info}\n"
             items_text += f"  Количество: {item.quantity} шт. × {item.product_price} BYN\n\n"
 
         # 🚚 Информация о доставке
@@ -286,30 +277,17 @@ def send_telegram_notification(order):
             }
             delivery_info = delivery_methods.get(order.delivery_method, order.delivery_method)
 
-        # 📍 Адрес доставки (с экранированием)
+        # 📍 Адрес доставки
         address_info = "Самовывоз"
         if order.shipping_address:
-            address_info = order.shipping_address.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace(
-                '`', '\\`')
-
-        # 📝 Формируем красивое сообщение
-        # Экранирование имени и примечаний
-        customer_name = order.customer_name.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`',
-                                                                                                                '\\`') if order.customer_name else ""
-        customer_email = order.customer_email.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`',
-                                                                                                                  '\\`') if order.customer_email else ""
-        customer_phone = order.customer_phone.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`',
-                                                                                                                  '\\`') if order.customer_phone else ""
-        order_notes = order.order_notes.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`',
-                                                                                                            '\\`') if order.order_notes else ""
+            address_info = order.shipping_address
 
         # 🔄 Используем HTML-форматирование вместо Markdown
-        # Это поможет избежать проблем с экранированием в Markdown
+        # Формируем основное сообщение без поля email
         html_message = f"""<b>🛍️ НОВЫЙ ЗАКАЗ #{order.order_id}</b>
 
 <b>👤 Клиент:</b> {order.customer_name}
 <b>📱 Телефон:</b> {order.customer_phone}
-<b>📧 Email:</b> {order.customer_email}
 
 {f"<b>🚚 Доставка:</b> {delivery_info}" if delivery_info else ""}
 <b>📍 Адрес:</b> {address_info}
@@ -416,7 +394,7 @@ def send_order_notification(order):
 
 
 def place_order(request):
-    """🛒 Обработка оформления заказа - ИСПРАВЛЕНО под текущую форму"""
+    """🛒 Обработка оформления заказа - БЕЗ использования email"""
 
     print("🔍 Начинаем обработку заказа...")  # Отладочная информация
 
@@ -435,12 +413,12 @@ def place_order(request):
             messages.warning(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
             return redirect('index')
 
-        # 📝 Получаем данные формы (ИСПРАВЛЕНО под текущую структуру)
+        # 📝 Получаем данные формы (ИСПРАВЛЕНО без email)
         customer_name = request.POST.get('customer_name', '').strip()
         customer_phone = request.POST.get('customer_phone', '').strip()
-        customer_city = request.POST.get('customer_city', '').strip()  # 🆕 НОВОЕ ПОЛЕ
-        need_delivery = request.POST.get('need_delivery') == 'on'  # 🆕 ЧЕКБОКС
-        terms_agree = request.POST.get('terms_agree') == 'on'  # 🆕 ЧЕКБОКС
+        customer_city = request.POST.get('customer_city', '').strip()
+        need_delivery = request.POST.get('need_delivery') == 'on'
+        terms_agree = request.POST.get('terms_agree') == 'on'
         order_notes = request.POST.get('order_notes', '').strip()
 
         print(f"📝 Данные формы:")
@@ -459,17 +437,6 @@ def place_order(request):
             shipping_address = request.POST.get('shipping_address', '').strip()
             print(f"  - delivery_method: '{delivery_method}'")
             print(f"  - shipping_address: '{shipping_address}'")
-
-        # 📧 Генерируем email (так как в форме его нет)
-        if request.user.is_authenticated and request.user.email:
-            customer_email = request.user.email
-        else:
-            # Создаем временный email из телефона
-            phone_clean = customer_phone.replace('+', '').replace(' ', '').replace('-', '').replace('(', '').replace(
-                ')', '')
-            customer_email = f"order_{phone_clean}@temp.local"
-
-        print(f"  - customer_email (сгенерирован): '{customer_email}'")
 
         # ✅ Проверяем обязательные поля
         missing_fields = []
@@ -501,12 +468,12 @@ def place_order(request):
         order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
         print(f"🆔 ID заказа: {order_id}")
 
-        # 📦 Создаем заказ
+        # 📦 Создаем заказ (без email)
         order = Order.objects.create(
             user=request.user if request.user.is_authenticated else None,
             customer_name=customer_name,
             customer_phone=customer_phone,
-            customer_email=customer_email,
+            customer_email="",  # Пустой email
             delivery_method=delivery_method,
             shipping_address=shipping_address,
             order_notes=order_notes,
@@ -568,7 +535,7 @@ def place_order(request):
         print(f"❌ ОШИБКА: {error_msg}")
         print(f"❌ Трейсбек: {e}")
         messages.error(request,
-                       "Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.")
+                    "Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.")
         return redirect('cart')
 
 
