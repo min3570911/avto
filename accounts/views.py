@@ -227,7 +227,7 @@ def remove_coupon(request, cart_id):
 
 def send_telegram_notification(order):
     """
-    🤖 Отправляет красивое уведомление о новом заказе в Telegram
+    🤖 Отправляет красивое уведомление о новом заказе в Telegram с улучшенным форматированием товаров
     """
     try:
         # Получаем настройки из Django settings
@@ -242,29 +242,38 @@ def send_telegram_notification(order):
         # URL для отправки сообщения
         url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
 
-        # 📝 Собираем информацию о товарах
+        # 📝 Собираем информацию о товарах с красивым форматированием
         items_text = ""
         total_items = 0
 
         for item in OrderItem.objects.filter(order=order):
             total_items += item.quantity
 
-            # Информация о комплектации с экранированием специальных символов
-            kit_info = f" ({item.kit_variant.name})" if item.kit_variant else ""
+            # 🏷️ Наименование товара с эмодзи
+            product_name = item.product.product_name
+            items_text += f"🚘 <b>{product_name}</b>\n"
 
-            # Информация о цветах с экранированием специальных символов
-            color_info = ""
+            # 📋 Информация о комплектации
+            if item.kit_variant:
+                items_text += f"   📦 Комплектация: {item.kit_variant.name}\n"
+
+            # 🎨 Информация о цветах
+            # Используем emoji из модели, если они есть, или стандартные эмодзи
             if item.carpet_color:
-                carpet_name = item.carpet_color.name
-                color_info += f", коврик: {carpet_name}"
-            if item.border_color:
-                border_name = item.border_color.name
-                color_info += f", окантовка: {border_name}"
-            if item.has_podpyatnik:
-                color_info += ", с подпятником"
+                # Используем emoji из модели, если оно есть, или стандартное эмодзи
+                carpet_emoji = getattr(item.carpet_color, 'emoji', '🎨')
+                items_text += f"   {carpet_emoji} Коврик: {item.carpet_color.name}\n"
 
-            items_text += f"• {item.product.product_name}{kit_info}{color_info}\n"
-            items_text += f"  Количество: {item.quantity} шт. × {item.product_price} BYN\n\n"
+            if item.border_color:
+                border_emoji = getattr(item.border_color, 'emoji', '🎨')
+                items_text += f"   {border_emoji} Окантовка: {item.border_color.name}\n"
+
+            if item.has_podpyatnik:
+                items_text += f"   👞 С подпятником\n"
+
+            # 🔢 Количество и цена
+            items_text += f"   🔢 Количество: <b>{item.quantity} шт. × {item.product_price} BYN</b>\n"
+            items_text += f"   💵 Сумма: <b>{item.quantity * item.product_price} BYN</b>\n\n"
 
         # 🚚 Информация о доставке
         delivery_info = ""
@@ -278,33 +287,33 @@ def send_telegram_notification(order):
             delivery_info = delivery_methods.get(order.delivery_method, order.delivery_method)
 
         # 📍 Адрес доставки
-        address_info = "Самовывоз"
+        address_info = "🏪 Самовывоз"
         if order.shipping_address:
-            address_info = order.shipping_address
+            address_info = f"📍 {order.shipping_address}"
 
-        # 🔄 Используем HTML-форматирование вместо Markdown
-        # Формируем основное сообщение без поля email
+        # 🔄 Используем HTML-форматирование
+        # Формируем красивое сообщение
         html_message = f"""<b>🛍️ НОВЫЙ ЗАКАЗ #{order.order_id}</b>
 
 <b>👤 Клиент:</b> {order.customer_name}
 <b>📱 Телефон:</b> {order.customer_phone}
 
 {f"<b>🚚 Доставка:</b> {delivery_info}" if delivery_info else ""}
-<b>📍 Адрес:</b> {address_info}
+<b>{address_info}</b>
 
-<b>📦 Товары ({total_items} шт.):</b>
-{items_text}<b>💰 ИТОГО:</b> {order.grand_total} BYN
+<b>📦 ТОВАРЫ ({total_items} шт.):</b>
+{items_text}<b>💰 ИТОГО: {order.grand_total} BYN</b>
 
 {f"<b>💬 Примечание:</b> {order.order_notes}" if order.order_notes else ""}
 
 <b>⏰ Заказ оформлен:</b> {order.order_date.strftime('%d.%m.%Y в %H:%M')}
 """
 
-        # Параметры для отправки (используем HTML вместо Markdown)
+        # Параметры для отправки
         params = {
             "chat_id": telegram_chat_id,
             "text": html_message,
-            "parse_mode": "HTML"  # Меняем режим форматирования на HTML
+            "parse_mode": "HTML"
         }
 
         # 📡 Отправляем
