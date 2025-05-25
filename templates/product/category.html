@@ -1,0 +1,298 @@
+<!-- 📁 templates/products/category.html - Товары по категории -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category.category_name }} - Автоковрики</title>
+    
+    <!-- 🎨 Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        .product-card {
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+        }
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- 🏠 Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="bi bi-car-front"></i> Автоковрики
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">🏠 Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'products_catalog' %}">🛍️ Каталог</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'cart' %}">
+                            <i class="bi bi-basket"></i> Корзина
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 🎯 Заголовок категории -->
+    <div class="category-header text-white py-5">
+        <div class="container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb text-white-50">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'index' %}" class="text-white-50">Главная</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'products_catalog' %}" class="text-white-50">Каталог</a>
+                    </li>
+                    <li class="breadcrumb-item active text-white">{{ category.category_name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold">
+                        <i class="bi bi-folder"></i> {{ category.category_name }}
+                    </h1>
+                    <p class="lead mb-0">Найдено товаров: <strong>{{ total_products }}</strong></p>
+                </div>
+                
+                {% if category.category_image %}
+                <div class="col-md-4 text-end">
+                    <img src="{{ category.category_image.url }}" 
+                         alt="{{ category.category_name }}" 
+                         class="img-fluid rounded shadow"
+                         style="max-height: 150px; object-fit: cover;">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <div class="row">
+            <!-- 🔍 Боковая панель -->
+            <div class="col-lg-3 mb-4">
+                <div class="bg-light rounded p-3">
+                    <!-- 📂 Навигация по категориям -->
+                    <h6><i class="bi bi-list"></i> Все категории</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'products_catalog' %}" 
+                           class="list-group-item list-group-item-action border-0 ps-0">
+                            <i class="bi bi-grid"></i> Все товары
+                        </a>
+                        {% for cat in categories %}
+                        <a href="{% url 'products_by_category' cat.slug %}" 
+                           class="list-group-item list-group-item-action border-0 ps-0 {% if cat.slug == category.slug %}active{% endif %}">
+                            <i class="bi bi-folder"></i> {{ cat.category_name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- 🔍 Поиск в категории -->
+                    <form method="GET" class="mt-4">
+                        <h6><i class="bi bi-search"></i> Поиск в категории</h6>
+                        <div class="input-group mb-3">
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Поиск..." 
+                                   value="{{ search_query }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- 📊 Сортировка -->
+                        <h6>Сортировка</h6>
+                        <select name="sort" class="form-select" onchange="this.form.submit()">
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Новые первыми</option>
+                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Старые первыми</option>
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>По названию (А-Я)</option>
+                            <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>По названию (Я-А)</option>
+                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Дешевые первыми</option>
+                            <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>Дорогие первыми</option>
+                        </select>
+                        
+                        <!-- 🔄 Сброс -->
+                        {% if search_query or sort_by != 'newest' %}
+                        <div class="mt-2">
+                            <a href="{% url 'products_by_category' category.slug %}" class="btn btn-outline-secondary btn-sm w-100">
+                                <i class="bi bi-arrow-clockwise"></i> Сбросить
+                            </a>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+
+            <!-- 🛍️ Товары -->
+            <div class="col-lg-9">
+                {% if products %}
+                    <!-- 📊 Информация -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <p class="text-muted mb-0">
+                            Показано {{ products|length }} из {{ total_products }} товаров
+                            {% if search_query %}по запросу "<strong>{{ search_query }}</strong>"{% endif %}
+                        </p>
+                        
+                        {% if page_obj.has_other_pages %}
+                        <small class="text-muted">
+                            Страница {{ current_page }} из {{ total_pages }}
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- 🛍️ Сетка товаров -->
+                    <div class="row">
+                        {% for product in products %}
+                        <div class="col-md-6 col-xl-4 mb-4">
+                            <div class="card product-card h-100">
+                                {% if product.get_main_image %}
+                                <img src="{{ product.get_main_image.image.url }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.product_name }}" 
+                                     style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title">{{ product.product_name }}</h6>
+                                    <p class="card-text text-muted small flex-grow-1">
+                                        {{ product.product_desription|truncatechars:100 }}
+                                    </p>
+                                    
+                                    {% if product.newest_product %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-warning text-dark">🆕 Новинка</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="mt-auto">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="fw-bold text-primary h5 mb-0">
+                                                {{ product.get_salon_price|floatformat:0 }} BYN
+                                            </span>
+                                            {% if product.get_reviews_count %}
+                                            <small class="text-muted">
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                                {{ product.get_rating|floatformat:1 }} 
+                                                ({{ product.get_reviews_count }})
+                                            </small>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <a href="{% url 'get_product' product.slug %}" 
+                                           class="btn btn-primary w-100">
+                                            <i class="bi bi-eye"></i> Подробнее
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- 📄 Пагинация -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Навигация по страницам">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_obj.number }}</span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                {% else %}
+                    <!-- 🚫 Товары не найдены -->
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="text-muted mt-3">В этой категории нет товаров</h4>
+                        <p class="text-muted">
+                            {% if search_query %}
+                                По запросу "<strong>{{ search_query }}</strong>" в категории "{{ category.category_name }}" ничего не найдено.
+                            {% else %}
+                                В категории "{{ category.category_name }}" пока нет товаров.
+                            {% endif %}
+                        </p>
+                        
+                        <div class="mt-4">
+                            {% if search_query %}
+                            <a href="{% url 'products_by_category' category.slug %}" class="btn btn-primary me-2">
+                                <i class="bi bi-arrow-left"></i> Показать все товары категории
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'products_catalog' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-grid"></i> Весь каталог
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 🦶 Подвал -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p>&copy; 2025 Автоковрики. Качественные товары для вашего автомобиля.</p>
+        </div>
+    </footer>
+
+    <!-- 📱 Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
