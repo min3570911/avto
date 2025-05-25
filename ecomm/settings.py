@@ -37,7 +37,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    'django_countries',
+    
     'crispy_forms',
     'crispy_bootstrap4',
     # 'rest_framework',  # если используете DRF

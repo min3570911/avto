@@ -1,74 +1,46 @@
-# accounts/urls.py
+# 📁 accounts/urls.py - ФИНАЛЬНЫЕ УПРОЩЕННЫЕ URL-ы
+# 🛍️ Только функции интернет-магазина (без регистрации пользователей)
 
 from django.urls import path
 from accounts.views import (
-    login_page,
-    register_page,
-    user_logout,
-    activate_email_account,
-    profile_view,
-    change_password,
-    update_shipping_address,
     cart,
     update_cart_item,
     remove_cart,
     remove_coupon,
-    place_order,  # 🛒 Новый view для размещения заказа
+    place_order,
     success,
-    order_history,
-    order_details,
-    download_invoice,
-    delete_account,
-    check_cart_item,  # 🛒 Проверка наличия товара в корзине
+    check_cart_item,
 )
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    # User view urls with login, register, logout, and email activation.
-    path('login/', login_page, name="login"),
-    path('register/', register_page, name="register"),
-    path('logout/', user_logout, name='logout'),
-    path('activate/<email_token>/', activate_email_account, name="activate_email"),
-
-    # Profile management urls with profile, change-password, and shipping-address
-    path('profile/<str:username>/', profile_view, name='profile'),
-    path('change-password/', change_password, name='change_password'),
-    path('shipping-address/', update_shipping_address, name='shipping-address'),
-
-    # Password reset urls with django default view.
-    path('password_reset/', auth_views.PasswordResetView.as_view(
-        template_name='registration/password_reset_form.html',
-        email_template_name='registration/password_reset_email.html',
-        html_email_template_name='registration/password_reset_email.html'), name='password_reset'),
-
-    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(
-        template_name='registration/password_reset_done.html'), name='password_reset_done'),
-
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
-
-    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
-        template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
-
-    # Cart functionality with update-cart, remove-cart, and remove-coupon urls.
+    # 🛒 Корзина и покупки (анонимные)
     path('cart/', cart, name="cart"),
     path('update_cart_item/', update_cart_item, name='update_cart_item'),
     path('remove-cart/<uid>/', remove_cart, name="remove_cart"),
     path('remove-coupon/<cart_id>/', remove_coupon, name="remove_coupon"),
     path('check-cart-item/<str:product_id>/', check_cart_item, name="check_cart_item"),
 
-    # Checkout and order placement
+    # 📦 Оформление заказа
     path('place-order/', place_order, name="place_order"),
-
-    # Success url after payment is done.
     path('success/', success, name="success"),
     path('success/<str:order_id>/', success, name="success"),
-
-    # Order history and details urls
-    path('order-history/', order_history, name='order_history'),
-    path('order-details/<str:order_id>/', order_details, name='order_details'),
-    path('order-details/<str:order_id>/download/', download_invoice, name='download_invoice'),
-
-    # Delete user account url
-    path('delete-account/', delete_account, name='delete_account'),
 ]
+
+# ℹ️ ПРИМЕЧАНИЯ:
+#
+# 🔐 Для входа в админку используется стандартный Django:
+#     /admin/ - вход для администраторов
+#
+# 🗑️ УДАЛЕНО (не нужно):
+# - login/ register/ logout/ - регистрация пользователей
+# - activate/<email_token>/ - активация email
+# - profile/<username>/ - профили пользователей
+# - change-password/ - смена пароля
+# - shipping-address/ - адреса доставки
+# - password_reset/ - сброс пароля
+# - order-history/ - история заказов
+# - order-details/ - детали заказов
+# - download/ - скачивание PDF
+# - delete-account/ - удаление аккаунтов
+#
+# ✅ ВСЕ ЭТО ДОСТУПНО В СТАНДАРТНОЙ DJANGO АДМИНКЕ!
