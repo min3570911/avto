@@ -74,23 +74,80 @@ def cart(request):
 
 @require_POST
 def update_cart_item(request):
-    """🔄 Обновление количества товаров в корзине"""
+    """🔄 Обновление количества товаров в корзине с возвратом всех необходимых данных"""
     try:
+        # 📥 Получаем данные из запроса
         data = json.loads(request.body)
         cart_item_id = data.get("cart_item_id")
         quantity = int(data.get("quantity"))
 
-        # Получаем корзину пользователя/сессии
+        # ✅ Валидация количества
+        if quantity <= 0:
+            return JsonResponse({
+                "success": False,
+                "error": "Количество должно быть больше 0"
+            }, status=400)
+
+        if quantity > 99:  # 🚧 Максимальное количество
+            return JsonResponse({
+                "success": False,
+                "error": "Максимальное количество - 99 штук"
+            }, status=400)
+
+        # 🛒 Получаем корзину пользователя/сессии
         cart = Cart.get_cart(request)
 
-        # Находим элемент корзины
-        cart_item = CartItem.objects.get(uid=cart_item_id, cart=cart, cart__is_paid=False)
+        # 🔍 Находим элемент корзины (убрали избыточное условие cart__is_paid=False)
+        try:
+            cart_item = CartItem.objects.get(uid=cart_item_id, cart=cart)
+        except CartItem.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Товар не найден в корзине"
+            }, status=404)
+
+        # 💾 Обновляем количество
         cart_item.quantity = quantity
         cart_item.save()
 
-        return JsonResponse({"success": True})
+        # 💰 Рассчитываем новую цену товара
+        item_total_price = cart_item.get_product_price()
+
+        # 💳 Рассчитываем общую стоимость корзины
+        cart_total = cart.get_cart_total()
+        cart_total_after_coupon = cart.get_cart_total_price_after_coupon()
+
+        # ✅ Возвращаем ПОЛНЫЙ ответ для обновления интерфейса
+        return JsonResponse({
+            "success": True,
+            "cart_item_id": str(cart_item_id),  # 🆔 ID товара для обновления цены
+            "item_price": float(item_total_price),  # 💰 Новая цена товара
+            "cart_total": float(cart_total),  # 🛒 Общая сумма корзины
+            "cart_total_after_coupon": float(cart_total_after_coupon),  # 💳 Сумма с купоном
+            "quantity": quantity  # 🔢 Подтверждение количества
+        })
+
+    except ValueError:
+        # 🚨 Ошибка преобразования количества в число
+        return JsonResponse({
+            "success": False,
+            "error": "Неверное значение количества"
+        }, status=400)
+
+    except json.JSONDecodeError:
+        # 🚨 Ошибка парсинга JSON
+        return JsonResponse({
+            "success": False,
+            "error": "Неверный формат данных"
+        }, status=400)
+
     except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
+        # 🚨 Общая обработка ошибок
+        logger.error(f"Ошибка обновления корзины: {str(e)}")
+        return JsonResponse({
+            "success": False,
+            "error": "Произошла ошибка при обновлении корзины"
+        }, status=500)
 
 
 def remove_cart(request, uid):
