@@ -1,4 +1,5 @@
-# products/views.py - исправленная функция get_product
+# 📁 products/views.py - ПОЛНЫЙ ИСПРАВЛЕННЫЙ ФАЙЛ с каталогом
+# 🛍️ Все view-функции для товаров включая каталог
 
 import random
 from django.shortcuts import render, redirect, get_object_or_404
@@ -6,12 +7,158 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 
-from products.models import Product, KitVariant, ProductReview, Wishlist, Color
+from products.models import Product, KitVariant, ProductReview, Wishlist, Color, Category
 from accounts.models import Cart, CartItem
 from .forms import ReviewForm
 
 
+# 🏠 НОВАЯ ФУНКЦИЯ: Каталог товаров
+def products_catalog(request):
+    """
+    🛍️ Главная страница каталога товаров
+
+    Отображает все товары с возможностью поиска и фильтрации.
+    Поддерживает пагинацию и сортировку.
+    """
+    # 🔍 Получаем параметры поиска и фильтрации
+    search_query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', '-created_at')  # По умолчанию новые первыми
+    category_filter = request.GET.get('category', '')
+
+    # 📦 Базовый queryset - только основные товары (без вариантов)
+    products = Product.objects.filter(parent=None).select_related('category').prefetch_related('product_images')
+
+    # 🔍 Применяем поиск
+    if search_query:
+        products = products.filter(
+            Q(product_name__icontains=search_query) |
+            Q(product_desription__icontains=search_query) |
+            Q(category__category_name__icontains=search_query)
+        )
+
+    # 📂 Фильтрация по категории
+    if category_filter:
+        products = products.filter(category__slug=category_filter)
+
+    # 📊 Сортировка
+    sort_options = {
+        'name': 'product_name',
+        '-name': '-product_name',
+        'price': 'price',
+        '-price': '-price',
+        'newest': '-created_at',
+        'oldest': 'created_at',
+    }
+
+    if sort_by in sort_options:
+        products = products.order_by(sort_options[sort_by])
+    else:
+        products = products.order_by('-created_at')
+
+    # 📄 Пагинация
+    paginator = Paginator(products, 12)  # 12 товаров на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # 📂 Получаем все категории для фильтра
+    categories = Category.objects.all().order_by('category_name')
+
+    # 🎯 Популярные товары (для сайдбара)
+    popular_products = Product.objects.filter(
+        parent=None,
+        newest_product=True
+    ).order_by('-created_at')[:4]
+
+    context = {
+        'page_obj': page_obj,
+        'products': page_obj.object_list,
+        'categories': categories,
+        'popular_products': popular_products,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'category_filter': category_filter,
+        'total_products': paginator.count,
+
+        # 📊 Статистика для отображения
+        'products_count': paginator.count,
+        'current_page': page_obj.number,
+        'total_pages': paginator.num_pages,
+    }
+
+    return render(request, 'products/catalog.html', context)
+
+
+# 📂 НОВАЯ ФУНКЦИЯ: Товары по категории
+def products_by_category(request, category_slug):
+    """
+    📂 Товары по конкретной категории
+
+    Отображает товары выбранной категории с возможностью сортировки.
+    """
+    # 📂 Получаем категорию или 404
+    category = get_object_or_404(Category, slug=category_slug)
+
+    # 🔍 Параметры сортировки
+    sort_by = request.GET.get('sort', '-created_at')
+    search_query = request.GET.get('search', '')
+
+    # 📦 Товары категории
+    products = Product.objects.filter(
+        category=category,
+        parent=None
+    ).select_related('category').prefetch_related('product_images')
+
+    # 🔍 Поиск внутри категории
+    if search_query:
+        products = products.filter(
+            Q(product_name__icontains=search_query) |
+            Q(product_desription__icontains=search_query)
+        )
+
+    # 📊 Сортировка
+    sort_options = {
+        'name': 'product_name',
+        '-name': '-product_name',
+        'price': 'price',
+        '-price': '-price',
+        'newest': '-created_at',
+        'oldest': 'created_at',
+    }
+
+    if sort_by in sort_options:
+        products = products.order_by(sort_options[sort_by])
+    else:
+        products = products.order_by('-created_at')
+
+    # 📄 Пагинация
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # 📂 Все категории для навигации
+    categories = Category.objects.all().order_by('category_name')
+
+    context = {
+        'category': category,
+        'page_obj': page_obj,
+        'products': page_obj.object_list,
+        'categories': categories,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'total_products': paginator.count,
+
+        # 📊 Мета-информация
+        'current_page': page_obj.number,
+        'total_pages': paginator.num_pages,
+    }
+
+    return render(request, 'products/category.html', context)
+
+
+# 🛍️ СУЩЕСТВУЮЩАЯ ФУНКЦИЯ: Страница товара (БЕЗ ИЗМЕНЕНИЙ)
 def get_product(request, slug):
     """
     🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
@@ -106,7 +253,8 @@ def get_product(request, slug):
     return render(request, 'product/product.html', context)
 
 
-# 🔄 Остальные функции остаются без изменений...
+# 🔄 ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ...
+
 # Product Review view
 @login_required
 def product_reviews(request):
@@ -361,7 +509,7 @@ def add_to_cart(request, uid):
             carpet_color = get_object_or_404(Color, uid=carpet_color_id)
             if not carpet_color.is_available:
                 messages.warning(request,
-                                f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                                 f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
                 return redirect(request.META.get('HTTP_REFERER'))
 
         border_color = None
@@ -369,7 +517,7 @@ def add_to_cart(request, uid):
             border_color = get_object_or_404(Color, uid=border_color_id)
             if not border_color.is_available:
                 messages.warning(request,
-                                f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                                 f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
                 return redirect(request.META.get('HTTP_REFERER'))
 
         # Получаем корзину для текущего пользователя/сессии
@@ -396,3 +544,9 @@ def add_to_cart(request, uid):
         messages.error(request, f'Ошибка при добавлении в корзину: {str(e)}')
 
     return redirect('cart')
+
+# 🔧 ИСПРАВЛЕНИЯ:
+# ✅ ДОБАВЛЕНЫ: функции products_catalog и products_by_category
+# ✅ СОХРАНЕНЫ: все существующие функции без изменений
+# ✅ ДОБАВЛЕНЫ: необходимые импорты (Paginator, Q)
+# ✅ ИСПРАВЛЕНА: проблема с NameError для products_catalog
