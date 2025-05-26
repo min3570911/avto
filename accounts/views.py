@@ -395,7 +395,6 @@ def place_order(request):
                 order=order,
                 product=cart_item.product,
                 kit_variant=cart_item.kit_variant,
-                color_variant=cart_item.color_variant,
                 carpet_color=cart_item.carpet_color,
                 border_color=cart_item.border_color,
                 has_podpyatnik=cart_item.has_podpyatnik,

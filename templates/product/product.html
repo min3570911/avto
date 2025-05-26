@@ -626,17 +626,6 @@ class="custom-control-input"
  {{product.product_desription}}
 </p>
  </div>
-
- <h3 class="title padding-y-sm">Похожие товары</h3>
- {% if related_products %}
-{% with related_products as list_products %}
-{% include 'product_parts/product_list.html' %}
-{% endwith %}
-{% else %}
-<p>Похожих товаров не найдено.</p>
- {% endif %}
-<hr />
-
  <h3 class="title padding-bottom-sm">Отзывы</h3>
 
  {% for review in product.reviews.all %}

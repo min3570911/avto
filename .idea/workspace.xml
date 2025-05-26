@@ -4,85 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Сломано. после очистки цветов.">
-      <change afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SETTINGS_INSTRUCTIONS.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/admin.py.backup_1748161301" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/forms.py.backup_django_countries" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/migrations/0001_initial.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/models.py.backup_1748161301" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/urls.py.backup_1748161301" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/accounts/views.py.backup_1748161301" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/copy_4_path.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ecomm/settings.py.backup_django_countries" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/home/admin.py.backup_django_countries" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/home/migrations/0001_initial.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/home/models.py.backup_django_countries" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/old_db.sqlite3" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0017_add_configuration_type.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0018_remove_configurationtype_image_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0020_merge_20250515_2230.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0022_delete_configurationtype_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0023_alter_category_options_alter_colorvariant_options_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/migrations/0024_alter_color_options_alter_coupon_options_and_more.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/catgories/acura.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/catgories/byd.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border211.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border212.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border213.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border214.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border214_uyiEdPi.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border215.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border216.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border217.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border218.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border219.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border220.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border221.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border222.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/border/border223.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border211.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border212.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border213.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border214.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border214_6SCvAQG.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border215.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border215_D1fmdjG.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border217.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border218.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/border221.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota10.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota10_b4ghZVe.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota2.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota3.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota4.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota5.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota6.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota7.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota8.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/colors/carpet/sota9.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/all-salon.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/all-salon_kxpEuSa.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/bagajnik.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/bagajnik_NmZW85h.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/car_2-1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/car_2-1_QANWRYA.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/driver.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/driver_jlFbBTg.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/salonbagajnik.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/configurations/salonbagajnik_Bqb1600.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/public/media/product/BYD-E2-1-2019.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt.backup_1748161301" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt.backup_django_countries" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.by.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.by.py" afterDir="false" />
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Не отправляется корзина - не передает атрибут.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/product/product.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/product/product.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,9 +39,11 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
     "Django Server.avtokovriki.executor": "Run",
     "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "django.template.preview.state": "SHOW_EDITOR_AND_PREVIEW",
     "git-widget-placeholder": "main",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -170,7 +96,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1748278340808</updated>
-      <workItem from="1748278346125" duration="3233000" />
+      <workItem from="1748278346125" duration="4315000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -180,7 +106,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748281112348</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Не отправляется корзина - не передает атрибут.">
+      <option name="closed" value="true" />
+      <created>1748282428186</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1748282428186</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -188,6 +122,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Сломано. после очистки цветов." />
-    <option name="LAST_COMMIT_MESSAGE" value="Сломано. после очистки цветов." />
+    <MESSAGE value="Не отправляется корзина - не передает атрибут." />
+    <option name="LAST_COMMIT_MESSAGE" value="Не отправляется корзина - не передает атрибут." />
   </component>
 </project>
