@@ -158,7 +158,6 @@ def products_by_category(request, category_slug):
     return render(request, 'products/category.html', context)
 
 
-# 🛍️ СУЩЕСТВУЮЩАЯ ФУНКЦИЯ: Страница товара (БЕЗ ИЗМЕНЕНИЙ)
 def get_product(request, slug):
     """
     🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
@@ -251,9 +250,6 @@ def get_product(request, slug):
     }
 
     return render(request, 'product/product.html', context)
-
-
-# 🔄 ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ...
 
 # Product Review view
 @login_required

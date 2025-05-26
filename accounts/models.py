@@ -1,16 +1,13 @@
-# 📁 accounts/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ циклического импорта
-# 🚨 УБРАН ИМПОРТ home.models для избежания circular import
+# 📁 accounts/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ColorVariant
+# 🚨 УБРАН ИМПОРТ ColorVariant и все связанные поля
 
 from django.db import models
 from django.contrib.auth.models import User
 from base.models import BaseModel
-from products.models import Product, ColorVariant, KitVariant, Coupon, Color
+from products.models import Product, KitVariant, Coupon, Color
 from django.conf import settings
 import os
 import uuid
-
-
-# 🗑️ УДАЛЕНО: from home.models import ShippingAddress  # ПРИЧИНА ЦИКЛИЧЕСКОГО ИМПОРТА!
 
 
 class Profile(BaseModel):
@@ -20,9 +17,6 @@ class Profile(BaseModel):
     email_token = models.CharField(max_length=100, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile', null=True, blank=True)
     bio = models.TextField(null=True, blank=True)
-
-    # 🗑️ УДАЛЕНО: shipping_address (больше не нужен)
-    # Адреса доставки теперь указываются прямо в заказах
 
     def __str__(self):
         return self.user.username
@@ -117,7 +111,7 @@ class CartItem(BaseModel):
     """📦 Товар в корзине"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="cart_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
-    color_variant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    # 🗑️ УДАЛЕНО: color_variant поле (ColorVariant больше не существует)
     kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="cart_items_carpet")
@@ -129,12 +123,9 @@ class CartItem(BaseModel):
     def get_product_price(self):
         """💰 Рассчитать стоимость товара с учетом всех опций"""
         # 🎯 Базовая цена за один товар
-        base_price = self.product.price
+        base_price = self.product.price if self.product.price else 0
 
-        # ➕ Добавляем опции к единичной стоимости
-        if self.color_variant:
-            base_price += self.color_variant.price
-
+        # ➕ Добавляем стоимость комплектации
         if self.kit_variant:
             base_price += float(self.kit_variant.price_modifier)
 
@@ -145,7 +136,7 @@ class CartItem(BaseModel):
                 base_price += float(podpyatnik_option.price_modifier)
             else:
                 # 🔄 Запасной вариант
-                base_price += 15
+                base_price += 20
 
         # ✖️ Умножаем полную цену единицы товара на количество
         return base_price * self.quantity
@@ -240,7 +231,7 @@ class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    color_variant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    # 🗑️ УДАЛЕНО: color_variant поле (ColorVariant больше не существует)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="order_items_carpet")
     border_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
@@ -258,7 +249,6 @@ class OrderItem(BaseModel):
         cart_item = CartItem(
             product=self.product,
             kit_variant=self.kit_variant,
-            color_variant=self.color_variant,
             carpet_color=self.carpet_color,
             border_color=self.border_color,
             quantity=self.quantity,
@@ -270,11 +260,8 @@ class OrderItem(BaseModel):
         verbose_name = "Товар в заказе"
         verbose_name_plural = "Товары в заказе"
 
-# 🔧 ИСПРАВЛЕНИЯ:
-# ✅ УБРАН импорт home.models.ShippingAddress (причина циклического импорта)
-# ✅ ИСПОЛЬЗОВАНА строковая ссылка 'home.ShippingAddress' в ForeignKey
-# ✅ ДОБАВЛЕНА обработка ошибок в методе save() модели Order
-# ✅ СОХРАНЕНА вся функциональность без циклических импортов
-
-# 💡 ПРИМЕЧАНИЕ:
-# Django автоматически разрешает строковые ссылки на модели при загрузке приложения
+# 🗑️ ИЗМЕНЕНИЯ:
+# ✅ УБРАН импорт ColorVariant из products.models
+# ✅ УДАЛЕНО поле color_variant из CartItem
+# ✅ УДАЛЕНО поле color_variant из OrderItem
+# ✅ ОБНОВЛЕН метод get_product_price() в CartItem (убрана проверка color_variant)

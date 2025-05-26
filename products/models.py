@@ -1,5 +1,6 @@
 # 📁 products/models.py
 # 🛍️ Модели для системы интернет-магазина автоковриков
+# ✅ УДАЛЕНО: ColorVariant, parent поле
 
 from django.db import models
 from base.models import BaseModel
@@ -33,19 +34,6 @@ class Category(BaseModel):
         verbose_name_plural = "Категории"
 
 
-class ColorVariant(BaseModel):
-    """🎨 Устаревшая модель вариантов цветов (сохранена для совместимости)"""
-    color_name = models.CharField(max_length=100, verbose_name="Название цвета")
-    price = models.IntegerField(default=0, verbose_name="Цена")
-
-    def __str__(self) -> str:
-        return self.color_name
-
-    class Meta:
-        verbose_name = "Вариант цвета (устаревшее)"
-        verbose_name_plural = "Варианты цветов (устаревшее)"
-
-
 class KitVariant(BaseModel):
     """📦 Модель комплектаций товаров"""
     name = models.CharField(max_length=100, verbose_name="Название комплектации")
@@ -66,15 +54,14 @@ class KitVariant(BaseModel):
 
 class Product(BaseModel):
     """🛍️ Основная модель товаров"""
-    parent = models.ForeignKey(
-        'self', related_name='variants', on_delete=models.CASCADE,
-        blank=True, null=True, verbose_name="Родительский товар")
+    # 🗑️ УДАЛЕНО: parent поле (не используется в проекте)
     product_name = models.CharField(max_length=100, verbose_name="Название товара")
     slug = models.SlugField(unique=True, null=True, blank=True, verbose_name="URL-адрес")
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE,
         related_name="products", verbose_name="Категория")
-    price = models.IntegerField(verbose_name="Базовая цена")
+    # ✅ ИЗМЕНЕНО: price теперь необязательное поле (null=True, blank=True)
+    price = models.IntegerField(verbose_name="Базовая цена", null=True, blank=True, default=0)
     product_desription = models.TextField(verbose_name="Описание товара")
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
@@ -98,7 +85,8 @@ class Product(BaseModel):
         kit = KitVariant.objects.filter(code=kit_code).first()
         if kit:
             return float(kit.price_modifier)  # Возвращаем полную стоимость комплектации
-        return float(self.price)  # Запасной вариант - базовая цена
+        # ⚠️ Если базовая цена не указана, возвращаем 0
+        return float(self.price) if self.price else 0
 
     # 💰 НОВЫЕ МЕТОДЫ для упрощения использования в шаблонах
     def get_salon_price(self):
@@ -372,3 +360,13 @@ class Wishlist(BaseModel):
         verbose_name = "Избранное"
         verbose_name_plural = "Избранное"
         ordering = ['-added_on']
+
+
+# 🗑️ ПОЛНОСТЬЮ УДАЛЕНО:
+# - class ColorVariant (устаревшая модель)
+# - поле parent в модели Product (не используется)
+
+# ✅ ИЗМЕНЕНИЯ:
+# - Поле price в Product теперь необязательное (null=True, blank=True)
+# - Добавлен default=0 для поля price
+# - Обновлен метод get_product_price_by_kit() для обработки пустой цены

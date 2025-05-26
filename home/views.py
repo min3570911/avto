@@ -1,4 +1,6 @@
-# home/views.py
+# 📁 home/views.py
+# ✅ ИСПРАВЛЕНО: Убраны все обращения к полю parent
+
 from django.shortcuts import render, get_object_or_404
 from products.models import Product, Category, KitVariant
 from django.core.paginator import Paginator
@@ -10,8 +12,9 @@ def index(request):
     category_filter = request.GET.get('category')
     sort_option = request.GET.get('sort')
 
+    # 🔧 ИСПРАВЛЕНО: Убран filter(parent=None)
     # Базовый запрос всех товаров
-    products_query = Product.objects.filter(parent=None)
+    products_query = Product.objects.all()
 
     # Применяем фильтр по категории, если выбран
     if category_filter:
@@ -63,8 +66,9 @@ def category_view(request, slug):
     # Получаем категорию или возвращаем 404
     category = get_object_or_404(Category, slug=slug)
 
+    # 🔧 ИСПРАВЛЕНО: Убран filter(parent=None)
     # Получаем все продукты этой категории
-    products_query = Product.objects.filter(category=category, parent=None)
+    products_query = Product.objects.filter(category=category)
 
     # Сортировка товаров (аналогично index view)
     sort_option = request.GET.get('sort')
