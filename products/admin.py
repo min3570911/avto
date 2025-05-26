@@ -1,4 +1,5 @@
-# products/admin.py
+# 📁 products/admin.py
+# ✅ УДАЛЕНО: ColorVariant из админки
 
 from django.contrib import admin
 from django.utils.html import mark_safe
@@ -14,10 +15,15 @@ class ProductImageAdmin(admin.StackedInline):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['product_name', 'category', 'price', 'newest_product']
+    list_display = ['product_name', 'category', 'display_price', 'newest_product']
     list_filter = ['category', 'newest_product']
     search_fields = ['product_name', 'product_desription']
     inlines = [ProductImageAdmin]
+
+    # ✅ ДОБАВЛЕНО: Указываем, какие поля можно не заполнять
+    # price теперь необязательное поле
+    fields = ['product_name', 'slug', 'category', 'price', 'product_desription', 'newest_product']
+    prepopulated_fields = {'slug': ('product_name',)}
 
 
 @admin.register(Category)
@@ -26,10 +32,7 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('category_name',)}
 
 
-@admin.register(ColorVariant)
-class ColorVariantAdmin(admin.ModelAdmin):
-    list_display = ['color_name', 'price']
-    model = ColorVariant
+# 🗑️ УДАЛЕНО: ColorVariantAdmin - больше не нужен
 
 
 @admin.register(KitVariant)
@@ -135,3 +138,7 @@ admin.site.register(ProductImage)
 admin.site.site_header = "🛒 Админ-панель магазина автоковриков"
 admin.site.site_title = "Автоковрики - Админка"
 admin.site.index_title = "Управление магазином"
+
+# 🗑️ УДАЛЕНО:
+# - @admin.register(ColorVariant) - полностью убран из админки
+# - Класс ColorVariantAdmin

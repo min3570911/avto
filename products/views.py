@@ -196,10 +196,6 @@ def get_product(request, slug):
     initial_carpet_color = carpet_colors.filter(is_available=True).first() or carpet_colors.first()
     initial_border_color = border_colors.filter(is_available=True).first() or border_colors.first()
 
-    # похожие товары
-    related_products = list(product.category.products.filter(parent=None).exclude(uid=product.uid))
-    if len(related_products) >= 4:
-        related_products = random.sample(related_products, 4)
 
     # рейтинг / отзыв текущего пользователя
     review = ProductReview.objects.filter(product=product,
@@ -235,7 +231,6 @@ def get_product(request, slug):
         'sorted_kit_variants': sorted_kit_variants,
         'additional_options': additional_options,
         'podpyatnik_option': podpyatnik_option,  # 💰 ДОБАВЛЕНО: передаем опцию подпятника в контекст
-        'related_products': related_products,
         'review_form': review_form,
         'rating_percentage': rating_percentage,
         'in_wishlist': Wishlist.objects.filter(user=request.user,
