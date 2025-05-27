@@ -19,6 +19,12 @@ urlpatterns = [
 
     # 🛍️ Товары и каталог
     path('products/', include('products.urls')),
+
+    # 🎨 Summernote URLs
+    path('summernote/', include('django_summernote.urls')),
+
+    # 📝 Blog URLs
+    path('blog/', include('blog.urls')),
 ]
 
 # 📁 Медиа и статические файлы

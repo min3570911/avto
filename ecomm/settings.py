@@ -40,7 +40,7 @@ THIRD_PARTY_APPS = [
     
     'crispy_forms',
     'crispy_bootstrap4',
-    # 'rest_framework',  # если используете DRF
+
 ]
 
 LOCAL_APPS = [
@@ -48,6 +48,8 @@ LOCAL_APPS = [
     'products',
     'home',
     'base',
+    'django_summernote',
+    'blog',  # Новое приложение для статей
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -357,3 +359,44 @@ MESSAGE_TAGS = {
 # 🌐 Настройка домена для писем
 DEFAULT_DOMAIN = '127.0.0.1:8000'
 DEFAULT_HTTP_PROTOCOL = 'http'
+
+# 🎨 Настройки Django Summernote
+SUMMERNOTE_CONFIG = {
+    # 📐 Размеры редактора
+    'width': '100%',
+    'height': '400',
+
+    # 🛠️ Настройки тулбара для описания товаров
+    'toolbar': [
+        ['style', ['style']],
+        ['font', ['bold', 'italic', 'underline', 'clear']],
+        ['fontname', ['fontname']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['height', ['height']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture', 'video']],
+        ['view', ['fullscreen', 'codeview']],
+        ['help', ['help']],
+    ],
+
+    # 🔧 Дополнительные настройки
+    'attachment_require_authentication': True,  # Только для авторизованных
+    'attachment_filesize_limit': 5 * 1024 * 1024,  # 5MB макс
+    'disable_attachment': False,  # Разрешить загрузку файлов
+
+    # 🎯 Кастомные настройки для разных полей
+    'summernote': {
+        'airMode': False,
+        'lang': 'ru-RU',  # Русский язык
+        'codemirror': {
+            'mode': 'htmlmixed',
+            'lineNumbers': True,
+            'theme': 'monokai',
+        },
+    },
+}
+
+# 📁 Путь для загрузки изображений
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media')

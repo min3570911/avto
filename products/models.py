@@ -7,6 +7,7 @@ from base.models import BaseModel
 from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
+from django_summernote.fields import SummernoteTextField
 
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (
@@ -62,7 +63,10 @@ class Product(BaseModel):
         related_name="products", verbose_name="Категория")
     # ✅ ИЗМЕНЕНО: price теперь необязательное поле (null=True, blank=True)
     price = models.IntegerField(verbose_name="Базовая цена", null=True, blank=True, default=0)
-    product_desription = models.TextField(verbose_name="Описание товара")
+    product_desription = SummernoteTextField(
+        verbose_name="Описание товара",
+        help_text="Подробное описание товара с возможностью форматирования"
+    )
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
     def save(self, *args, **kwargs):

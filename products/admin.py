@@ -1,39 +1,41 @@
-# 📁 products/admin.py
-# ✅ УДАЛЕНО: ColorVariant из админки
+# 📁 products/admin.py - ОБНОВЛЕННАЯ ВЕРСИЯ с WYSIWYG
+# 🛍️ Добавляем CKEditor в админку товаров
 
 from django.contrib import admin
 from django.utils.html import mark_safe
+from django_summernote.admin import SummernoteModelAdmin
+from django import forms
 from .models import *
+from .models import Product
 
 
-# Register your models here.
+# 🎨 Теперь наследуемся от SummernoteModelAdmin
+class ProductAdmin(SummernoteModelAdmin):
+    """📦 Админка товаров с WYSIWYG редактором"""
+    # 🎯 Указываем поля с редактором
+    summernote_fields = ('product_desription',)
 
-class ProductImageAdmin(admin.StackedInline):
-    model = ProductImage
-    verbose_name = "Изображение товара"
-    verbose_name_plural = "Изображения товара"
-
-
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ['product_name', 'category', 'display_price', 'newest_product']
+    list_display = ['product_name', 'category', 'price', 'newest_product']
     list_filter = ['category', 'newest_product']
     search_fields = ['product_name', 'product_desription']
     inlines = [ProductImageAdmin]
 
-    # ✅ ДОБАВЛЕНО: Указываем, какие поля можно не заполнять
-    # price теперь необязательное поле
-    fields = ['product_name', 'slug', 'category', 'price', 'product_desription', 'newest_product']
-    prepopulated_fields = {'slug': ('product_name',)}
+    fieldsets = (
+        ('📝 Основная информация', {
+            'fields': ('product_name', 'slug', 'category', 'price', 'newest_product', 'parent')
+        }),
+        ('✍️ Описание товара', {
+            'fields': ('product_desription',),
+            'classes': ('wide',),
+            'description': '🎨 Используйте редактор для форматирования описания'
+        }),
+    )
 
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['category_name', 'slug']
     prepopulated_fields = {'slug': ('category_name',)}
-
-
-# 🗑️ УДАЛЕНО: ColorVariantAdmin - больше не нужен
-
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
@@ -138,7 +140,3 @@ admin.site.register(ProductImage)
 admin.site.site_header = "🛒 Админ-панель магазина автоковриков"
 admin.site.site_title = "Автоковрики - Админка"
 admin.site.index_title = "Управление магазином"
-
-# 🗑️ УДАЛЕНО:
-# - @admin.register(ColorVariant) - полностью убран из админки
-# - Класс ColorVariantAdmin
