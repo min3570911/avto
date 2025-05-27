@@ -4,11 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедряю блог. Не работает пока.">
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедряю блог. Джанго саммерноте.">
+      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/migrations/0027_update_product_description_to_summernote.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/product/product.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/product/product.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/home/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/home/navbar.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/navbar.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,7 +39,7 @@
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/min3570911/avto.git",
-    "accountId": "502038a7-7703-43ac-96d8-e8cbd4a75480"
+    "accountId": "43c3ffbf-a0f5-4c48-89e2-bbd8bc1ff001"
   }
 }]]></component>
   <component name="ProjectColorInfo">{
@@ -52,27 +53,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Django Server.avtokovriki.executor": "Run",
-    "Python.setup.by.executor": "Run",
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.pycharm.django.structure.promotion.once.per.project": "true",
-    "django.template.preview.state": "SHOW_EDITOR",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/YandexDisk/avtokovriki",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Django Server.avtokovriki.executor&quot;: &quot;Run&quot;,
+    &quot;Python.setup.by.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
+    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/YandexDisk/avtokovriki&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="avtokovriki" type="Python.DjangoServer" factoryName="Django server">
       <module name="avtokovriki" />
@@ -103,8 +104,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23339.19" />
-        <option value="bundled-python-sdk-0029f7779945-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23339.19" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.24807.21" />
+        <option value="bundled-python-sdk-00717045f1d3-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.24807.21" />
       </set>
     </attachedChunks>
   </component>
@@ -117,7 +118,8 @@
       <option name="presentableId" value="Default" />
       <updated>1748278340808</updated>
       <workItem from="1748278346125" duration="8059000" />
-      <workItem from="1748320148887" duration="6488000" />
+      <workItem from="1748320148887" duration="8442000" />
+      <workItem from="1748363935808" duration="1365000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -159,7 +161,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748324578046</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Внедряю блог. Джанго саммерноте.">
+      <option name="closed" value="true" />
+      <created>1748326879312</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1748326879312</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -171,7 +181,8 @@
     <MESSAGE value="Починил корзину. Приступаю к реализации импорта." />
     <MESSAGE value="не работает удаление отзыва. Решил попробовать сделать модуль статьи вместо импорта." />
     <MESSAGE value="Внедряю блог. Не работает пока." />
-    <option name="LAST_COMMIT_MESSAGE" value="Внедряю блог. Не работает пока." />
+    <MESSAGE value="Внедряю блог. Джанго саммерноте." />
+    <option name="LAST_COMMIT_MESSAGE" value="Внедряю блог. Джанго саммерноте." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748286483136" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

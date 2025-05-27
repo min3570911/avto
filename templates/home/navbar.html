@@ -51,15 +51,17 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto" style="gap: 20px;">
-          <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Главная</a></li>
           {% if user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Wishlist ({{ request.user.wishlist.count }})</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное ({{ request.user.wishlist.count }})</a></li>
           {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Wishlist</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное</a></li>
           {% endif %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'product_reviews' %}">Your Reviews</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'product_reviews' %}">Ваши отзывы</a></li>
+          <!-- 📝 Добавленная ссылка на блог -->
+          <li class="nav-item"><a class="nav-link" href="{% url 'blog' %}">Блог</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Контакты</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">О нас</a></li>
         </ul>
       </div>
     </div>
@@ -79,7 +81,7 @@
           <form method="GET" action="{% url 'product_search' %}" class="search">
             <div class="input-group w-100">
               <input type="text" class="form-control" name="q"
-              placeholder="Search" value="{{ query|default:"" }}"/>
+              placeholder="Поиск" value="{{ query|default:"" }}"/>
               <div class="input-group-append">
                 <button class="btn btn-primary" type="submit">
                   <i class="fa fa-search"></i>
