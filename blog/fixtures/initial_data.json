@@ -1,0 +1,50 @@
+[
+  {
+    "model": "blog.category",
+    "pk": 1,
+    "fields": {
+      "name": "Советы по выбору",
+      "slug": "sovety-po-vyboru",
+      "description": "Полезные советы и рекомендации по выбору автомобильных ковриков для различных марок и моделей автомобилей",
+      "sort_order": 1,
+      "created_at": "2025-01-01T10:00:00Z",
+      "updated_at": "2025-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 2,
+    "fields": {
+      "name": "Установка и монтаж",
+      "slug": "ustanovka-i-montazh",
+      "description": "Пошаговые инструкции по правильной установке автомобильных ковриков",
+      "sort_order": 2,
+      "created_at": "2025-01-01T10:00:00Z",
+      "updated_at": "2025-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 3,
+    "fields": {
+      "name": "Уход и эксплуатация",
+      "slug": "uhod-i-ekspluataciya",
+      "description": "Советы по уходу за автоковриками для продления срока их службы",
+      "sort_order": 3,
+      "created_at": "2025-01-01T10:00:00Z",
+      "updated_at": "2025-01-01T10:00:00Z"
+    }
+  },
+  {
+    "model": "blog.category",
+    "pk": 4,
+    "fields": {
+      "name": "Обзоры моделей",
+      "slug": "obzory-modeley",
+      "description": "Детальные обзоры различных моделей автомобильных ковриков",
+      "sort_order": 4,
+      "created_at": "2025-01-01T10:00:00Z",
+      "updated_at": "2025-01-01T10:00:00Z"
+    }
+  }
+]

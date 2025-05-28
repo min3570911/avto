@@ -400,3 +400,67 @@ SUMMERNOTE_CONFIG = {
 # 📁 Путь для загрузки изображений
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media')
+
+# 📁 Добавить в ecomm/settings.py
+
+# 📝 Настройки Summernote для WYSIWYG редактора в блоге
+SUMMERNOTE_CONFIG = {
+    # 🖼️ Настройки загрузки изображений
+    'attachment_require_authentication': True,
+    'attachment_upload_to': 'blog/uploads/',
+    'attachment_filesize_limit': 5 * 1024 * 1024,  # 5MB max
+
+    # 🎨 Размеры редактора
+    'width': '100%',
+    'height': '400',
+
+    # 🛠️ Панель инструментов
+    'toolbar': [
+        ['style', ['style']],
+        ['font', ['bold', 'underline', 'italic', 'clear']],
+        ['fontname', ['fontname']],
+        ['fontsize', ['fontsize']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['height', ['height']],
+        ['table', ['table']],
+        ['insert', ['link', 'picture', 'video']],
+        ['view', ['fullscreen', 'codeview', 'help']],
+    ],
+
+    # 🌐 Язык интерфейса
+    'lang': 'ru-RU',
+
+    # 🎯 Дополнительные настройки
+    'codemirror': {
+        'mode': 'htmlmixed',
+        'lineNumbers': True,
+        'theme': 'monokai',
+    },
+
+    # 🔒 Безопасность
+    'disable_attachment': False,
+    'summernote': {
+        'airMode': False,
+        'width': '100%',
+        'height': '480',
+        'lang': 'ru-RU',
+        'disableDragAndDrop': False,
+    },
+
+    # 📝 CSS классы
+    'css': (
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/theme/monokai.min.css',
+    ),
+}
+
+# 🔧 Убедитесь, что django_summernote добавлен в INSTALLED_APPS:
+# INSTALLED_APPS = [
+#     ...
+#     'django_summernote',
+#     'blog',
+#     ...
+# ]
+
+# 🔗 И в основном urls.py должна быть строка:
+# path('summernote/', include('django_summernote.urls')),

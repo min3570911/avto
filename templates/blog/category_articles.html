@@ -1,0 +1,145 @@
+<!-- 📁 templates/blog/category_articles.html -->
+<!-- 📂 Страница со статьями конкретной категории -->
+
+{% extends "blog/base_blog.html" %}
+{% load static %}
+
+{% block blog_title %}{{ page_title }}{% endblock %}
+
+{% block header_title %}{{ category.name }}{% endblock %}
+{% block header_subtitle %}{{ category.description|default:"Статьи из этой категории" }}{% endblock %}
+
+{% block blog_content %}
+<!-- 🏠 Хлебные крошки -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-blog">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'blog:article_list' %}">Статьи</a></li>
+        <li class="breadcrumb-item active">{{ category.name }}</li>
+    </ol>
+</nav>
+
+<!-- 📂 Информация о категории -->
+{% if category.image %}
+<div class="category-header mb-4">
+    <img src="{{ category.image.url }}" 
+         alt="{{ category.name }}" 
+         class="img-fluid rounded shadow-sm"
+         style="max-height: 200px; width: 100%; object-fit: cover;">
+</div>
+{% endif %}
+
+{% if category.description %}
+<div class="category-description bg-light p-4 rounded mb-4">
+    <p class="mb-0">{{ category.description }}</p>
+</div>
+{% endif %}
+
+<!-- 📰 Список статей категории -->
+<div class="articles-grid">
+    <div class="row">
+        {% for article in articles %}
+        <div class="col-md-6 mb-4">
+            <article class="card article-card">
+                <!-- 🖼️ Изображение статьи -->
+                <a href="{{ article.get_absolute_url }}">
+                    <img src="{{ article.featured_image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ article.title }}">
+                </a>
+                
+                <div class="card-body">
+                    <!-- 📋 Заголовок -->
+                    <h2 class="article-title">
+                        <a href="{{ article.get_absolute_url }}" class="text-decoration-none text-dark">
+                            {{ article.title }}
+                        </a>
+                    </h2>
+                    
+                    <!-- 📝 Краткое описание -->
+                    <div class="article-excerpt">
+                        {{ article.excerpt|safe|truncatewords_html:20 }}
+                    </div>
+                    
+                    <!-- 🔗 Кнопка -->
+                    <a href="{{ article.get_absolute_url }}" 
+                       class="btn btn-primary btn-sm">
+                        Читать далее →
+                    </a>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>В этой категории пока нет статей</h4>
+                <p>Посмотрите статьи в других категориях или вернитесь позже!</p>
+                <a href="{% url 'blog:article_list' %}" class="btn btn-primary mt-3">
+                    Все статьи
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 📄 Пагинация -->
+{% if is_paginated %}
+<nav aria-label="Навигация по страницам" class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1">
+                <i class="fa fa-angle-double-left"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-double-left"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-left"></i></span>
+        </li>
+        {% endif %}
+        
+        <!-- 🔢 Номера страниц -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                <i class="fa fa-angle-double-right"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-right"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-double-right"></i></span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

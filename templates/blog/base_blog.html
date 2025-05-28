@@ -1,0 +1,211 @@
+<!-- 📁 templates/blog/base_blog.html -->
+<!-- 🎨 Базовый шаблон для раздела "Статьи" -->
+
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{% block blog_title %}Статьи{% endblock %} | Автоковрики{% endblock %}
+
+{% block start %}
+<style>
+    /* 🎨 Стили для блога */
+    .blog-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 40px;
+    }
+    
+    .blog-header h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .blog-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    /* 📰 Карточки статей */
+    .article-card {
+        border: none;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        overflow: hidden;
+    }
+    
+    .article-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    }
+    
+    .article-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .article-card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    
+    .article-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .article-category {
+        color: #667eea;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .article-title {
+        font-size: 1.3rem;
+        font-weight: bold;
+        line-height: 1.4;
+        margin: 0.5rem 0;
+        color: #333;
+    }
+    
+    .article-excerpt {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    /* 📂 Сайдбар категорий */
+    .categories-sidebar {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .categories-sidebar h3 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        color: #333;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 10px;
+    }
+    
+    .category-item {
+        padding: 10px 15px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .category-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .category-item a {
+        color: #495057;
+        text-decoration: none;
+        font-weight: 500;
+        display: block;
+        width: 100%;
+    }
+    
+    .category-item.active {
+        background: #667eea;
+    }
+    
+    .category-item.active a {
+        color: white;
+    }
+    
+    .category-count {
+        background: #dee2e6;
+        color: #495057;
+        padding: 2px 8px;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+    
+    .category-item.active .category-count {
+        background: rgba(255,255,255,0.3);
+        color: white;
+    }
+    
+    /* 📄 Хлебные крошки */
+    .breadcrumb-blog {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 30px;
+    }
+    
+    .breadcrumb-blog a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-blog a:hover {
+        text-decoration: underline;
+    }
+    
+    /* 📱 Адаптивность */
+    @media (max-width: 768px) {
+        .blog-header h1 {
+            font-size: 2rem;
+        }
+        
+        .categories-sidebar {
+            margin-bottom: 30px;
+        }
+    }
+</style>
+
+<!-- 🎯 Заголовок блога -->
+<div class="blog-header">
+    <div class="container">
+        <div class="text-center">
+            <h1>{% block header_title %}Полезные статьи{% endblock %}</h1>
+            <p>{% block header_subtitle %}Советы по выбору, установке и уходу за автоковриками{% endblock %}</p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- 📋 Основной контент -->
+        <div class="col-lg-8">
+            {% block blog_content %}{% endblock %}
+        </div>
+        
+        <!-- 📂 Боковая панель -->
+        <div class="col-lg-4">
+            <div class="categories-sidebar">
+                <h3>Категории статей</h3>
+                <div class="category-list">
+                    <div class="category-item {% if not category %}active{% endif %}">
+                        <a href="{% url 'blog:article_list' %}">
+                            <span>Все статьи</span>
+                        </a>
+                    </div>
+                    {% for cat in categories %}
+                    <div class="category-item {% if category and category.slug == cat.slug %}active{% endif %}">
+                        <a href="{{ cat.get_absolute_url }}">
+                            <span>{{ cat.name }}</span>
+                        </a>
+                        <span class="category-count">{{ cat.get_articles_count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% block sidebar_extra %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

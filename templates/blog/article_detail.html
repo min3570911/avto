@@ -1,37 +1,40 @@
 <!-- 📁 templates/blog/article_detail.html -->
-<!-- 📝 Шаблон детальной страницы статьи с WYSIWYG контентом -->
+<!-- 📝 Детальная страница статьи с WYSIWYG контентом -->
 
-{% extends "base/base.html" %}
+{% extends "blog/base_blog.html" %}
 {% load static %}
 
-{% block title %}{{ article.title }} | Блог{% endblock %}
+{% block blog_title %}{{ page_title }}{% endblock %}
 
-{% block start %}
+{% block header_title %}{{ article.title }}{% endblock %}
+{% block header_subtitle %}{{ article.category.name }}{% endblock %}
+
+{% block blog_content %}
 <style>
-    /* 🎨 Стили для контента из CKEditor */
-    .article-content {
+    /* 🎨 Стили для контента статьи */
+    .article-detail-content {
         font-size: 1.1rem;
         line-height: 1.8;
         color: #333;
     }
     
-    .article-content h2 {
+    .article-detail-content h2 {
         margin-top: 2rem;
         margin-bottom: 1rem;
         color: #2a41e8;
     }
     
-    .article-content h3 {
+    .article-detail-content h3 {
         margin-top: 1.5rem;
         margin-bottom: 0.8rem;
     }
     
-    .article-content p {
+    .article-detail-content p {
         margin-bottom: 1.2rem;
         text-align: justify;
     }
     
-    .article-content img {
+    .article-detail-content img {
         max-width: 100%;
         height: auto;
         margin: 1.5rem auto;
@@ -40,7 +43,7 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     
-    .article-content blockquote {
+    .article-detail-content blockquote {
         border-left: 4px solid #2a41e8;
         padding-left: 1.5rem;
         margin: 1.5rem 0;
@@ -48,31 +51,31 @@
         color: #666;
     }
     
-    .article-content ul, .article-content ol {
+    .article-detail-content ul, .article-detail-content ol {
         margin-bottom: 1.2rem;
         padding-left: 2rem;
     }
     
-    .article-content table {
+    .article-detail-content table {
         width: 100%;
         margin: 1.5rem 0;
         border-collapse: collapse;
     }
     
-    .article-content table th,
-    .article-content table td {
+    .article-detail-content table th,
+    .article-detail-content table td {
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
     }
     
-    .article-content table th {
+    .article-detail-content table th {
         background-color: #f8f9fa;
         font-weight: bold;
     }
     
     /* 📹 Стили для встроенных видео */
-    .article-content iframe {
+    .article-detail-content iframe {
         max-width: 100%;
         margin: 1.5rem auto;
         display: block;
@@ -80,127 +83,139 @@
     
     .article-meta {
         color: #666;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
     }
     
-    .article-header {
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
-        border-bottom: 1px solid #eee;
+    .article-navigation {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .nav-article {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-article:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .nav-article.prev:hover {
+        transform: translateX(-5px);
     }
 </style>
 
-<section class="section-content padding-y">
-    <div class="container">
+<!-- 🏠 Хлебные крошки -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-blog">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'blog:article_list' %}">Статьи</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ article.category.get_absolute_url }}">{{ article.category.name }}</a>
+        </li>
+        <li class="breadcrumb-item active text-truncate" style="max-width: 300px;">
+            {{ article.title }}
+        </li>
+    </ol>
+</nav>
+
+<article>
+    <!-- 🖼️ Главное изображение -->
+    {% if article.featured_image %}
+    <div class="mb-4">
+        <img src="{{ article.featured_image.url }}" 
+             alt="{{ article.title }}" 
+             class="img-fluid rounded shadow">
+    </div>
+    {% endif %}
+    
+    <!-- 📊 Мета-информация -->
+    <div class="article-meta d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <span>
+                <i class="fa fa-user"></i> 
+                {{ article.author.get_full_name|default:article.author.username }}
+            </span>
+            <span class="mx-2">|</span>
+            <span>
+                <i class="fa fa-folder"></i> 
+                <a href="{{ article.category.get_absolute_url }}">
+                    {{ article.category.name }}
+                </a>
+            </span>
+            <span class="mx-2">|</span>
+            <span>
+                <i class="fa fa-clock"></i> 
+                ~{{ reading_time }} мин. чтения
+            </span>
+        </div>
+        <div>
+            <span>
+                <i class="fa fa-eye"></i> 
+                {{ article.views }} просмотров
+            </span>
+        </div>
+    </div>
+    
+    <!-- ✍️ Контент статьи -->
+    <div class="article-detail-content">
+        {{ article.content|safe }}
+    </div>
+    
+    <!-- ⬅️➡️ Навигация между статьями -->
+    <div class="article-navigation">
         <div class="row">
-            <!-- 📰 Основной контент -->
-            <div class="col-lg-8">
-                <article class="card">
-                    <div class="card-body">
-                        <!-- 🎯 Заголовок и мета-информация -->
-                        <div class="article-header">
-                            <h1 class="h2 mb-3">{{ article.title }}</h1>
-                            
-                            <div class="article-meta">
-                                <span>
-                                    <i class="fa fa-user"></i> 
-                                    {{ article.author.get_full_name|default:article.author.username }}
-                                </span>
-                                <span class="mx-2">|</span>
-                                <span>
-                                    <i class="fa fa-calendar"></i> 
-                                    {{ article.published_at|date:"d.m.Y" }}
-                                </span>
-                                <span class="mx-2">|</span>
-                                <span>
-                                    <i class="fa fa-folder"></i> 
-                                    <a href="{% url 'blog:category_articles' article.category.slug %}">
-                                        {{ article.category.name }}
-                                    </a>
-                                </span>
-                                <span class="mx-2">|</span>
-                                <span>
-                                    <i class="fa fa-eye"></i> 
-                                    {{ article.views }} просмотров
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- 🖼️ Главное изображение -->
-                        {% if article.featured_image %}
-                        <div class="mb-4">
-                            <img src="{{ article.featured_image.url }}" 
-                                 alt="{{ article.title }}" 
-                                 class="img-fluid rounded">
-                        </div>
-                        {% endif %}
-                        
-                        <!-- ✍️ Контент статьи с WYSIWYG форматированием -->
-                        <div class="article-content">
-                            {{ article.content|safe }}
-                        </div>
-                        
-                        <!-- 🏷️ Теги -->
-                        {% if article.tags.exists %}
-                        <div class="mt-4 pt-3 border-top">
-                            <i class="fa fa-tags"></i> Теги:
-                            {% for tag in article.tags.all %}
-                            <a href="{% url 'blog:tag_articles' tag.slug %}" 
-                               class="badge bg-secondary text-decoration-none">
-                                {{ tag.name }}
-                            </a>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+            <div class="col-md-6 mb-3">
+                {% if previous_article %}
+                <a href="{{ previous_article.get_absolute_url }}" class="text-decoration-none">
+                    <div class="nav-article prev">
+                        <small class="text-muted">← Предыдущая статья</small>
+                        <h6 class="mb-0 mt-1">{{ previous_article.title }}</h6>
                     </div>
-                </article>
+                </a>
+                {% endif %}
             </div>
-            
-            <!-- 📋 Сайдбар -->
-            <div class="col-lg-4">
-                <!-- 📂 Категории -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Категории</h5>
+            <div class="col-md-6 mb-3 text-md-end">
+                {% if next_article %}
+                <a href="{{ next_article.get_absolute_url }}" class="text-decoration-none">
+                    <div class="nav-article next">
+                        <small class="text-muted">Следующая статья →</small>
+                        <h6 class="mb-0 mt-1">{{ next_article.title }}</h6>
                     </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled mb-0">
-                            {% for category in categories %}
-                            <li>
-                                <a href="{% url 'blog:category_articles' category.slug %}">
-                                    {{ category.name }} 
-                                    <span class="text-muted">({{ category.articles.count }})</span>
-                                </a>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- 🔗 Похожие статьи -->
-                {% if related_articles %}
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Похожие статьи</h5>
-                    </div>
-                    <div class="card-body">
-                        {% for related in related_articles %}
-                        <div class="mb-3">
-                            <a href="{% url 'blog:article_detail' related.slug %}" 
-                               class="text-decoration-none">
-                                <h6 class="mb-1">{{ related.title }}</h6>
-                            </a>
-                            <small class="text-muted">
-                                {{ related.published_at|date:"d.m.Y" }}
-                            </small>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
+                </a>
                 {% endif %}
             </div>
         </div>
     </div>
-</section>
+</article>
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- 🔗 Похожие статьи -->
+{% if related_articles %}
+<div class="related-articles mt-4">
+    <div class="categories-sidebar">
+        <h3>Похожие статьи</h3>
+        {% for related in related_articles %}
+        <div class="related-article mb-3">
+            <h6 class="mb-1">
+                <a href="{{ related.get_absolute_url }}" class="text-decoration-none">
+                    {{ related.title }}
+                </a>
+            </h6>
+            <small class="text-muted">
+                <i class="fa fa-eye"></i> {{ related.views }} просмотров
+            </small>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

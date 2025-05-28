@@ -1,0 +1,135 @@
+<!-- 📁 templates/blog/article_list.html -->
+<!-- 📰 Главная страница блога со списком всех статей -->
+
+{% extends "blog/base_blog.html" %}
+{% load static %}
+
+{% block blog_title %}{{ page_title }}{% endblock %}
+
+{% block header_title %}Полезные статьи об автоковриках{% endblock %}
+{% block header_subtitle %}Экспертные советы и рекомендации для автовладельцев{% endblock %}
+
+{% block blog_content %}
+<!-- 🏠 Хлебные крошки -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-blog">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+        <li class="breadcrumb-item active">Статьи</li>
+    </ol>
+</nav>
+
+<!-- 📰 Список статей -->
+<div class="articles-grid">
+    <div class="row">
+        {% for article in articles %}
+        <div class="col-md-6 mb-4">
+            <article class="card article-card">
+                <!-- 🖼️ Изображение статьи -->
+                <a href="{{ article.get_absolute_url }}">
+                    <img src="{{ article.featured_image.url }}" 
+                         class="card-img-top" 
+                         alt="{{ article.title }}">
+                </a>
+                
+                <div class="card-body">
+                    <!-- 📂 Категория -->
+                    <a href="{{ article.category.get_absolute_url }}" 
+                       class="article-category">
+                        {{ article.category.name }}
+                    </a>
+                    
+                    <!-- 📋 Заголовок -->
+                    <h2 class="article-title">
+                        <a href="{{ article.get_absolute_url }}" class="text-decoration-none text-dark">
+                            {{ article.title }}
+                        </a>
+                    </h2>
+                    
+                    <!-- 📝 Краткое описание -->
+                    <div class="article-excerpt">
+                        {{ article.excerpt|safe|truncatewords_html:20 }}
+                    </div>
+                    
+                    <!-- 🔗 Кнопка -->
+                    <a href="{{ article.get_absolute_url }}" 
+                       class="btn btn-primary btn-sm">
+                        Читать далее →
+                    </a>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>Статей пока нет</h4>
+                <p>Мы работаем над созданием полезного контента для вас!</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 📄 Пагинация -->
+{% if is_paginated %}
+<nav aria-label="Навигация по страницам" class="mt-5">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1">
+                <i class="fa fa-angle-double-left"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-double-left"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-left"></i></span>
+        </li>
+        {% endif %}
+        
+        <!-- 🔢 Номера страниц -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">
+                <i class="fa fa-angle-double-right"></i>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-right"></i></span>
+        </li>
+        <li class="page-item disabled">
+            <span class="page-link"><i class="fa fa-angle-double-right"></i></span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block sidebar_extra %}
+<!-- 🎯 Дополнительный блок в сайдбаре (можно добавить популярные статьи) -->
+{% endblock %}
