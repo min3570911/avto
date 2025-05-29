@@ -1,5 +1,6 @@
 # 📁 products/admin.py - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ОШИБОК
 # 🛍️ Админка для системы интернет-магазина автоковриков с исправленными импортами
+# ✅ ИСПРАВЛЕНО: Удалено поле 'parent' из fieldsets
 
 from django.contrib import admin
 from django.utils.html import mark_safe
@@ -53,6 +54,7 @@ class ProductAdmin(SummernoteModelAdmin if SUMMERNOTE_AVAILABLE else admin.Model
     inlines = [ProductImageAdmin]
 
     # 📝 Группировка полей в админке
+    # ✅ ИСПРАВЛЕНО: Удалено поле 'parent' из fieldsets
     fieldsets = (
         ('🛍️ Основная информация', {
             'fields': ('product_name', 'slug', 'category', 'price')
@@ -62,7 +64,7 @@ class ProductAdmin(SummernoteModelAdmin if SUMMERNOTE_AVAILABLE else admin.Model
             'description': '📝 Подробное описание товара для покупателей'
         }),
         ('⚙️ Настройки', {
-            'fields': ('newest_product', 'parent'),
+            'fields': ('newest_product',),  # 🔧 ИСПРАВЛЕНО: убрано поле 'parent'
             'classes': ('collapse',)  # 📦 Сворачиваемый блок
         }),
     )
@@ -128,14 +130,6 @@ class CategoryAdmin(admin.ModelAdmin):
         return f"📦 {count} товаров" if count > 0 else "🚫 Нет товаров"
 
     get_products_count.short_description = "Товары в категории"
-
-    def get_readonly_fields(self, request, obj=None):
-        """⚠️ Предупреждение об устаревшей модели"""
-        return self.readonly_fields + ('color_name', 'price')
-
-    def has_add_permission(self, request):
-        """🚫 Запрещаем добавление новых записей"""
-        return False
 
 
 @admin.register(KitVariant)
