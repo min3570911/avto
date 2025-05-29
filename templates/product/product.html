@@ -754,8 +754,7 @@ class="custom-control-input"
  <div class="card-body">
  <div class="form-group">
  {% if request.user.is_authenticated %}
-<form method="POST" action="">
- {% csrf_token %} {{ review_form|crispy }}
+<form method="POST" action="{% url 'get_product' product.slug %}"> {% csrf_token %} {{ review_form|crispy }}
 <button class="btn btn-success">Отправить</button>
  </form>
  {% else %}
