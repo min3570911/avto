@@ -16,7 +16,7 @@ crispy-bootstrap4==2024.10
 pillow==11.1.0
 
 # ✏️ WYSIWYG редактор (ФИНАЛЬНОЕ РЕШЕНИЕ!)
-django-ckeditor==6.7.0
+django-ckeditor==6.7.2
 
 # 🔧 Управление настройками
 python-decouple==3.8

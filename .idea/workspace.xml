@@ -4,23 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедрен блог вместе с редактором">
-      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/blog/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/blog/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/migrations/0001_initial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/blog/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/blog/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ecomm/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ecomm/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrate_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/migrate_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/migrations/0026_alter_product_product_desription.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/migrations/0026_alter_product_product_desription.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедрен блог вместе с редактором CKEDITOR">
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/blog/article_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/blog/article_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/product/product.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/product/product.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -156,7 +141,7 @@
       <workItem from="1748456954061" duration="265000" />
       <workItem from="1748457240375" duration="5152000" />
       <workItem from="1748674940084" duration="1204000" />
-      <workItem from="1748756530841" duration="3945000" />
+      <workItem from="1748756530841" duration="4295000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -238,7 +223,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748508096411</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Внедрен блог вместе с редактором CKEDITOR">
+      <option name="closed" value="true" />
+      <created>1748760672806</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1748760672806</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -266,7 +259,8 @@
     <MESSAGE value="Внедрен блог вместе с редактором" />
     <MESSAGE value="Блог заработал." />
     <MESSAGE value="Блог заработал. Чиню отзыв" />
-    <option name="LAST_COMMIT_MESSAGE" value="Блог заработал. Чиню отзыв" />
+    <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR" />
+    <option name="LAST_COMMIT_MESSAGE" value="Внедрен блог вместе с редактором CKEDITOR" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
