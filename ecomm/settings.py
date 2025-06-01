@@ -1,5 +1,6 @@
-# ecomm/settings.py
-# 🔧 Полная конфигурация Django проекта с исправленным логированием
+# 📁 ecomm/settings.py
+# 🔧 Полная конфигурация Django проекта с CKEditor
+# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
 
 import os
 import sys
@@ -37,10 +38,11 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    
     'crispy_forms',
     'crispy_bootstrap4',
-
+    # ✅ НОВОЕ: CKEditor для WYSIWYG редактирования
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 LOCAL_APPS = [
@@ -48,8 +50,7 @@ LOCAL_APPS = [
     'products',
     'home',
     'base',
-    'django_summernote',
-    'blog',  # Новое приложение для статей
+    'blog',  # Приложение для статей
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -360,107 +361,88 @@ MESSAGE_TAGS = {
 DEFAULT_DOMAIN = '127.0.0.1:8000'
 DEFAULT_HTTP_PROTOCOL = 'http'
 
-# 🎨 Настройки Django Summernote
-SUMMERNOTE_CONFIG = {
-    # 📐 Размеры редактора
-    'width': '100%',
-    'height': '400',
+# ================================
+# ✅ НАСТРОЙКИ CKEDITOR
+# ================================
 
-    # 🛠️ Настройки тулбара для описания товаров
-    'toolbar': [
-        ['style', ['style']],
-        ['font', ['bold', 'italic', 'underline', 'clear']],
-        ['fontname', ['fontname']],
-        ['color', ['color']],
-        ['para', ['ul', 'ol', 'paragraph']],
-        ['height', ['height']],
-        ['table', ['table']],
-        ['insert', ['link', 'picture', 'video']],
-        ['view', ['fullscreen', 'codeview']],
-        ['help', ['help']],
-    ],
+# 📁 Путь для загрузки файлов через CKEditor
+CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
 
-    # 🔧 Дополнительные настройки
-    'attachment_require_authentication': True,  # Только для авторизованных
-    'attachment_filesize_limit': 5 * 1024 * 1024,  # 5MB макс
-    'disable_attachment': False,  # Разрешить загрузку файлов
+# 🔧 Разрешенные расширения для загрузки
+CKEDITOR_ALLOW_NONIMAGE_FILES = False
 
-    # 🎯 Кастомные настройки для разных полей
-    'summernote': {
-        'airMode': False,
-        'lang': 'ru-RU',  # Русский язык
-        'codemirror': {
-            'mode': 'htmlmixed',
-            'lineNumbers': True,
-            'theme': 'monokai',
-        },
-    },
-}
+# 🖼️ Настройки изображений
+CKEDITOR_IMAGE_BACKEND = "pillow"
 
-# 📁 Путь для загрузки изображений
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media')
-
-# 📁 Добавить в ecomm/settings.py
-
-# 📝 Настройки Summernote для WYSIWYG редактора в блоге
-SUMMERNOTE_CONFIG = {
-    # 🖼️ Настройки загрузки изображений
-    'attachment_require_authentication': True,
-    'attachment_upload_to': 'blog/uploads/',
-    'attachment_filesize_limit': 5 * 1024 * 1024,  # 5MB max
-
-    # 🎨 Размеры редактора
-    'width': '100%',
-    'height': '400',
-
-    # 🛠️ Панель инструментов
-    'toolbar': [
-        ['style', ['style']],
-        ['font', ['bold', 'underline', 'italic', 'clear']],
-        ['fontname', ['fontname']],
-        ['fontsize', ['fontsize']],
-        ['color', ['color']],
-        ['para', ['ul', 'ol', 'paragraph']],
-        ['height', ['height']],
-        ['table', ['table']],
-        ['insert', ['link', 'picture', 'video']],
-        ['view', ['fullscreen', 'codeview', 'help']],
-    ],
-
-    # 🌐 Язык интерфейса
-    'lang': 'ru-RU',
-
-    # 🎯 Дополнительные настройки
-    'codemirror': {
-        'mode': 'htmlmixed',
-        'lineNumbers': True,
-        'theme': 'monokai',
-    },
-
-    # 🔒 Безопасность
-    'disable_attachment': False,
-    'summernote': {
-        'airMode': False,
+# 🎨 Конфигурации редактора
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Full',
+        'height': 400,
         'width': '100%',
-        'height': '480',
-        'lang': 'ru-RU',
-        'disableDragAndDrop': False,
+        'removePlugins': 'stylesheetparser',
+        'allowedContent': True,
+        'toolbar_Full': [
+            ['Styles', 'Format', 'Bold', 'Italic', 'Underline', 'Strike', 'SpellChecker', 'Undo', 'Redo'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Flash', 'Table', 'HorizontalRule'],
+            ['TextColor', 'BGColor'],
+            ['Smiley', 'SpecialChar'],
+            ['Source'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['NumberedList', 'BulletedList'],
+            ['Indent', 'Outdent'],
+            ['Maximize'],
+        ],
+        'extraPlugins': ','.join([
+            'uploadimage',
+            'image2',
+            'justify',
+        ]),
     },
-
-    # 📝 CSS классы
-    'css': (
-        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.29.0/theme/monokai.min.css',
-    ),
+    'blog': {
+        'toolbar': 'Full',
+        'height': 500,
+        'width': '100%',
+        'removePlugins': 'stylesheetparser',
+        'allowedContent': True,
+        'toolbar_Full': [
+            ['Styles', 'Format'],
+            ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['TextColor', 'BGColor'],
+            ['Maximize'],
+            ['Source'],
+        ],
+        'extraPlugins': ','.join([
+            'uploadimage',
+            'image2',
+            'justify',
+        ]),
+    },
+    'basic': {
+        'toolbar': 'Basic',
+        'height': 200,
+        'width': '100%',
+        'toolbar_Basic': [
+            ['Bold', 'Italic', 'Underline'],
+            ['NumberedList', 'BulletedList'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat', 'Source']
+        ],
+    }
 }
 
-# 🔧 Убедитесь, что django_summernote добавлен в INSTALLED_APPS:
-# INSTALLED_APPS = [
-#     ...
-#     'django_summernote',
-#     'blog',
-#     ...
-# ]
+# 🔒 Настройки безопасности для CKEditor
+CKEDITOR_RESTRICT_BY_USER = True  # Ограничиваем доступ к файлам пользователя
+CKEDITOR_BROWSE_SHOW_DIRS = True  # Показываем папки в браузере файлов
+CKEDITOR_RESTRICT_BY_DATE = True  # Группируем файлы по датам
 
-# 🔗 И в основном urls.py должна быть строка:
-# path('summernote/', include('django_summernote.urls')),
+# 🎯 ИЗМЕНЕНИЯ:
+# ❌ УДАЛЕНО: Все настройки django-summernote
+# ✅ ДОБАВЛЕНО: Полная конфигурация CKEditor
+# ✅ ДОБАВЛЕНО: 'ckeditor' и 'ckeditor_uploader' в INSTALLED_APPS
+# ✅ НАСТРОЕНО: Три конфигурации редактора (default, blog, basic)

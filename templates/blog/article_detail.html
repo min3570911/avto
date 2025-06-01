@@ -1,221 +1,397 @@
-<!-- 📁 templates/blog/article_detail.html -->
-<!-- 📝 Детальная страница статьи с WYSIWYG контентом -->
+<!-- 📁 templates/blog/article_detail.html - Детальная страница статьи с Quill Editor -->
+<!-- 🎨 Адаптирован для корректного отображения QuillField контента -->
 
-{% extends "blog/base_blog.html" %}
+{% extends "base/base.html" %}
 {% load static %}
 
-{% block blog_title %}{{ page_title }}{% endblock %}
+{% block title %}{{ article.title }}{% endblock %}
 
-{% block header_title %}{{ article.title }}{% endblock %}
-{% block header_subtitle %}{{ article.category.name }}{% endblock %}
-
-{% block blog_content %}
+{% block start %}
 <style>
-    /* 🎨 Стили для контента статьи */
-    .article-detail-content {
-        font-size: 1.1rem;
+    /* 🎨 Стили для WYSIWYG контента из Quill Editor */
+    .quill-content {
         line-height: 1.8;
+        font-size: 1.05rem;
         color: #333;
     }
-    
-    .article-detail-content h2 {
+
+    .quill-content h1,
+    .quill-content h2,
+    .quill-content h3,
+    .quill-content h4,
+    .quill-content h5,
+    .quill-content h6 {
         margin-top: 2rem;
         margin-bottom: 1rem;
-        color: #2a41e8;
+        color: #2c3e50;
+        font-weight: 600;
     }
-    
-    .article-detail-content h3 {
-        margin-top: 1.5rem;
-        margin-bottom: 0.8rem;
-    }
-    
-    .article-detail-content p {
+
+    .quill-content h1 { font-size: 2rem; }
+    .quill-content h2 { font-size: 1.75rem; }
+    .quill-content h3 { font-size: 1.5rem; }
+
+    .quill-content p {
         margin-bottom: 1.2rem;
         text-align: justify;
     }
-    
-    .article-detail-content img {
+
+    .quill-content img {
         max-width: 100%;
         height: auto;
-        margin: 1.5rem auto;
-        display: block;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .article-detail-content blockquote {
-        border-left: 4px solid #2a41e8;
-        padding-left: 1.5rem;
         margin: 1.5rem 0;
-        font-style: italic;
-        color: #666;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
-    
-    .article-detail-content ul, .article-detail-content ol {
-        margin-bottom: 1.2rem;
+
+    .quill-content ul,
+    .quill-content ol {
+        margin: 1.2rem 0;
         padding-left: 2rem;
     }
-    
-    .article-detail-content table {
+
+    .quill-content li {
+        margin-bottom: 0.5rem;
+    }
+
+    .quill-content blockquote {
+        border-left: 4px solid #3498db;
+        padding-left: 1.5rem;
+        margin: 1.5rem 0;
+        color: #666;
+        font-style: italic;
+        background-color: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .quill-content code {
+        background-color: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #e74c3c;
+    }
+
+    .quill-content pre {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 1.5rem 0;
+    }
+
+    .quill-content pre code {
+        background: none;
+        color: inherit;
+        padding: 0;
+    }
+
+    .quill-content a {
+        color: #3498db;
+        text-decoration: none;
+        border-bottom: 1px dotted #3498db;
+        transition: all 0.3s ease;
+    }
+
+    .quill-content a:hover {
+        color: #2980b9;
+        border-bottom-style: solid;
+    }
+
+    .quill-content table {
         width: 100%;
         margin: 1.5rem 0;
         border-collapse: collapse;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    
-    .article-detail-content table th,
-    .article-detail-content table td {
+
+    .quill-content table td,
+    .quill-content table th {
         border: 1px solid #ddd;
-        padding: 8px;
+        padding: 12px;
         text-align: left;
     }
-    
-    .article-detail-content table th {
+
+    .quill-content table th {
+        background-color: #3498db;
+        color: white;
+        font-weight: 600;
+    }
+
+    .quill-content table tr:nth-child(even) {
         background-color: #f8f9fa;
-        font-weight: bold;
     }
-    
-    /* 📹 Стили для встроенных видео */
-    .article-detail-content iframe {
-        max-width: 100%;
-        margin: 1.5rem auto;
-        display: block;
+
+    /* 📱 Адаптивность */
+    @media (max-width: 768px) {
+        .quill-content {
+            font-size: 1rem;
+        }
+        
+        .quill-content h1 { font-size: 1.75rem; }
+        .quill-content h2 { font-size: 1.5rem; }
+        .quill-content h3 { font-size: 1.25rem; }
+        
+        .quill-content table {
+            font-size: 0.9rem;
+        }
     }
-    
-    .article-meta {
-        color: #666;
-        font-size: 0.95rem;
+
+    /* 🎯 Стили для статьи */
+    .article-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
         margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #eee;
     }
-    
-    .article-navigation {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 1px solid #eee;
+
+    .article-meta {
+        color: rgba(255,255,255,0.8);
+        margin-top: 1rem;
     }
-    
-    .nav-article {
-        padding: 15px;
-        background: #f8f9fa;
+
+    .article-image {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .sidebar {
+        background-color: #f8f9fa;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+
+    .related-article {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
         border-radius: 8px;
         transition: all 0.3s ease;
     }
-    
-    .nav-article:hover {
-        background: #e9ecef;
-        transform: translateX(5px);
-    }
-    
-    .nav-article.prev:hover {
-        transform: translateX(-5px);
+
+    .related-article:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
     }
 </style>
 
-<!-- 🏠 Хлебные крошки -->
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb breadcrumb-blog">
-        <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'blog:article_list' %}">Статьи</a></li>
-        <li class="breadcrumb-item">
-            <a href="{{ article.category.get_absolute_url }}">{{ article.category.name }}</a>
-        </li>
-        <li class="breadcrumb-item active text-truncate" style="max-width: 300px;">
-            {{ article.title }}
-        </li>
-    </ol>
-</nav>
-
-<article>
-    <!-- 🖼️ Главное изображение -->
-    {% if article.featured_image %}
-    <div class="mb-4">
-        <img src="{{ article.featured_image.url }}" 
-             alt="{{ article.title }}" 
-             class="img-fluid rounded shadow">
-    </div>
-    {% endif %}
-    
-    <!-- 📊 Мета-информация -->
-    <div class="article-meta d-flex justify-content-between align-items-center flex-wrap">
-        <div>
-            <span>
-                <i class="fa fa-user"></i> 
-                {{ article.author.get_full_name|default:article.author.username }}
-            </span>
-            <span class="mx-2">|</span>
-            <span>
-                <i class="fa fa-folder"></i> 
-                <a href="{{ article.category.get_absolute_url }}">
-                    {{ article.category.name }}
-                </a>
-            </span>
-            <span class="mx-2">|</span>
-            <span>
-                <i class="fa fa-clock"></i> 
-                ~{{ reading_time }} мин. чтения
-            </span>
-        </div>
-        <div>
-            <span>
-                <i class="fa fa-eye"></i> 
-                {{ article.views }} просмотров
-            </span>
-        </div>
-    </div>
-    
-    <!-- ✍️ Контент статьи -->
-    <div class="article-detail-content">
-        {{ article.content|safe }}
-    </div>
-    
-    <!-- ⬅️➡️ Навигация между статьями -->
-    <div class="article-navigation">
+<div class="article-header">
+    <div class="container">
         <div class="row">
-            <div class="col-md-6 mb-3">
-                {% if previous_article %}
-                <a href="{{ previous_article.get_absolute_url }}" class="text-decoration-none">
-                    <div class="nav-article prev">
-                        <small class="text-muted">← Предыдущая статья</small>
-                        <h6 class="mb-0 mt-1">{{ previous_article.title }}</h6>
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb bg-transparent p-0">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'index' %}" class="text-white-50">Главная</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:article_list' %}" class="text-white-50">Статьи</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'blog:category_articles' article.category.slug %}" class="text-white-50">
+                                {{ article.category.name }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active text-white">{{ article.title }}</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-4 fw-bold mb-3">{{ article.title }}</h1>
+                
+                <div class="article-meta">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <i class="bi bi-person-circle"></i> 
+                            {{ article.author.get_full_name|default:article.author.username }}
+                            
+                            <span class="mx-3">|</span>
+                            
+                            <i class="bi bi-calendar3"></i>
+                            {{ article.published_at|date:"d F Y" }}
+                            
+                            <span class="mx-3">|</span>
+                            
+                            <i class="bi bi-eye"></i>
+                            {{ article.views }} просмотров
+                            
+                            <span class="mx-3">|</span>
+                            
+                            <i class="bi bi-clock"></i>
+                            {{ article.reading_time }} мин чтения
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <span class="badge bg-light text-dark fs-6">
+                                {{ article.category.name }}
+                            </span>
+                        </div>
                     </div>
-                </a>
-                {% endif %}
-            </div>
-            <div class="col-md-6 mb-3 text-md-end">
-                {% if next_article %}
-                <a href="{{ next_article.get_absolute_url }}" class="text-decoration-none">
-                    <div class="nav-article next">
-                        <small class="text-muted">Следующая статья →</small>
-                        <h6 class="mb-0 mt-1">{{ next_article.title }}</h6>
-                    </div>
-                </a>
-                {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-</article>
-{% endblock %}
-
-{% block sidebar_extra %}
-<!-- 🔗 Похожие статьи -->
-{% if related_articles %}
-<div class="related-articles mt-4">
-    <div class="categories-sidebar">
-        <h3>Похожие статьи</h3>
-        {% for related in related_articles %}
-        <div class="related-article mb-3">
-            <h6 class="mb-1">
-                <a href="{{ related.get_absolute_url }}" class="text-decoration-none">
-                    {{ related.title }}
-                </a>
-            </h6>
-            <small class="text-muted">
-                <i class="fa fa-eye"></i> {{ related.views }} просмотров
-            </small>
-        </div>
-        {% endfor %}
     </div>
 </div>
-{% endif %}
+
+<div class="container py-4">
+    <div class="row">
+        <!-- 📄 Основной контент -->
+        <div class="col-lg-8">
+            <!-- 🖼️ Главное изображение -->
+            {% if article.featured_image %}
+                <img src="{{ article.featured_image.url }}" 
+                     alt="{{ article.title }}" 
+                     class="article-image">
+            {% endif %}
+
+            <!-- 📝 Краткое описание (если есть) -->
+            {% if article.excerpt %}
+                <div class="alert alert-info mb-4">
+                    <div class="quill-content">
+                        <!-- 🔄 ИЗМЕНЕНИЕ: Адаптировано для QuillField -->
+                        {% if article.excerpt.html %}
+                            {{ article.excerpt.html|safe }}
+                        {% else %}
+                            {{ article.excerpt|safe }}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- 📄 Основной контент статьи -->
+            <div class="quill-content">
+                <!-- 🔄 ИЗМЕНЕНИЕ: Адаптировано для QuillField -->
+                {% if article.content.html %}
+                    {{ article.content.html|safe }}
+                {% else %}
+                    {{ article.content|safe }}
+                {% endif %}
+            </div>
+
+            <!-- 🔗 Навигация между статьями -->
+            <div class="row mt-5">
+                <div class="col-md-6">
+                    {% if previous_article %}
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    <i class="bi bi-arrow-left"></i> Предыдущая статья
+                                </h6>
+                                <h5 class="card-title">
+                                    <a href="{{ previous_article.get_absolute_url }}" class="text-decoration-none">
+                                        {{ previous_article.title }}
+                                    </a>
+                                </h5>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    {% if next_article %}
+                        <div class="card">
+                            <div class="card-body text-end">
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    Следующая статья <i class="bi bi-arrow-right"></i>
+                                </h6>
+                                <h5 class="card-title">
+                                    <a href="{{ next_article.get_absolute_url }}" class="text-decoration-none">
+                                        {{ next_article.title }}
+                                    </a>
+                                </h5>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 📱 Боковая панель -->
+        <div class="col-lg-4">
+            <div class="sidebar">
+                <!-- 📂 Категории -->
+                <h5 class="mb-3">
+                    <i class="bi bi-folder"></i> Категории
+                </h5>
+                <div class="list-group list-group-flush mb-4">
+                    {% for category in categories %}
+                        <a href="{% url 'blog:category_articles' category.slug %}" 
+                           class="list-group-item list-group-item-action border-0 ps-0
+                           {% if category.slug == article.category.slug %}active{% endif %}">
+                            {{ category.name }}
+                            <span class="badge bg-secondary float-end">
+                                {{ category.get_articles_count }}
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <!-- 🔗 Похожие статьи -->
+                {% if related_articles %}
+                    <h5 class="mb-3">
+                        <i class="bi bi-bookmark"></i> Похожие статьи
+                    </h5>
+                    {% for related in related_articles %}
+                        <div class="related-article">
+                            <h6>
+                                <a href="{{ related.get_absolute_url }}" class="text-decoration-none">
+                                    {{ related.title }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3"></i>
+                                {{ related.published_at|date:"d.m.Y" }}
+                                
+                                <span class="mx-2">|</span>
+                                
+                                <i class="bi bi-eye"></i>
+                                {{ related.views }}
+                            </small>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔧 Дополнительные скрипты для Quill контента -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 🖼️ Lazy loading для изображений в контенте
+        const images = document.querySelectorAll('.quill-content img');
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.style.opacity = '0';
+                        img.style.transition = 'opacity 0.3s';
+                        img.onload = () => {
+                            img.style.opacity = '1';
+                        };
+                        observer.unobserve(img);
+                    }
+                });
+            });
+
+            images.forEach(img => imageObserver.observe(img));
+        }
+
+        // 🔗 Внешние ссылки в новой вкладке
+        document.querySelectorAll('.quill-content a').forEach(link => {
+            if (link.hostname !== location.hostname) {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            }
+        });
+    });
+</script>
 {% endblock %}

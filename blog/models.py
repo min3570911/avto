@@ -1,11 +1,13 @@
 # 📁 blog/models.py - Модели для раздела "Статьи"
 # 📝 Блог для интернет-магазина автоковриков
+# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.urls import reverse
-from django_summernote.fields import SummernoteTextField
+# ✅ ИСПРАВЛЕНО: Импорт RichTextField из ckeditor
+from ckeditor.fields import RichTextField
 
 
 class Category(models.Model):
@@ -93,14 +95,16 @@ class Article(models.Model):
         help_text='Рекомендуемый размер: 1200x600 px'
     )
 
-    # 📝 WYSIWYG поля
-    excerpt = SummernoteTextField(
+    # ✅ ИСПРАВЛЕНО: Замена SummernoteTextField на RichTextField
+    excerpt = RichTextField(
         verbose_name='Краткое описание',
-        help_text='Краткое описание для карточки статьи (анонс)'
+        help_text='Краткое описание для карточки статьи (анонс)',
+        config_name='basic'  # 🎯 Используем базовую конфигурацию для анонса
     )
-    content = SummernoteTextField(
+    content = RichTextField(
         verbose_name='Содержание статьи',
-        help_text='Полное содержание статьи с форматированием'
+        help_text='Полное содержание статьи с форматированием',
+        config_name='blog'  # 🎯 Используем расширенную конфигурацию для блога
     )
 
     # 📊 Дополнительные поля
@@ -204,3 +208,11 @@ class Article(models.Model):
         word_count = len(strip_tags(self.content).split())
         minutes = word_count // 200
         return max(1, minutes)  # Минимум 1 минута
+
+
+# 🔧 ИЗМЕНЕНИЯ:
+# ✅ ИСПРАВЛЕНО: SummernoteTextField заменен на RichTextField из ckeditor
+# ✅ ДОБАВЛЕНО: config_name='basic' для excerpt (краткое описание)
+# ✅ ДОБАВЛЕНО: config_name='blog' для content (полный текст)
+# ✅ СОХРАНЕНО: Вся остальная функциональность модели Article без изменений
+# ✅ УЛУЧШЕНО: Добавлены подробные комментарии для CKEditor конфигураций

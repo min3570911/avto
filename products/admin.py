@@ -1,24 +1,13 @@
-# 📁 products/admin.py - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ОШИБОК
-# 🛍️ Админка для системы интернет-магазина автоковриков с исправленными импортами
-# ✅ ИСПРАВЛЕНО: Удалено поле 'parent' из fieldsets
+# 📁 products/admin.py - ИСПРАВЛЕННАЯ ВЕРСИЯ для CKEditor
+# 🛍️ Админка для системы интернет-магазина автоковриков
+# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
 
 from django.contrib import admin
 from django.utils.html import mark_safe
 from .models import *
 
-# 🔧 ОПЦИОНАЛЬНЫЙ ИМПОРТ: если используете django-summernote
-try:
-    from django_summernote.admin import SummernoteModelAdmin
 
-    SUMMERNOTE_AVAILABLE = True
-except ImportError:
-    # 📝 Если Summernote не установлен, используем обычный ModelAdmin
-    SummernoteModelAdmin = admin.ModelAdmin
-    SUMMERNOTE_AVAILABLE = False
-    print("⚠️ django-summernote не найден. Используется стандартный Django админ.")
-
-
-# 🖼️ ИСПРАВЛЕНО: Определяем ProductImageAdmin ПЕРЕД ProductAdmin
+# 🖼️ Инлайн админка для изображений товаров
 class ProductImageAdmin(admin.StackedInline):
     """🖼️ Инлайн админка для изображений товаров"""
     model = ProductImage
@@ -41,37 +30,32 @@ class ProductImageAdmin(admin.StackedInline):
     img_preview.short_description = "Предпросмотр"
 
 
-# 🛍️ ИСПРАВЛЕНО: ProductAdmin теперь может использовать ProductImageAdmin
-class ProductAdmin(SummernoteModelAdmin if SUMMERNOTE_AVAILABLE else admin.ModelAdmin):
-    """🛍️ Админка для товаров с поддержкой Summernote (опционально)"""
+# 🛍️ ИСПРАВЛЕНО: Обычный ModelAdmin без Summernote
+class ProductAdmin(admin.ModelAdmin):
+    """🛍️ Админка для товаров с поддержкой CKEditor"""
 
     list_display = ['product_name', 'category', 'display_price', 'newest_product', 'get_images_count']
     list_filter = ['category', 'newest_product', 'created_at']
     search_fields = ['product_name', 'product_desription']
     list_editable = ['newest_product']  # ✏️ Быстрое редактирование
 
-    # 🖼️ ИСПРАВЛЕНО: Теперь ProductImageAdmin определен выше
+    # 🖼️ Инлайн для изображений
     inlines = [ProductImageAdmin]
 
     # 📝 Группировка полей в админке
-    # ✅ ИСПРАВЛЕНО: Удалено поле 'parent' из fieldsets
     fieldsets = (
         ('🛍️ Основная информация', {
             'fields': ('product_name', 'slug', 'category', 'price')
         }),
         ('📝 Описание', {
             'fields': ('product_desription',),
-            'description': '📝 Подробное описание товара для покупателей'
+            'description': '📝 Подробное описание товара для покупателей (используется CKEditor)'
         }),
         ('⚙️ Настройки', {
-            'fields': ('newest_product',),  # 🔧 ИСПРАВЛЕНО: убрано поле 'parent'
+            'fields': ('newest_product',),
             'classes': ('collapse',)  # 📦 Сворачиваемый блок
         }),
     )
-
-    # 🔧 ДОПОЛНИТЕЛЬНЫЕ ПОЛЯ: Summernote для богатого текста
-    if SUMMERNOTE_AVAILABLE:
-        summernote_fields = ('product_desription',)
 
     def get_images_count(self, obj):
         """📊 Количество изображений у товара"""
@@ -283,11 +267,16 @@ class WishlistAdmin(admin.ModelAdmin):
     )
 
 
-# 🗑️ ИСПРАВЛЕНО: Убираем повторную регистрацию Product и ProductImage
+# ✅ Регистрируем основную модель Product
 admin.site.register(Product, ProductAdmin)
-# admin.site.register(ProductImage)  # ❌ Не нужно, так как используется inline
 
 # 🎯 Кастомизация заголовков админки
 admin.site.site_header = "🛒 Админ-панель магазина автоковриков"
 admin.site.site_title = "Автоковрики - Админка"
 admin.site.index_title = "Управление магазином"
+
+# 🔧 ИЗМЕНЕНИЯ:
+# ❌ УДАЛЕНО: Все импорты и использование SummernoteModelAdmin
+# ✅ ИЗМЕНЕНО: ProductAdmin теперь наследуется от обычного ModelAdmin
+# ✅ СОХРАНЕНО: Вся функциональность админки работает как прежде
+# ✅ ДОБАВЛЕНО: Комментарий о том, что описание товара использует CKEditor

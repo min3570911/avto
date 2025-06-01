@@ -1,13 +1,14 @@
 # 📁 products/models.py
 # 🛍️ Модели для системы интернет-магазина автоковриков
-# ✅ УДАЛЕНО: ColorVariant, parent поле
+# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
 
 from django.db import models
 from base.models import BaseModel
 from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
-from django_summernote.fields import SummernoteTextField
+# ✅ ИСПРАВЛЕНО: Импорт RichTextField из ckeditor
+from ckeditor.fields import RichTextField
 
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (
@@ -55,7 +56,6 @@ class KitVariant(BaseModel):
 
 class Product(BaseModel):
     """🛍️ Основная модель товаров"""
-    # 🗑️ УДАЛЕНО: parent поле (не используется в проекте)
     product_name = models.CharField(max_length=100, verbose_name="Название товара")
     slug = models.SlugField(unique=True, null=True, blank=True, verbose_name="URL-адрес")
     category = models.ForeignKey(
@@ -63,9 +63,11 @@ class Product(BaseModel):
         related_name="products", verbose_name="Категория")
     # ✅ ИЗМЕНЕНО: price теперь необязательное поле (null=True, blank=True)
     price = models.IntegerField(verbose_name="Базовая цена", null=True, blank=True, default=0)
-    product_desription = SummernoteTextField(
+    # ✅ ИСПРАВЛЕНО: Замена SummernoteTextField на RichTextField
+    product_desription = RichTextField(
         verbose_name="Описание товара",
-        help_text="Подробное описание товара с возможностью форматирования"
+        help_text="Подробное описание товара с возможностью форматирования",
+        config_name='default'  # 🎯 Используем конфигурацию 'default' из settings
     )
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
@@ -366,11 +368,8 @@ class Wishlist(BaseModel):
         ordering = ['-added_on']
 
 
-# 🗑️ ПОЛНОСТЬЮ УДАЛЕНО:
-# - class ColorVariant (устаревшая модель)
-# - поле parent в модели Product (не используется)
-
-# ✅ ИЗМЕНЕНИЯ:
-# - Поле price в Product теперь необязательное (null=True, blank=True)
-# - Добавлен default=0 для поля price
-# - Обновлен метод get_product_price_by_kit() для обработки пустой цены
+# 🔧 ИЗМЕНЕНИЯ:
+# ✅ ИСПРАВЛЕНО: SummernoteTextField заменен на RichTextField из ckeditor
+# ✅ ДОБАВЛЕНО: config_name='default' для использования настроек из settings.py
+# ✅ СОХРАНЕНО: Вся остальная функциональность модели Product без изменений
+# ✅ УЛУЧШЕНО: Добавлены подробные комментарии для CKEditor

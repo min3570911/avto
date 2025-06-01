@@ -457,7 +457,95 @@ font-weight: bold;
             max-width: 100%;
             margin: 1rem 0;
         }
+/* Стили для WYSIWYG контента из Quill Editor в описании товара */
+    .wysiwyg-content {
+        line-height: 1.8;
+        font-size: 1.05rem;
+        color: #333;
+    }
 
+    .wysiwyg-content h1,
+    .wysiwyg-content h2,
+    .wysiwyg-content h3,
+    .wysiwyg-content h4,
+    .wysiwyg-content h5,
+    .wysiwyg-content h6 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .wysiwyg-content p {
+        margin-bottom: 1rem;
+        text-align: justify;
+    }
+
+    .wysiwyg-content img {
+        max-width: 100%;
+        height: auto;
+        margin: 1rem 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .wysiwyg-content ul,
+    .wysiwyg-content ol {
+        margin: 1rem 0;
+        padding-left: 2rem;
+    }
+
+    .wysiwyg-content li {
+        margin-bottom: 0.5rem;
+    }
+
+    .wysiwyg-content blockquote {
+        border-left: 4px solid #2a41e8;
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: #666;
+        font-style: italic;
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .wysiwyg-content code {
+        background-color: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #e74c3c;
+    }
+
+    .wysiwyg-content a {
+        color: #2a41e8;
+        text-decoration: none;
+        border-bottom: 1px dotted #2a41e8;
+    }
+
+    .wysiwyg-content a:hover {
+        border-bottom-style: solid;
+    }
+
+    .wysiwyg-content table {
+        width: 100%;
+        margin: 1rem 0;
+        border-collapse: collapse;
+        border: 1px solid #ddd;
+    }
+
+    .wysiwyg-content table td,
+    .wysiwyg-content table th {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .wysiwyg-content table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
 
 </style>
 
@@ -682,7 +770,11 @@ class="custom-control-input"
  <div class="product-description-block mt-4 mb-4">
  <h4>Описание товара</h4>
     <div class="wysiwyg-content">
-        {{ product.product_desription|safe }}
+        {% if product.product_desription.html %}
+            {{ product.product_desription.html|safe }}
+        {% else %}
+            {{ product.product_desription|safe }}
+        {% endif %}
     </div>
 </p>
  </div>

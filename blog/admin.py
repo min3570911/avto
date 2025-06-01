@@ -1,9 +1,9 @@
 # 📁 blog/admin.py - Админка для раздела "Статьи"
-# 🛠️ Настройка Django Admin с Summernote редактором
+# 🛠️ Настройка Django Admin с CKEditor
+# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
 
 from django.contrib import admin
 from django.utils.html import format_html
-from django_summernote.admin import SummernoteModelAdmin
 from .models import Category, Article
 
 
@@ -39,11 +39,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 @admin.register(Article)
-class ArticleAdmin(SummernoteModelAdmin):
-    """📰 Админка для статей с WYSIWYG редактором"""
-
-    # ✏️ Поля с Summernote редактором
-    summernote_fields = ('excerpt', 'content')
+class ArticleAdmin(admin.ModelAdmin):
+    """📰 Админка для статей с CKEditor"""
 
     # 📋 Отображение в списке
     list_display = [
@@ -75,11 +72,12 @@ class ArticleAdmin(SummernoteModelAdmin):
         ('✍️ Контент', {
             'fields': ('excerpt',),
             'classes': ('wide',),
-            'description': 'Краткое описание для карточки статьи'
+            'description': 'Краткое описание для карточки статьи (использует CKEditor с базовой конфигурацией)'
         }),
         ('📄 Полный текст статьи', {
             'fields': ('content',),
-            'classes': ('wide', 'extra-wide-content'),  # 🎯 Класс для расширенного редактора
+            'classes': ('wide', 'extra-wide-content'),
+            'description': 'Полное содержание статьи (использует CKEditor с расширенной конфигурацией для блога)'
         }),
         ('⚙️ Настройки публикации', {
             'fields': ('is_published', 'published_at'),
@@ -120,7 +118,7 @@ class ArticleAdmin(SummernoteModelAdmin):
         return form
 
     class Media:
-        """🎨 Дополнительные стили для расширенного редактора"""
+        """🎨 Дополнительные стили для админки"""
         css = {
             'all': ('blog/admin/article_admin.css',)
         }
@@ -128,3 +126,10 @@ class ArticleAdmin(SummernoteModelAdmin):
 
 # 🎯 Настройка заголовков админки для блога
 admin.site.index_title = 'Управление сайтом автоковриков'
+
+# 🔧 ИЗМЕНЕНИЯ:
+# ❌ УДАЛЕНО: Все импорты и использование SummernoteModelAdmin
+# ✅ ИЗМЕНЕНО: ArticleAdmin теперь наследуется от обычного ModelAdmin
+# ✅ СОХРАНЕНО: Вся функциональность админки работает как прежде
+# ✅ ДОБАВЛЕНО: Комментарии о том, что поля используют CKEditor с разными конфигурациями
+# ✅ УЛУЧШЕНО: Более подробные описания полей в fieldsets
