@@ -1,6 +1,6 @@
 # 📁 ecomm/settings.py
-# 🔧 Полная конфигурация Django проекта с CKEditor
-# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
+# 🔧 Полная конфигурация Django проекта с CKEditor 5
+# ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
 
 import os
 import sys
@@ -40,9 +40,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'crispy_forms',
     'crispy_bootstrap4',
-    # ✅ НОВОЕ: CKEditor для WYSIWYG редактирования
-    'ckeditor',
-    'ckeditor_uploader',
+    # ✅ НОВОЕ: CKEditor 5 для современного WYSIWYG редактирования
+    'django_ckeditor_5',
 ]
 
 LOCAL_APPS = [
@@ -196,6 +195,7 @@ LOGGING = {
 if os.name == 'nt':  # Windows
     # Отключаем эмодзи в консольных логах на Windows
     import locale
+
     try:
         # Пытаемся установить UTF-8 локаль
         locale.setlocale(locale.LC_ALL, 'C.UTF-8')
@@ -217,6 +217,7 @@ TELEGRAM_CHAT_ID = config('TELEGRAM_CHAT_ID', default='YOUR_TELEGRAM_CHAT_ID')
 # ⚠️ Проверка наличия обязательных Telegram настроек
 if TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN' or TELEGRAM_CHAT_ID == 'YOUR_TELEGRAM_CHAT_ID':
     import warnings
+
     warnings.warn(
         "⚠️ Telegram настройки не найдены в .env файле! "
         "Уведомления о заказах работать не будут. "
@@ -362,87 +363,187 @@ DEFAULT_DOMAIN = '127.0.0.1:8000'
 DEFAULT_HTTP_PROTOCOL = 'http'
 
 # ================================
-# ✅ НАСТРОЙКИ CKEDITOR
+# ✅ НАСТРОЙКИ CKEDITOR 5
 # ================================
 
-# 📁 Путь для загрузки файлов через CKEditor
-CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
+# 🎨 Кастомные конфигурации для разных типов контента
+customColorPalette = [
+    {'color': 'hsl(4, 90%, 58%)', 'label': 'Red'},
+    {'color': 'hsl(340, 82%, 52%)', 'label': 'Pink'},
+    {'color': 'hsl(291, 64%, 42%)', 'label': 'Purple'},
+    {'color': 'hsl(262, 52%, 47%)', 'label': 'Deep Purple'},
+    {'color': 'hsl(231, 48%, 48%)', 'label': 'Indigo'},
+    {'color': 'hsl(207, 90%, 54%)', 'label': 'Blue'},
+]
 
-# 🔧 Разрешенные расширения для загрузки
-CKEDITOR_ALLOW_NONIMAGE_FILES = False
-
-# 🖼️ Настройки изображений
-CKEDITOR_IMAGE_BACKEND = "pillow"
-
-# 🎨 Конфигурации редактора
-CKEDITOR_CONFIGS = {
+# 🎯 Основные конфигурации редактора
+CKEDITOR_5_CONFIGS = {
     'default': {
-        'toolbar': 'Full',
-        'height': 400,
-        'width': '100%',
-        'removePlugins': 'stylesheetparser',
-        'allowedContent': True,
-        'toolbar_Full': [
-            ['Styles', 'Format', 'Bold', 'Italic', 'Underline', 'Strike', 'SpellChecker', 'Undo', 'Redo'],
-            ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Flash', 'Table', 'HorizontalRule'],
-            ['TextColor', 'BGColor'],
-            ['Smiley', 'SpecialChar'],
-            ['Source'],
-            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['NumberedList', 'BulletedList'],
-            ['Indent', 'Outdent'],
-            ['Maximize'],
-        ],
-        'extraPlugins': ','.join([
-            'uploadimage',
-            'image2',
-            'justify',
-        ]),
+        'toolbar': {
+            'items': [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'bulletedList', 'numberedList', '|',
+                'outdent', 'indent', '|',
+                'insertTable', 'link', 'imageUpload', 'blockQuote', '|',
+                'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                'alignment', '|',
+                'undo', 'redo', 'sourceEditing'
+            ]
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'}
+            ]
+        },
+        'fontSize': {
+            'options': [9, 11, 13, 'default', 17, 19, 21]
+        },
+        'fontColor': {
+            'colors': customColorPalette
+        },
+        'fontBackgroundColor': {
+            'colors': customColorPalette
+        },
+        'image': {
+            'toolbar': [
+                'imageTextAlternative', '|',
+                'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side', '|'
+            ],
+            'styles': [
+                'full', 'side', 'alignLeft', 'alignRight', 'alignCenter'
+            ]
+        },
+        'table': {
+            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells']
+        },
+        'link': {
+            'decorators': {
+                'addTargetToExternalLinks': True,
+                'defaultProtocol': 'https://',
+                'toggleDownloadable': {
+                    'mode': 'manual',
+                    'label': 'Downloadable',
+                    'attributes': {
+                        'download': 'file'
+                    }
+                }
+            }
+        },
+        'htmlSupport': {
+            'allow': [
+                {'name': '/./', 'attributes': True, 'classes': True, 'styles': True}
+            ]
+        }
     },
+
+    # 📝 Конфигурация для блога (расширенная)
     'blog': {
-        'toolbar': 'Full',
-        'height': 500,
-        'width': '100%',
-        'removePlugins': 'stylesheetparser',
-        'allowedContent': True,
-        'toolbar_Full': [
-            ['Styles', 'Format'],
-            ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'],
-            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
-            ['TextColor', 'BGColor'],
-            ['Maximize'],
-            ['Source'],
-        ],
-        'extraPlugins': ','.join([
-            'uploadimage',
-            'image2',
-            'justify',
-        ]),
+        'toolbar': {
+            'items': [
+                'heading', 'style', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'outdent', 'indent', '|',
+                'insertTable', 'link', 'imageUpload', 'mediaEmbed', 'blockQuote', 'horizontalLine', '|',
+                'fontSize', 'fontColor', 'fontBackgroundColor', 'highlight', '|',
+                'alignment', '|',
+                'specialCharacters', 'pageBreak', '|',
+                'undo', 'redo', 'sourceEditing', 'showBlocks'
+            ]
+        },
+        'heading': {
+            'options': [
+                {'model': 'paragraph', 'title': 'Paragraph', 'class': 'ck-heading_paragraph'},
+                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1', 'class': 'ck-heading_heading1'},
+                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2', 'class': 'ck-heading_heading2'},
+                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3', 'class': 'ck-heading_heading3'},
+                {'model': 'heading4', 'view': 'h4', 'title': 'Heading 4', 'class': 'ck-heading_heading4'},
+                {'model': 'heading5', 'view': 'h5', 'title': 'Heading 5', 'class': 'ck-heading_heading5'},
+                {'model': 'heading6', 'view': 'h6', 'title': 'Heading 6', 'class': 'ck-heading_heading6'}
+            ]
+        },
+        'fontSize': {
+            'options': [9, 11, 13, 'default', 17, 19, 21, 23, 25]
+        },
+        'fontColor': {
+            'colors': customColorPalette
+        },
+        'fontBackgroundColor': {
+            'colors': customColorPalette
+        },
+        'image': {
+            'toolbar': [
+                'imageTextAlternative', '|',
+                'imageStyle:alignLeft', 'imageStyle:alignRight', 'imageStyle:alignCenter', 'imageStyle:side', '|',
+                'imageStyle:block', 'imageStyle:inline'
+            ],
+            'styles': [
+                'full', 'side', 'alignLeft', 'alignRight', 'alignCenter', 'block', 'inline'
+            ]
+        },
+        'table': {
+            'contentToolbar': [
+                'tableColumn', 'tableRow', 'mergeTableCells',
+                'tableCellProperties', 'tableProperties'
+            ]
+        },
+        'link': {
+            'decorators': {
+                'addTargetToExternalLinks': True,
+                'defaultProtocol': 'https://',
+                'toggleDownloadable': {
+                    'mode': 'manual',
+                    'label': 'Downloadable',
+                    'attributes': {
+                        'download': 'file'
+                    }
+                }
+            }
+        },
+        'mediaEmbed': {
+            'previewsInData': True
+        },
+        'htmlSupport': {
+            'allow': [
+                {'name': '/./', 'attributes': True, 'classes': True, 'styles': True}
+            ]
+        }
     },
+
+    # 📄 Базовая конфигурация (простая)
     'basic': {
-        'toolbar': 'Basic',
-        'height': 200,
-        'width': '100%',
-        'toolbar_Basic': [
-            ['Bold', 'Italic', 'Underline'],
-            ['NumberedList', 'BulletedList'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat', 'Source']
-        ],
+        'toolbar': {
+            'items': [
+                'bold', 'italic', 'underline', '|',
+                'bulletedList', 'numberedList', '|',
+                'link', '|',
+                'undo', 'redo'
+            ]
+        },
+        'link': {
+            'decorators': {
+                'addTargetToExternalLinks': True,
+                'defaultProtocol': 'https://'
+            }
+        }
     }
 }
 
-# 🔒 Настройки безопасности для CKEditor
-CKEDITOR_RESTRICT_BY_USER = True  # Ограничиваем доступ к файлам пользователя
-CKEDITOR_BROWSE_SHOW_DIRS = True  # Показываем папки в браузере файлов
-CKEDITOR_RESTRICT_BY_DATE = True  # Группируем файлы по датам
+# 📁 Настройки загрузки файлов для CKEditor 5
+CKEDITOR_5_UPLOAD_PATH = "ckeditor5_uploads/"
+CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
-# 🎯 ИЗМЕНЕНИЯ:
-# ❌ УДАЛЕНО: Все настройки django-summernote
-# ✅ ДОБАВЛЕНО: Полная конфигурация CKEditor
-# ✅ ДОБАВЛЕНО: 'ckeditor' и 'ckeditor_uploader' в INSTALLED_APPS
-# ✅ НАСТРОЕНО: Три конфигурации редактора (default, blog, basic)
+# 🔒 Ограничения загрузки
+CKEDITOR_5_ALLOW_ALL_FILE_TYPES = False
+CKEDITOR_5_UPLOAD_FILE_TYPES = ['jpeg', 'jpg', 'png', 'gif', 'webp']
+
+# 🎯 ПРЕИМУЩЕСТВА CKEDITOR 5:
+# ✅ Современный интерфейс - отзывчивый и мобильный
+# ✅ Лучшая безопасность - последние патчи безопасности
+# ✅ Расширенная функциональность - больше возможностей редактирования
+# ✅ Лучшая производительность - оптимизированный код
+# ✅ Активная поддержка - регулярные обновления

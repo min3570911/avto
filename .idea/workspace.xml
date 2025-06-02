@@ -5,6 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедрен блог вместе с редактором CKEDITOR">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blog/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blog/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/migrations/0001_initial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blog/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/blog/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ecomm/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ecomm/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/migrations/0026_alter_product_product_desription.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/migrations/0026_alter_product_product_desription.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -52,34 +61,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Django Server.avtokovriki.executor": "Run",
-    "Python.migrate_data.executor": "Run",
-    "Python.setup.by.executor": "Run",
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.pycharm.django.structure.promotion.once.per.project": "true",
-    "django.template.preview.state": "SHOW_EDITOR",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/YandexDisk/avtokovriki",
-    "list.type.of.created.stylesheet": "CSS",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Django Server.avtokovriki.executor&quot;: &quot;Run&quot;,
+    &quot;Python.migrate_data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.setup.by.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
+    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/YandexDisk/avtokovriki&quot;,
+    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "sqlite"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;sqlite&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="avtokovriki" type="Python.DjangoServer" factoryName="Django server">
       <module name="avtokovriki" />
@@ -91,7 +100,6 @@
         <env name="DJANGO_SETTINGS_MODULE" value="ecomm.settings" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="SDK_NAME" value="Python 3.12 (avto)" />
       <option name="WORKING_DIRECTORY" value="D:\YandexDisk\avtokovriki" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -142,6 +150,8 @@
       <workItem from="1748457240375" duration="5152000" />
       <workItem from="1748674940084" duration="1204000" />
       <workItem from="1748756530841" duration="4295000" />
+      <workItem from="1748841340106" duration="4182000" />
+      <workItem from="1748877944273" duration="1286000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />

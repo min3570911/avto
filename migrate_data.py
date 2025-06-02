@@ -1,51 +1,96 @@
-# 📁 check_quill.py - Скрипт для проверки установки django-quill-editor
-# 🔍 Проверяем, правильно ли установлен пакет и какие в нем есть компоненты
+#!/usr/bin/env python3
+# 📁 fix_migrations.py - Скрипт для исправления конфликта миграций
+# 🔧 Безопасное удаление проблемных миграций и пересоздание
 
-import sys
 import os
+import shutil
+from pathlib import Path
 
-def check_quill_installation():
-    """🔍 Проверяет установку и структуру django-quill-editor"""
 
-    print("🔍 Проверка django-quill-editor...")
+def backup_migrations():
+    """📦 Создаем резервную копию миграций"""
+    print("📦 Создаем резервную копию миграций...")
 
-    # Проверяем, установлен ли пакет
-    try:
-        import django_quill
-        print("✅ Пакет django_quill успешно импортирован")
-        print(f"📦 Версия: {getattr(django_quill, '__version__', 'Неизвестно')}")
-        print(f"📁 Путь: {django_quill.__file__}")
-    except ImportError as e:
-        print(f"❌ Ошибка импорта django_quill: {e}")
-        return False
+    # Создаем папку для бэкапов
+    backup_dir = Path("migrations_backup")
+    backup_dir.mkdir(exist_ok=True)
 
-    # Проверяем QuillField
-    try:
-        from django_quill.fields import QuillField
-        print("✅ QuillField успешно импортирован")
-    except ImportError as e:
-        print(f"❌ Ошибка импорта QuillField: {e}")
-        return False
+    # Копируем миграции
+    for app in ['products', 'blog']:
+        app_migrations = Path(app) / 'migrations'
+        if app_migrations.exists():
+            backup_app_dir = backup_dir / app
+            if backup_app_dir.exists():
+                shutil.rmtree(backup_app_dir)
+            shutil.copytree(app_migrations, backup_app_dir)
+            print(f"✅ Скопированы миграции {app}")
 
-    # Проверяем наличие urls.py
-    try:
-        import django_quill.urls
-        print("✅ django_quill.urls существует")
-    except ImportError:
-        print("⚠️ django_quill.urls не найден (это нормально для некоторых версий)")
 
-    # Проверяем структуру пакета
-    package_dir = os.path.dirname(django_quill.__file__)
-    print(f"\n📁 Содержимое пакета django_quill:")
+def remove_problematic_migrations():
+    """🗑️ Удаляем проблемные миграции"""
+    print("🗑️ Удаляем проблемные миграции...")
 
-    for item in os.listdir(package_dir):
-        if not item.startswith('__pycache__'):
-            print(f"   📄 {item}")
+    # Файлы для удаления
+    files_to_remove = [
+        'products/migrations/0026_alter_product_product_desription.py',
+        'blog/migrations/0001_initial.py',
+        'blog/migrations/0002_migrate_to_ckeditor5.py',
+        'products/migrations/0027_migrate_to_ckeditor5.py'
+    ]
 
-    return True
+    for file_path in files_to_remove:
+        file_path = Path(file_path)
+        if file_path.exists():
+            file_path.unlink()
+            print(f"🗑️ Удален файл: {file_path}")
+        else:
+            print(f"⚠️ Файл не найден: {file_path}")
+
+
+def show_commands():
+    """📋 Показываем команды для выполнения"""
+    print("\n" + "=" * 60)
+    print("📋 СЛЕДУЮЩИЕ ШАГИ:")
+    print("=" * 60)
+    print()
+    print("1️⃣ Откатите миграции к безопасной версии:")
+    print("   python manage.py migrate products 0025")
+    print("   python manage.py migrate blog zero")
+    print()
+    print("2️⃣ Создайте новые миграции:")
+    print("   python manage.py makemigrations blog")
+    print("   python manage.py makemigrations products")
+    print()
+    print("3️⃣ Примените новые миграции:")
+    print("   python manage.py migrate")
+    print()
+    print("4️⃣ Соберите статические файлы:")
+    print("   python manage.py collectstatic --clear --noinput")
+    print()
+    print("5️⃣ Запустите сервер:")
+    print("   python manage.py runserver localhost:8000")
+    print()
+    print("=" * 60)
+
+
+def main():
+    """🚀 Главная функция"""
+    print("🔧 Исправление конфликта миграций Django")
+    print("=" * 50)
+
+    response = input("📦 Создать резервную копию миграций? (y/n): ")
+    if response.lower() == 'y':
+        backup_migrations()
+
+    response = input("🗑️ Удалить проблемные файлы миграций? (y/n): ")
+    if response.lower() == 'y':
+        remove_problematic_migrations()
+
+    show_commands()
+
+    print("\n✅ Скрипт завершен!")
+    print("⚠️ ВАЖНО: Выполните команды выше по порядку!")
+
 
 if __name__ == "__main__":
-    if check_quill_installation():
-        print("\n🎉 django-quill-editor установлен корректно!")
-    else:
-        print("\n❌ Проблемы с установкой django-quill-editor")
+    main()

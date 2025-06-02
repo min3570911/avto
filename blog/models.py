@@ -1,13 +1,13 @@
 # 📁 blog/models.py - Модели для раздела "Статьи"
 # 📝 Блог для интернет-магазина автоковриков
-# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
+# ✅ СОВРЕМЕННО: Переход на CKEditor 5
 
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.urls import reverse
-# ✅ ИСПРАВЛЕНО: Импорт RichTextField из ckeditor
-from ckeditor.fields import RichTextField
+# ✅ НОВОЕ: Импорт CKEditor5Field из django-ckeditor-5
+from django_ckeditor_5.fields import CKEditor5Field
 
 
 class Category(models.Model):
@@ -95,13 +95,13 @@ class Article(models.Model):
         help_text='Рекомендуемый размер: 1200x600 px'
     )
 
-    # ✅ ИСПРАВЛЕНО: Замена SummernoteTextField на RichTextField
-    excerpt = RichTextField(
+    # ✅ НОВОЕ: Замена RichTextField на CKEditor5Field
+    excerpt = CKEditor5Field(
         verbose_name='Краткое описание',
         help_text='Краткое описание для карточки статьи (анонс)',
         config_name='basic'  # 🎯 Используем базовую конфигурацию для анонса
     )
-    content = RichTextField(
+    content = CKEditor5Field(
         verbose_name='Содержание статьи',
         help_text='Полное содержание статьи с форматированием',
         config_name='blog'  # 🎯 Используем расширенную конфигурацию для блога
@@ -211,8 +211,8 @@ class Article(models.Model):
 
 
 # 🔧 ИЗМЕНЕНИЯ:
-# ✅ ИСПРАВЛЕНО: SummernoteTextField заменен на RichTextField из ckeditor
+# ✅ ЗАМЕНЕНО: ckeditor.fields.RichTextField → django_ckeditor_5.fields.CKEditor5Field
 # ✅ ДОБАВЛЕНО: config_name='basic' для excerpt (краткое описание)
 # ✅ ДОБАВЛЕНО: config_name='blog' для content (полный текст)
 # ✅ СОХРАНЕНО: Вся остальная функциональность модели Article без изменений
-# ✅ УЛУЧШЕНО: Добавлены подробные комментарии для CKEditor конфигураций
+# ✅ УЛУЧШЕНО: Современный интерфейс CKEditor 5 с лучшей безопасностью

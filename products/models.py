@@ -1,14 +1,14 @@
 # 📁 products/models.py
 # 🛍️ Модели для системы интернет-магазина автоковриков
-# ✅ ИСПРАВЛЕНО: Переход с django-summernote на django-ckeditor
+# ✅ СОВРЕМЕННО: Переход на CKEditor 5
 
 from django.db import models
 from base.models import BaseModel
 from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
-# ✅ ИСПРАВЛЕНО: Импорт RichTextField из ckeditor
-from ckeditor.fields import RichTextField
+# ✅ НОВОЕ: Импорт CKEditor5Field из django-ckeditor-5
+from django_ckeditor_5.fields import CKEditor5Field
 
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (
@@ -63,8 +63,8 @@ class Product(BaseModel):
         related_name="products", verbose_name="Категория")
     # ✅ ИЗМЕНЕНО: price теперь необязательное поле (null=True, blank=True)
     price = models.IntegerField(verbose_name="Базовая цена", null=True, blank=True, default=0)
-    # ✅ ИСПРАВЛЕНО: Замена SummernoteTextField на RichTextField
-    product_desription = RichTextField(
+    # ✅ НОВОЕ: Замена RichTextField на CKEditor5Field
+    product_desription = CKEditor5Field(
         verbose_name="Описание товара",
         help_text="Подробное описание товара с возможностью форматирования",
         config_name='default'  # 🎯 Используем конфигурацию 'default' из settings
@@ -369,7 +369,7 @@ class Wishlist(BaseModel):
 
 
 # 🔧 ИЗМЕНЕНИЯ:
-# ✅ ИСПРАВЛЕНО: SummernoteTextField заменен на RichTextField из ckeditor
+# ✅ ЗАМЕНЕНО: ckeditor.fields.RichTextField → django_ckeditor_5.fields.CKEditor5Field
 # ✅ ДОБАВЛЕНО: config_name='default' для использования настроек из settings.py
 # ✅ СОХРАНЕНО: Вся остальная функциональность модели Product без изменений
-# ✅ УЛУЧШЕНО: Добавлены подробные комментарии для CKEditor
+# ✅ УЛУЧШЕНО: Современный интерфейс CKEditor 5 с улучшенной безопасностью
