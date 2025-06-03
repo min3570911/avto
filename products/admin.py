@@ -1,13 +1,16 @@
-# 📁 products/admin.py - ОБНОВЛЕННАЯ ВЕРСИЯ для CKEditor 5
+# 📁 products/admin.py - ОБНОВЛЕННАЯ ВЕРСИЯ
 # 🛍️ Админка для системы интернет-магазина автоковриков
-# ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
+# ✅ СОВРЕМЕННО: Pереход на django-ckeditor-5 + расширенная CategoryAdmin c SEO-валидацией
 
 from django.contrib import admin
 from django.utils.html import mark_safe
+from django import forms
+from django.core.exceptions import ValidationError
+
 from .models import *
 
 
-# 🖼️ Инлайн админка для изображений товаров
+# 🖼️ Инлайн админка для изображений товаров (БЕЗ ИЗМЕНЕНИЙ)
 class ProductImageAdmin(admin.StackedInline):
     """🖼️ Инлайн админка для изображений товаров"""
     model = ProductImage
@@ -23,14 +26,229 @@ class ProductImageAdmin(admin.StackedInline):
         """👁️ Предпросмотр изображения при редактировании"""
         if obj.image:
             return mark_safe(
-                f'<img src="{obj.image.url}" width="150" style="border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"/>'
+                f'<img src="{obj.image.url}" width="150" '
+                f'style="border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"/>'
             )
         return "📷 Изображение не загружено"
 
     img_preview.short_description = "Предпросмотр"
 
 
-# 🛍️ ОБНОВЛЕНО: Обычный ModelAdmin с автоматическим CKEditor 5
+# 🆕 Форма-валидатор для категорий
+class CategoryAdminForm(forms.ModelForm):
+    """📝 Форма с валидацией SEO-полей категории"""
+
+    class Meta:
+        model = Category
+        fields = "__all__"
+
+    def clean_meta_title(self):
+        meta_title = self.cleaned_data.get("meta_title")
+        if meta_title and len(meta_title) > 60:
+            raise ValidationError(
+                f"⚠️ SEO-заголовок слишком длинный ({len(meta_title)} симв.). "
+                f"Максимум 60."
+            )
+        return meta_title
+
+    def clean_meta_description(self):
+        meta_description = self.cleaned_data.get("meta_description")
+        if meta_description and len(meta_description) > 160:
+            raise ValidationError(
+                f"⚠️ SEO-описание слишком длинное ({len(meta_description)} симв.). "
+                f"Максимум 160."
+            )
+        return meta_description
+
+
+# 📂 Расширенная админка категорий
+
+class CategoryAdmin(admin.ModelAdmin):
+    """📂 Админка категорий товаров с SEO, предпросмотром и валидацией"""
+
+    form = CategoryAdminForm
+
+    # 📊 Список
+    list_display = [
+        "category_name",
+        "category_sku",
+        "slug",
+        "get_products_count",
+        "display_order",
+        "is_active",
+        "image_preview_small",
+        "seo_status",
+    ]
+    list_filter = ["is_active", "created_at", "updated_at"]
+    search_fields = ["category_name", "slug", "category_sku", "meta_title"]
+    list_editable = ["display_order", "is_active", "category_sku"]
+    prepopulated_fields = {"slug": ("category_name",)}
+    list_per_page = 20
+
+    # 🗂️ Секции формы
+    fieldsets = (
+        ("📋 Основная информация", {
+            "fields": (
+                "category_name",
+                "category_sku",
+                "slug",
+                "category_image",
+                "image_preview",
+            ),
+            "description": "🏷️ Базовая информация о категории",
+        }),
+        ("📝 Контент категории", {
+            "fields": ("description", "additional_content"),
+            "classes": ("wide",),
+            "description": "✍️ Текстовое содержимое страницы",
+        }),
+        ("🔍 SEO-настройки", {
+            "fields": (
+                "page_title",
+                ("meta_title", "meta_title_length"),
+                ("meta_description", "meta_description_length"),
+                "google_preview",
+            ),
+            "description": "🎯 Оптимизация для поисковых систем",
+        }),
+        ("⚙️ Настройки отображения", {
+            "fields": ("display_order", "is_active"),
+            "classes": ("collapse",),
+            "description": "🔧 Порядок и видимость",
+        }),
+        ("📊 Служебная информация", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
+            "description": "🕐 Даты создания и обновления",
+        }),
+    )
+
+    # 🔒 Только-чтение
+    readonly_fields = [
+        "image_preview",
+        "meta_title_length",
+        "meta_description_length",
+        "google_preview",
+        "created_at",
+        "updated_at",
+    ]
+
+    # ---------- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ----------
+
+    def get_products_count(self, obj):
+        count = obj.products.count()
+        if count == 0:
+            return mark_safe('<span style="color:red;">🚫 Нет товаров</span>')
+        if count < 5:
+            return mark_safe(f'<span style="color:orange;">📦 {count} тов.</span>')
+        return mark_safe(f'<span style="color:green;">📦 {count} тов.</span>')
+
+    get_products_count.short_description = "Товары"
+
+    def image_preview(self, obj):
+        if obj.category_image:
+            return mark_safe(
+                f'<img src="{obj.category_image.url}" '
+                f'style="max-height:200px;max-width:400px;object-fit:contain;'
+                f'border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"/>'
+            )
+        return "📷 Изображение не загружено"
+
+    image_preview.short_description = "Превью"
+
+    def image_preview_small(self, obj):
+        if obj.category_image:
+            return mark_safe(
+                f'<img src="{obj.category_image.url}" '
+                f'style="height:40px;width:40px;object-fit:cover;border-radius:4px;"/>'
+            )
+        return "—"
+
+    image_preview_small.short_description = "Фото"
+
+    def meta_title_length(self, obj):
+        if obj.meta_title:
+            length = len(obj.meta_title)
+            color = "green" if length <= 60 else "red"
+            return mark_safe(f'<span style="color:{color};">{length}/60</span>')
+        return "—"
+
+    meta_title_length.short_description = "Длина"
+
+    def meta_description_length(self, obj):
+        if obj.meta_description:
+            length = len(obj.meta_description)
+            color = "green" if length <= 160 else "red"
+            return mark_safe(f'<span style="color:{color};">{length}/160</span>')
+        return "—"
+
+    meta_description_length.short_description = "Длина"
+
+    def seo_status(self, obj):
+        has_title = bool(obj.meta_title)
+        has_desc = bool(obj.meta_description)
+        has_image = bool(obj.category_image)
+        if has_title and has_desc and has_image:
+            return mark_safe('<span style="color:green;">✅ Полная</span>')
+        if has_title or has_desc:
+            return mark_safe('<span style="color:orange;">⚠️ Частичная</span>')
+        return mark_safe('<span style="color:red;">❌ Нет</span>')
+
+    seo_status.short_description = "SEO"
+
+    def google_preview(self, obj):
+        title = obj.get_meta_title()[:60]
+        description = obj.get_meta_description()[:160]
+        url = f"example.com/products/category/{obj.slug}/"
+        return mark_safe(f"""
+        <div style="font-family:Arial;max-width:600px;border:1px solid #ddd;
+                    padding:15px;border-radius:8px;background:#f9f9f9;">
+            <div style="color:#1a0dab;font-size:18px;margin-bottom:3px;">{title}</div>
+            <div style="color:#006621;font-size:14px;margin-bottom:5px;">{url}</div>
+            <div style="color:#545454;font-size:13px;line-height:1.4;">{description}</div>
+        </div>""")
+
+    google_preview.short_description = "Google preview"
+
+    # 🎯 Массовые действия
+    actions = ["activate_categories", "deactivate_categories", "optimize_seo"]
+
+    def activate_categories(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f"✅ Активировано: {updated}")
+
+    activate_categories.short_description = "✅ Активировать"
+
+    def deactivate_categories(self, request, queryset):
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f"🚫 Деактивировано: {updated}")
+
+    deactivate_categories.short_description = "🚫 Деактивировать"
+
+    def optimize_seo(self, request, queryset):
+        optimized = 0
+        for category in queryset:
+            changed = False
+            if not category.meta_title:
+                category.meta_title = (
+                    f"{category.category_name} – купить в интернет-магазине"
+                )[:60]
+                changed = True
+            if not category.meta_description:
+                category.meta_description = (
+                    f"Большой выбор {category.category_name.lower()}. "
+                    f"Доставка по РБ. Гарантия качества."
+                )[:160]
+                changed = True
+            if changed:
+                category.save()
+                optimized += 1
+        self.message_user(request, f"🔍 SEO оптимизировано для {optimized} категорий")
+
+    optimize_seo.short_description = "🔍 Оптимизировать SEO"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("products")
 class ProductAdmin(admin.ModelAdmin):
     """🛍️ Админка для товаров с поддержкой CKEditor 5"""
 

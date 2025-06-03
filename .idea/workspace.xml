@@ -4,7 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедрен блог вместе с редактором CKEDITOR 5" />
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Начинаю работу с масовым импортом машин">
+      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/views.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -36,7 +43,7 @@
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/min3570911/avto.git",
-    "accountId": "18629b04-2906-4453-8b5d-7c23d7d697ae"
+    "accountId": "502038a7-7703-43ac-96d8-e8cbd4a75480"
   }
 }]]></component>
   <component name="ProjectColorInfo">{
@@ -140,7 +147,8 @@
       <workItem from="1748674940084" duration="1204000" />
       <workItem from="1748756530841" duration="4295000" />
       <workItem from="1748841340106" duration="4182000" />
-      <workItem from="1748877944273" duration="2050000" />
+      <workItem from="1748877944273" duration="2367000" />
+      <workItem from="1748927362537" duration="4278000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -246,7 +254,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748879950297</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Начинаю работу с масовым импортом машин">
+      <option name="closed" value="true" />
+      <created>1748880266209</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1748880266209</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -276,7 +292,8 @@
     <MESSAGE value="Блог заработал. Чиню отзыв" />
     <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR" />
     <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR 5" />
-    <option name="LAST_COMMIT_MESSAGE" value="Внедрен блог вместе с редактором CKEDITOR 5" />
+    <MESSAGE value="Начинаю работу с масовым импортом машин" />
+    <option name="LAST_COMMIT_MESSAGE" value="Начинаю работу с масовым импортом машин" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

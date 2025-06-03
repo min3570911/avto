@@ -1,5 +1,5 @@
-# 📁 products/views.py - ПОЛНЫЙ ИСПРАВЛЕННЫЙ ФАЙЛ с каталогом
-# 🛍️ Все view-функции для товаров включая каталог
+# 📁 products/views.py — ПОЛНЫЙ АКТУАЛЬНЫЙ ФАЙЛ
+# 🛍️ View-функции интернет-магазина автоковриков
 
 import random
 from django.shortcuts import render, redirect, get_object_or_404
@@ -10,33 +10,45 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from products.models import Product, KitVariant, ProductReview, Wishlist, Color, Category
+from products.models import (
+    Product,
+    KitVariant,
+    ProductReview,
+    Wishlist,
+    Color,
+    Category,
+)
 from accounts.models import Cart, CartItem
 from .forms import ReviewForm
 
 
-# 🏠 НОВАЯ ФУНКЦИЯ: Каталог товаров
+# 🏠 ОБНОВЛЕНО: Каталог товаров с учётом активных категорий
 def products_catalog(request):
     """
     🛍️ Главная страница каталога товаров
 
     Отображает все товары с возможностью поиска и фильтрации.
     Поддерживает пагинацию и сортировку.
+    🆕 Теперь показывает только активные категории
     """
-    # 🔍 Получаем параметры поиска и фильтрации
-    search_query = request.GET.get('search', '')
-    sort_by = request.GET.get('sort', '-created_at')  # По умолчанию новые первыми
-    category_filter = request.GET.get('category', '')
+    # 🔍 Параметры поиска и фильтрации
+    search_query = request.GET.get("search", "")
+    sort_by = request.GET.get("sort", "-created_at")  # По умолчанию новые первыми
+    category_filter = request.GET.get("category", "")
 
-    # 📦 Базовый queryset - только основные товары (без вариантов)
-    products = Product.objects.filter(parent=None).select_related('category').prefetch_related('product_images')
+    # 📦 Базовый queryset — только основные товары (без вариантов)
+    products = (
+        Product.objects.filter(parent=None)
+        .select_related("category")
+        .prefetch_related("product_images")
+    )
 
-    # 🔍 Применяем поиск
+    # 🔍 Поиск
     if search_query:
         products = products.filter(
-            Q(product_name__icontains=search_query) |
-            Q(product_desription__icontains=search_query) |
-            Q(category__category_name__icontains=search_query)
+            Q(product_name__icontains=search_query)
+            | Q(product_desription__icontains=search_query)
+            | Q(category__category_name__icontains=search_query)
         )
 
     # 📂 Фильтрация по категории
@@ -45,119 +57,128 @@ def products_catalog(request):
 
     # 📊 Сортировка
     sort_options = {
-        'name': 'product_name',
-        '-name': '-product_name',
-        'price': 'price',
-        '-price': '-price',
-        'newest': '-created_at',
-        'oldest': 'created_at',
+        "name": "product_name",
+        "-name": "-product_name",
+        "price": "price",
+        "-price": "-price",
+        "newest": "-created_at",
+        "oldest": "created_at",
     }
-
-    if sort_by in sort_options:
-        products = products.order_by(sort_options[sort_by])
-    else:
-        products = products.order_by('-created_at')
+    products = products.order_by(sort_options.get(sort_by, "-created_at"))
 
     # 📄 Пагинация
     paginator = Paginator(products, 12)  # 12 товаров на страницу
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # 📂 Получаем все категории для фильтра
-    categories = Category.objects.all().order_by('category_name')
+    # 📂 ТОЛЬКО АКТИВНЫЕ категории для фильтра
+    categories = (
+        Category.objects.filter(is_active=True)
+        .order_by("display_order", "category_name")
+    )
 
     # 🎯 Популярные товары (для сайдбара)
-    popular_products = Product.objects.filter(
-        parent=None,
-        newest_product=True
-    ).order_by('-created_at')[:4]
+    popular_products = (
+        Product.objects.filter(parent=None, newest_product=True)
+        .order_by("-created_at")[:4]
+    )
 
     context = {
-        'page_obj': page_obj,
-        'products': page_obj.object_list,
-        'categories': categories,
-        'popular_products': popular_products,
-        'search_query': search_query,
-        'sort_by': sort_by,
-        'category_filter': category_filter,
-        'total_products': paginator.count,
-
-        # 📊 Статистика для отображения
-        'products_count': paginator.count,
-        'current_page': page_obj.number,
-        'total_pages': paginator.num_pages,
+        "page_obj": page_obj,
+        "products": page_obj.object_list,
+        "categories": categories,
+        "popular_products": popular_products,
+        "search_query": search_query,
+        "sort_by": sort_by,
+        "category_filter": category_filter,
+        "total_products": paginator.count,
+        # 📊 Статистика
+        "products_count": paginator.count,
+        "current_page": page_obj.number,
+        "total_pages": paginator.num_pages,
     }
 
-    return render(request, 'products/catalog.html', context)
+    return render(request, "products/catalog.html", context)
 
 
-# 📂 НОВАЯ ФУНКЦИЯ: Товары по категории
+# 📂 ОБНОВЛЕНО: Товары по категории с SEO-данными
 def products_by_category(request, category_slug):
     """
     📂 Товары по конкретной категории
 
     Отображает товары выбранной категории с возможностью сортировки.
+    🆕 При неактивной категории выполняется редирект, передаются SEO-данные
     """
-    # 📂 Получаем категорию или 404
+    # 📂 Категория или 404
     category = get_object_or_404(Category, slug=category_slug)
 
-    # 🔍 Параметры сортировки
-    sort_by = request.GET.get('sort', '-created_at')
-    search_query = request.GET.get('search', '')
+    # 🚫 Категория неактивна — предупреждаем и уходим
+    if not category.is_active:
+        messages.warning(request, "Эта категория временно недоступна.")
+        return redirect("products_catalog")
+
+    # 🔍 Параметры
+    sort_by = request.GET.get("sort", "-created_at")
+    search_query = request.GET.get("search", "")
 
     # 📦 Товары категории
-    products = Product.objects.filter(
-        category=category,
-        parent=None
-    ).select_related('category').prefetch_related('product_images')
+    products = (
+        Product.objects.filter(category=category, parent=None)
+        .select_related("category")
+        .prefetch_related("product_images")
+    )
 
     # 🔍 Поиск внутри категории
     if search_query:
         products = products.filter(
-            Q(product_name__icontains=search_query) |
-            Q(product_desription__icontains=search_query)
+            Q(product_name__icontains=search_query)
+            | Q(product_desription__icontains=search_query)
         )
 
     # 📊 Сортировка
     sort_options = {
-        'name': 'product_name',
-        '-name': '-product_name',
-        'price': 'price',
-        '-price': '-price',
-        'newest': '-created_at',
-        'oldest': 'created_at',
+        "name": "product_name",
+        "-name": "-product_name",
+        "price": "price",
+        "-price": "-price",
+        "newest": "-created_at",
+        "oldest": "created_at",
     }
-
-    if sort_by in sort_options:
-        products = products.order_by(sort_options[sort_by])
-    else:
-        products = products.order_by('-created_at')
+    products = products.order_by(sort_options.get(sort_by, "-created_at"))
 
     # 📄 Пагинация
     paginator = Paginator(products, 12)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # 📂 Все категории для навигации
-    categories = Category.objects.all().order_by('category_name')
+    # 📂 Навигация по активным категориям
+    categories = (
+        Category.objects.filter(is_active=True)
+        .order_by("display_order", "category_name")
+    )
 
+    # 🆕 Расширенный контекст
     context = {
-        'category': category,
-        'page_obj': page_obj,
-        'products': page_obj.object_list,
-        'categories': categories,
-        'search_query': search_query,
-        'sort_by': sort_by,
-        'total_products': paginator.count,
-
+        "category": category,
+        "page_obj": page_obj,
+        "products": page_obj.object_list,
+        "categories": categories,
+        "search_query": search_query,
+        "sort_by": sort_by,
+        "total_products": paginator.count,
         # 📊 Мета-информация
-        'current_page': page_obj.number,
-        'total_pages': paginator.num_pages,
+        "current_page": page_obj.number,
+        "total_pages": paginator.num_pages,
+        # 🆕 SEO
+        "page_title": category.page_title or category.category_name,
+        "meta_title": category.get_meta_title(),
+        "meta_description": category.get_meta_description(),
+        # 🆕 Контент категории
+        "has_description": bool(category.description),
+        "has_additional_content": bool(category.additional_content),
     }
 
-    return render(request, 'products/category.html', context)
-
-
+    return render(request, "products/category.html", context)
 def get_product(request, slug):
     """
     🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций

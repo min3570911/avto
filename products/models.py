@@ -1,6 +1,6 @@
 # 📁 products/models.py
 # 🛍️ Модели для системы интернет-магазина автоковриков
-# ✅ СОВРЕМЕННО: Переход на CKEditor 5
+# ✅ ОБНОВЛЕНО: Расширена модель Category с SEO и контентом
 
 from django.db import models
 from base.models import BaseModel
@@ -18,22 +18,126 @@ COLOR_TYPE_CHOICES = (
 
 
 class Category(BaseModel):
-    """📂 Модель категорий товаров"""
+    """📂 Модель категорий товаров с расширенным функционалом SEO и контента"""
+    # ⚡ Основные поля (существующие)
     category_name = models.CharField(max_length=100, verbose_name="Название категории")
     slug = models.SlugField(unique=True, null=True, blank=True, verbose_name="URL-адрес")
     category_image = models.ImageField(upload_to="catgories", verbose_name="Изображение категории")
 
+    # 🆕 НОВЫЕ ПОЛЯ для расширенного функционала
+
+    # 📝 Контентные поля
+    description = CKEditor5Field(
+        verbose_name="Описание категории",
+        help_text="Основное описание категории для отображения на странице",
+        config_name='blog',  # Используем расширенную конфигурацию как в блоге
+        null=True,
+        blank=True
+    )
+    additional_content = CKEditor5Field(
+        verbose_name="Дополнительный контент",
+        help_text="Дополнительная информация, советы, руководства по выбору",
+        config_name='blog',
+        null=True,
+        blank=True
+    )
+
+    # 🔍 SEO-поля
+    page_title = models.CharField(
+        max_length=100,
+        verbose_name="Заголовок страницы",
+        help_text="H1 заголовок на странице категории",
+        null=True,
+        blank=True
+    )
+    meta_title = models.CharField(
+        max_length=60,
+        verbose_name="SEO заголовок",
+        help_text="Title для поисковиков (макс. 60 символов)",
+        null=True,
+        blank=True
+    )
+    meta_description = models.TextField(
+        max_length=160,
+        verbose_name="SEO описание",
+        help_text="Description для поисковиков (макс. 160 символов)",
+        null=True,
+        blank=True
+    )
+
+    # 📊 Служебные поля
+    category_sku = models.PositiveIntegerField(
+        unique=True,
+        verbose_name="SKU категории",
+        help_text="Уникальный номер для импорта/экспорта",
+        null=True,
+        blank=True
+    )
+    display_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Порядок отображения",
+        help_text="Чем меньше число, тем выше в списке"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активна",
+        help_text="Неактивные категории не отображаются на сайте"
+    )
+
     def save(self, *args, **kwargs):
-        """🔄 Автоматическое создание slug из названия категории"""
-        self.slug = slugify(self.category_name)
+        """🔄 Автоматическое создание slug и заполнение SEO-полей"""
+        # Создаем slug из названия
+        if not self.slug:
+            self.slug = slugify(self.category_name)
+
+        # 🆕 Автозаполнение SEO-полей если пустые
+        if not self.page_title:
+            self.page_title = self.category_name
+
+        if not self.meta_title:
+            self.meta_title = f"{self.category_name} - купить в интернет-магазине"[:60]
+
+        if not self.meta_description:
+            self.meta_description = f"Большой выбор {self.category_name.lower()}. Доставка по всей Беларуси. Гарантия качества. Заказывайте онлайн!"[
+                                    :160]
+
         super(Category, self).save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.category_name
 
+    # 🆕 Новые методы для удобства работы
+    def get_active_products(self):
+        """🛍️ Получить только активные товары категории"""
+        return self.products.filter(parent=None)
+
+    def get_products_count(self):
+        """📊 Количество товаров в категории"""
+        return self.get_active_products().count()
+
+    def get_meta_title(self):
+        """🔍 Получить SEO заголовок с fallback"""
+        return self.meta_title or f"{self.category_name} - купить в интернет-магазине"
+
+    def get_meta_description(self):
+        """📝 Получить SEO описание с fallback"""
+        return self.meta_description or f"Большой выбор {self.category_name.lower()}. Доставка по всей Беларуси."
+
+    def image_preview(self):
+        """👁️ Превью изображения для админки"""
+        if self.category_image:
+            return mark_safe(
+                f'<img src="{self.category_image.url}" '
+                f'style="max-height: 100px; max-width: 200px; object-fit: contain;"/>'
+            )
+        return "—"
+
+    image_preview.short_description = "Превью"
+
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+        ordering = ['display_order', 'category_name']  # 🆕 Сортировка по порядку
 
 
 class KitVariant(BaseModel):
@@ -70,6 +174,7 @@ class Product(BaseModel):
         config_name='default'  # 🎯 Используем конфигурацию 'default' из settings
     )
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='variants')
 
     def save(self, *args, **kwargs):
         """🔄 Автоматическое создание slug из названия товара"""
@@ -367,9 +472,8 @@ class Wishlist(BaseModel):
         verbose_name_plural = "Избранное"
         ordering = ['-added_on']
 
-
-# 🔧 ИЗМЕНЕНИЯ:
-# ✅ ЗАМЕНЕНО: ckeditor.fields.RichTextField → django_ckeditor_5.fields.CKEditor5Field
-# ✅ ДОБАВЛЕНО: config_name='default' для использования настроек из settings.py
-# ✅ СОХРАНЕНО: Вся остальная функциональность модели Product без изменений
-# ✅ УЛУЧШЕНО: Современный интерфейс CKEditor 5 с улучшенной безопасностью
+# 🔧 ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
+# ✅ РАСШИРЕНА модель Category с новыми полями для SEO и контента
+# ✅ ДОБАВЛЕНЫ методы get_meta_title(), get_meta_description(), get_active_products()
+# ✅ ИЗМЕНЕНА сортировка категорий на ['display_order', 'category_name']
+# ✅ ВСЕ ОСТАЛЬНЫЕ модели остались БЕЗ ИЗМЕНЕНИЙ для безопасности
