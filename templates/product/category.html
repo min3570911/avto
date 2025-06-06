@@ -1,4 +1,5 @@
-<!-- 📁 templates/products/category.html - SEO-оптимизированный шаблон категории -->
+<!-- 📁 templates/products/category.html - SEO-оптимизированный шаблон с toggle контентом -->
+{% load category_filters %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -105,11 +106,176 @@
             font-style: italic;
         }
         
-        .seo-content-block {
+        /* 📖 Стили для блока описания категории */
+        .category-description-section {
             background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .category-description-section h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        /* 🎬 Стили для YouTube видео (responsive) */
+        .youtube-video-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
             margin: 20px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .youtube-video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* 📱 Мобильные стили для видео */
+        @media (max-width: 768px) {
+            .youtube-video-container {
+                margin: 15px 0;
+                border-radius: 8px;
+            }
+        }
+        
+        /* 🔄 Стили для toggle-контента */
+        .expandable-content {
+            position: relative;
+        }
+        
+        .content-preview {
+            transition: opacity 0.3s ease;
+        }
+        
+        .content-full {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .content-full.expanded {
+            opacity: 1;
+            max-height: 5000px; /* Достаточно большое значение */
+        }
+        
+        .toggle-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .toggle-btn:active {
+            transform: translateY(0);
+        }
+        
+        .toggle-btn .btn-icon {
+            display: inline-block;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+        
+        .toggle-btn.expanded .btn-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* 🌊 Градиент для плавного перехода текста */
+        .content-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(transparent, #f8f9fa);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        .content-preview.hidden::after {
+            opacity: 0;
+        }
+        
+        /* 📊 Информационная полоска */
+        .content-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .content-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* 📱 Мобильные стили */
+        @media (max-width: 768px) {
+            .category-description-section {
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+            }
+            
+            .category-description-section h2 {
+                font-size: 1.4rem;
+                margin-bottom: 15px;
+            }
+            
+            .toggle-btn {
+                padding: 10px 25px;
+                font-size: 0.9rem;
+                margin-top: 15px;
+            }
+            
+            .content-info {
+                gap: 15px;
+                font-size: 0.85rem;
+            }
+            
+            .category-content {
+                font-size: 1rem;
+            }
+        }
+        
+        /* 🎯 Дополнительные стили для контента */
+        .category-content strong,
+        .category-content b {
+            color: #2c3e50;
+        }
+        
+        .category-content em,
+        .category-content i {
+            color: #495057;
         }
     </style>
 </head>
@@ -174,15 +340,11 @@
                     </h1>
                     <p class="lead mb-0">Найдено товаров: <strong>{{ total_products }}</strong></p>
                     
-                    <!-- 📝 Краткое описание категории -->
+                    <!-- 📝 Краткое описание категории в шапке (мобильное превью) -->
                     {% if category.description %}
-                    <div class="mt-3">
+                    <div class="mt-3 d-md-none">
                         <div class="category-content">
-                            {% if category.description.html %}
-                                {{ category.description.html|safe }}
-                            {% else %}
-                                {{ category.description|safe }}
-                            {% endif %}
+                            {{ category.description|mobile_truncate_sentences:1|safe }}
                         </div>
                     </div>
                     {% endif %}
@@ -400,18 +562,70 @@
             </div>
         </div>
 
-        <!-- 📝 Дополнительный контент категории -->
-        {% if category.additional_content %}
+        <!-- 📝 Блок описания категории с toggle-функционалом -->
+        {% if category.has_content %}
         <div class="row mt-5">
             <div class="col-12">
-                <div class="seo-content-block">
-                    <h2>О категории {{ category.category_name }}</h2>
-                    <div class="category-content">
-                        {% if category.additional_content.html %}
-                            {{ category.additional_content.html|safe }}
-                        {% else %}
-                            {{ category.additional_content|safe }}
+                <div class="category-description-section">
+                    <h2>О категории "{{ category.category_name }}"</h2>
+                    
+                    <!-- 📊 Информация о контенте -->
+                    <div class="content-info">
+                        {% if category.description|word_count %}
+                        <span>
+                            <i class="bi bi-file-text"></i>
+                            {{ category.description|word_count }} слов
+                        </span>
                         {% endif %}
+                        
+                        {% if category.description|reading_time %}
+                        <span>
+                            <i class="bi bi-clock"></i>
+                            ~{{ category.description|reading_time }} мин. чтения
+                        </span>
+                        {% endif %}
+                        
+                        {% if category.additional_content|has_youtube_video %}
+                        <span>
+                            <i class="bi bi-play-circle"></i>
+                            Видеообзор
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="expandable-content">
+                        <!-- 👁️ Превью контент (первые предложения) -->
+                        <div class="content-preview" id="contentPreview">
+                            <div class="category-content">
+                                <!-- 🖥️ Десктоп превью: 3 предложения -->
+                                <div class="d-none d-md-block">
+                                    {{ category.description|smart_truncate_sentences:3|safe }}
+                                </div>
+                                <!-- 📱 Мобильное превью: 2 предложения -->
+                                <div class="d-md-none">
+                                    {{ category.description|mobile_truncate_sentences:2|safe }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 📄 Полный контент (скрыт по умолчанию) -->
+                        <div class="content-full" id="contentFull">
+                            <div class="category-content">
+                                {% if category.description %}
+                                    {{ category.description|safe }}
+                                {% endif %}
+                                
+                                {% if category.additional_content %}
+                                    {{ category.additional_content|safe }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- 🔄 Кнопка toggle -->
+                        <button class="toggle-btn" id="toggleBtn" type="button">
+                            <span class="btn-text">Читать далее</span>
+                            <i class="bi bi-chevron-down btn-icon"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -432,27 +646,67 @@
     <!-- 📱 Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- 📊 Google Analytics (замените на ваш код) -->
-    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script> -->
-    <!-- <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID');
-    </script> -->
+    <!-- 🎬 JavaScript для toggle-функционала -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggleBtn');
+            const contentPreview = document.getElementById('contentPreview');
+            const contentFull = document.getElementById('contentFull');
+            const btnText = toggleBtn.querySelector('.btn-text');
+            const btnIcon = toggleBtn.querySelector('.btn-icon');
+            
+            let isExpanded = false;
+            
+            toggleBtn.addEventListener('click', function() {
+                if (!isExpanded) {
+                    // 📖 Разворачиваем контент
+                    contentPreview.classList.add('hidden');
+                    contentFull.classList.add('expanded');
+                    toggleBtn.classList.add('expanded');
+                    btnText.textContent = 'Свернуть';
+                    btnIcon.className = 'bi bi-chevron-up btn-icon';
+                    isExpanded = true;
+                    
+                    // 📊 Плавная прокрутка к началу полного контента
+                    setTimeout(() => {
+                        contentFull.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
+                    
+                } else {
+                    // 📚 Сворачиваем контент
+                    contentPreview.classList.remove('hidden');
+                    contentFull.classList.remove('expanded');
+                    toggleBtn.classList.remove('expanded');
+                    btnText.textContent = 'Читать далее';
+                    btnIcon.className = 'bi bi-chevron-down btn-icon';
+                    isExpanded = false;
+                    
+                    // 📊 Плавная прокрутка к превью
+                    setTimeout(() => {
+                        contentPreview.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }, 100);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 
-<!-- 🔧 ИЗМЕНЕНИЯ:
-✅ ДОБАВЛЕНО: Полная SEO-оптимизация с мета-тегами
-✅ ДОБАВЛЕНО: Структурированные данные Schema.org из переменной seo.schema_data
-✅ ДОБАВЛЕНО: Open Graph и Twitter Card мета-теги
-✅ ДОБАВЛЕНО: Хлебные крошки для навигации
-✅ ДОБАВЛЕНО: SEO-заголовок страницы (H1) из category.page_title
-✅ ДОБАВЛЕНО: Отображение краткого описания категории
-✅ ДОБАВЛЕНО: Отображение дополнительного контента категории внизу
-✅ ДОБАВЛЕНО: Стили для WYSIWYG контента из CKEditor 5
-✅ ДОБАВЛЕНО: Каноническая ссылка для предотвращения дублей
-✅ ДОБАВЛЕНО: Счетчики товаров в категориях
-✅ ОБНОВЛЕНО: Корректное отображение описаний товаров из CKEditor 5
-✅ СОХРАНЕНО: Вся существующая функциональность шаблона -->
+<!-- 🔧 РЕАЛИЗОВАННЫЕ ВОЗМОЖНОСТИ:
+✅ SEO-оптимизация с мета-тегами и структурированными данными
+✅ Умное извлечение предложений с сохранением HTML-форматирования
+✅ Адаптивное превью (3 предложения на десктопе, 2 на мобильных)
+✅ Автоматическая конверсия YouTube ссылок в responsive iframe
+✅ Плавная анимация разворачивания/сворачивания контента
+✅ Красивые стили для всего контента с градиентами и тенями
+✅ Информационная полоска с количеством слов и временем чтения
+✅ Полная мобильная адаптация всех элементов
+✅ Хлебные крошки и навигация по категориям
+✅ Интеграция с загрузкой template filters
+✅ Кнопка toggle с анимацией иконки и изменением текста -->

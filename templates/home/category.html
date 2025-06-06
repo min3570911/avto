@@ -1,14 +1,14 @@
-{% extends "base/base.html"%} 
+{% extends "base/base.html"%}
 {% block title %}{{ category.category_name }} | Автоковрики{% endblock %}
 {% block start %}
 
 <style>
   .filter-section {
-      margin-bottom: 20px;
+    margin-bottom: 20px;
   }
 
   .form-group {
-      margin-bottom: 10px;
+    margin-bottom: 10px;
   }
 
   @keyframes appear {
@@ -66,72 +66,205 @@
     padding-left: 0;
   }
   
-  /* Стили для описания категории */
+  /* 📝 Стили для описания категории */
   .category-description {
     margin-top: 40px;
     margin-bottom: 50px;
-    border-radius: 10px;
-    padding: 25px;
-    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 30px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .category-description.collapsed {
-    max-height: 120px;
-  }
-  
-  .category-description h3 {
-    margin-bottom: 15px;
-    font-size: 22px;
-    color: #333;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(42, 65, 232, 0.1);
   }
   
   .category-description-text {
     font-size: 16px;
-    line-height: 1.6;
-    color: #555;
+    line-height: 1.7;
+    color: #495057;
     text-align: justify;
+    transition: all 0.4s ease;
   }
   
+  .category-description.collapsed .category-description-text {
+    max-height: 160px;
+    overflow: hidden;
+  }
+  
+  .category-description.expanded .category-description-text {
+    max-height: none;
+    overflow: visible;
+  }
+  
+  .category-description h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #2c3e50;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .category-description h3:before {
+    content: "📖";
+    font-size: 20px;
+  }
+  
+  /* ✨ ЭЛЕГАНТНАЯ кнопка в стиле Medium/статей */
   .read-more-btn {
-    display: inline-block;
-    background-color: #2a41e8;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 8px 20px;
-    margin-top: 15px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: transparent !important;
+    color: #2a41e8 !important;
+    border: 2px solid #2a41e8 !important;
+    border-radius: 25px !important;
+    padding: 10px 24px !important;
+    margin: 20px auto 0 auto !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-align: center !important;
+    position: relative !important;
+    z-index: 10 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    /* Центрирование */
+    display: block !important;
+    width: fit-content !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   
   .read-more-btn:hover {
-    background-color: #1a31d8;
+    background: #2a41e8 !important;
+    color: white !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(42, 65, 232, 0.25) !important;
+    border-color: #2a41e8 !important;
   }
   
+  .read-more-btn:active {
+    transform: translateY(0) !important;
+  }
+  
+  /* ✨ Иконка стрелочки */
+  .read-more-btn .arrow {
+    transition: transform 0.3s ease !important;
+    font-size: 12px !important;
+  }
+  
+  .read-more-btn.expanded .arrow {
+    transform: rotate(180deg) !important;
+  }
+  
+  /* 🌊 Элегантный градиентный оверлей */
   .read-more-overlay {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 80px;
-    background: linear-gradient(to bottom, rgba(248, 249, 250, 0), rgba(248, 249, 250, 1) 70%);
-    z-index: 1;
+    bottom: 70px;
+    left: 30px;
+    right: 30px;
+    height: 40px;
+    background: linear-gradient(to bottom, 
+      rgba(248, 249, 250, 0) 0%,
+      rgba(248, 249, 250, 0.7) 50%,
+      rgba(255, 255, 255, 1) 100%);
+    z-index: 5;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
+    border-radius: 0 0 12px 12px;
+  }
+
+  .category-description.expanded .read-more-overlay {
+    opacity: 0;
+  }
+
+  .category-description.collapsed .read-more-overlay {
+    opacity: 1;
+  }
+
+  /* 📊 Стильная информационная строка */
+  .content-info {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(42, 65, 232, 0.1);
   }
   
-  .read-more-container {
+  .content-info span {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    background: rgba(42, 65, 232, 0.05);
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-weight: 500;
+  }
+
+  /* 📱 Мобильная адаптация */
+  @media (max-width: 768px) {
+    .category-description {
+      padding: 20px;
+      margin-top: 30px;
+    }
+    
+    .category-description.collapsed .category-description-text {
+      max-height: 120px;
+    }
+    
+    .content-info {
+      gap: 10px;
+      font-size: 12px;
+    }
+    
+    .content-info span {
+      padding: 3px 10px;
+    }
+    
+    .read-more-btn {
+      font-size: 13px !important;
+      padding: 8px 20px !important;
+    }
+    
+    .category-description h3 {
+      font-size: 20px;
+    }
+  }
+
+  /* ✨ Дополнительные эффекты для текста */
+  .category-description-text p {
+    margin-bottom: 16px;
+  }
+  
+  .category-description-text p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .category-description-text ul {
+    padding-left: 20px;
+    margin: 16px 0;
+  }
+  
+  .category-description-text li {
+    margin-bottom: 8px;
     position: relative;
-    z-index: 2;
-    background-color: #f8f9fa;
-    padding-top: 10px;
-    padding-bottom: 10px;
+  }
+  
+  .category-description-text li:before {
+    content: "▸";
+    color: #2a41e8;
+    position: absolute;
+    left: -15px;
+    font-weight: bold;
   }
 </style>
 
@@ -149,7 +282,9 @@
         <p class="mt-3 text-muted">Автоковрики для вашего автомобиля</p>
       </div>
       <div class="col-md-4 text-center">
+        {% if category.category_image %}
         <img src="/media/{{ category.category_image }}" class="category-image" alt="{{ category.category_name }}">
+        {% endif %}
       </div>
     </div>
   </div>
@@ -158,7 +293,6 @@
 <div class="container">
   {% include 'base/alert.html' %}
   
-  <!-- Filter Section -->
   <div class="filter-section mb-3">
     <form method="GET" class="row">
       <div class="form-group col-md-6">
@@ -166,14 +300,13 @@
         <select id="category" name="category" class="form-control" onchange="changeCategory(this)">
           <option value="">Все</option>
           {% for cat in categories %}
-          <option value="{{ cat.slug }}" {% if category.category_name == cat.category_name %} selected {% endif %}>
+          <option value="{{ cat.slug }}" {% if category.slug == cat.slug %} selected {% endif %}>
             {{ cat.category_name }}
           </option>
           {% endfor %}
         </select>
       </div>
       
-      <!-- Sort Section -->
       <div class="form-group col-md-6">
         <label for="sort">Сортировать по:</label>
         <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
@@ -186,18 +319,18 @@
     </form>
   </div>
 
-  <!-- Product List -->
   <div class="row">
     {% for product in products %}
     <div class="col-md-3">
       <figure class="card card-product-grid">
         <div class="img-wrap">
+          {% if product.product_images.first %}
           <img src="/media/{{product.product_images.first.image}}" />
+          {% endif %}
         </div>
         <figcaption class="info-wrap border-top">
           <a href="{% url 'get_product' product.slug %}" class="title">
             <b>{{ product.product_name }}</b></a>
-          <!-- 🔄 ИСПРАВЛЕНО: заменил product.price.00 на product.get_salon_price руб. -->
           <div class="price mt-2">{{ product.get_salon_price }} руб.</div>
         </figcaption>
       </figure>
@@ -211,8 +344,7 @@
     {% endfor %}
   </div>
 
-  <!-- Pagination Section -->
-  {% if products %}
+  {% if products.paginator.num_pages > 1 %}
   <nav aria-label="Page navigation example">
     <ul class="pagination justify-content-center mb-4">
       {% if products.has_previous %}
@@ -248,36 +380,50 @@
   </nav>
   {% endif %}
   
-  <!-- Category Description Section -->
+  <!-- ✨ ЭЛЕГАНТНЫЙ блок описания категории -->
   <div class="category-description collapsed" id="category-description">
-    <h3>О категории "{{ category.category_name }}"</h3>
-    <div class="category-description-text">
-      {% if category_description %}
-      {{ category_description|safe }}
-      {% else %}
-      <p>Качественные автомобильные коврики категории "{{ category.category_name }}" идеально подходят для вашего автомобиля. Наши коврики изготавливаются из прочных и долговечных материалов, которые обеспечивают надежную защиту салона вашего автомобиля от грязи, воды и износа.</p>
-      <p>Особенности ковриков из категории "{{ category.category_name }}":</p>
-      <ul>
-        <li>Точное соответствие форме пола автомобиля</li>
-        <li>Высокие борты для удержания влаги и грязи</li>
-        <li>Противоскользящая поверхность</li>
-        <li>Простота в уходе и очистке</li>
-        <li>Устойчивость к износу и воздействию химических веществ</li>
-      </ul>
-      <p>Выбирая автомобильные коврики из нашего каталога, вы получаете продукцию высокого качества, которая прослужит вам долгие годы. Мы предлагаем широкий ассортимент ковриков различных цветов и конфигураций, чтобы вы могли выбрать оптимальный вариант для вашего автомобиля.</p>
-      <p>Не забывайте, что правильно подобранные автомобильные коврики не только защищают салон вашего автомобиля, но и придают ему аккуратный и ухоженный вид. Сделайте правильный выбор – выберите качественные автомобильные коврики из категории "{{ category.category_name }}"!</p>
-      {% endif %}
-    </div>
+    <h3>Автоковрики для "{{ category.category_name }}"</h3>
+    
+    {% if category.description %}
+      <div class="content-info">
+        <span>📝 {{ category.description|length }} символов</span>
+        <span>⏱️ ~2 мин. чтения</span>
+        </div>
+      <div class="category-description-text" id="category-text-content">
+        {{ category.description|safe }}
+      </div>
+    {% else %}
+      <div class="content-info">
+        <span>📝 Подробное описание</span>
+        <span>⏱️ ~2 мин. чтения</span>
+        
+      </div>
+      <div class="category-description-text" id="category-text-content">
+        <p>Качественные автомобильные коврики категории "{{ category.category_name }}" идеально подходят для вашего автомобиля. Наши коврики изготавливаются из прочных и долговечных материалов, которые обеспечивают надежную защиту салона вашего автомобиля от грязи, воды и износа.</p>
+        <p>Особенности ковриков из категории "{{ category.category_name }}":</p>
+        <ul>
+          <li>Точное соответствие форме пола автомобиля</li>
+          <li>Высокие борты для удержания влаги и грязи</li>
+          <li>Противоскользящая поверхность</li>
+          <li>Простота в уходе и очистке</li>
+          <li>Устойчивость к износу и воздействию химических веществ</li>
+        </ul>
+        <p>Выберите подходящий комплект ковриков для вашего автомобиля из нашего каталога. Мы гарантируем высокое качество всех наших товаров и предоставляем гарантию на все изделия.</p>
+      </div>
+    {% endif %}
+    
     <div class="read-more-overlay" id="read-more-overlay"></div>
-    <div class="read-more-container">
-      <button class="read-more-btn" id="read-more-btn">Подробнее</button>
-    </div>
+    
+    <!-- ✨ ЭЛЕГАНТНАЯ кнопка в стиле статей -->
+    <button class="read-more-btn" id="read-more-btn">
+      <span class="btn-text">Читать далее</span>
+      <span class="arrow">↓</span>
+    </button>
   </div>
   
 </div>
 
 <script>
-  // Функция для перехода на страницу выбранной категории
   function changeCategory(selectElement) {
     const categorySlug = selectElement.value;
     if (categorySlug) {
@@ -286,27 +432,38 @@
       window.location.href = `/`;
     }
   }
-  
-  // Функциональность кнопки "Подробнее"
+
+  // ✨ ЭЛЕГАНТНЫЙ JavaScript для toggle
   document.addEventListener('DOMContentLoaded', function() {
     const descriptionBlock = document.getElementById('category-description');
     const readMoreBtn = document.getElementById('read-more-btn');
-    const overlay = document.getElementById('read-more-overlay');
+    
+    if (!readMoreBtn || !descriptionBlock) {
+      return;
+    }
+    
+    let isExpanded = false;
     
     readMoreBtn.addEventListener('click', function() {
-      if (descriptionBlock.classList.contains('collapsed')) {
-        // Раскрываем описание
+      isExpanded = !isExpanded;
+      
+      const btnText = this.querySelector('.btn-text');
+      const arrow = this.querySelector('.arrow');
+      
+      if (isExpanded) {
+        // 📖 Раскрываем
         descriptionBlock.classList.remove('collapsed');
-        overlay.style.opacity = '0';
-        readMoreBtn.textContent = 'Свернуть';
+        descriptionBlock.classList.add('expanded');
+        readMoreBtn.classList.add('expanded');
+        btnText.textContent = 'Свернуть';
+        arrow.textContent = '↑';
       } else {
-        // Сворачиваем описание
+        // 📚 Сворачиваем
+        descriptionBlock.classList.remove('expanded');
         descriptionBlock.classList.add('collapsed');
-        overlay.style.opacity = '1';
-        readMoreBtn.textContent = 'Подробнее';
-        
-        // Прокручиваем страницу до начала блока описания
-        descriptionBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        readMoreBtn.classList.remove('expanded');
+        btnText.textContent = 'Читать далее';
+        arrow.textContent = '↓';
       }
     });
   });
