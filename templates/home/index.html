@@ -152,7 +152,7 @@
       {% for category in categories %}
       <div class="col-lg-2 col-md-3 col-sm-4 col-6">
         <div class="category-item">
-          <a href="{% url 'category' category.slug %}">
+         <a href="{% url 'products_by_category' category.slug %}">
             <div class="category-icon">
               <img src="/media/{{category.category_image}}" alt="{{category.category_name}}">
             </div>

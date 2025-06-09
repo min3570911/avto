@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Внедряю SEO - начал">
-      <change afterPath="$PROJECT_DIR$/products/templatetags/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/templatetags/category_filters.py" afterDir="false" />
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Заработала кнопка Читать далее.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/home/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/home/category.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/category.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/home/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/product/category.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/product/category.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -149,7 +150,8 @@
       <workItem from="1748841340106" duration="4182000" />
       <workItem from="1748877944273" duration="2367000" />
       <workItem from="1748927362537" duration="5787000" />
-      <workItem from="1749187804480" duration="13099000" />
+      <workItem from="1749187804480" duration="14101000" />
+      <workItem from="1749446539651" duration="11235000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -279,7 +281,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749189303115</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Заработала кнопка Читать далее.">
+      <option name="closed" value="true" />
+      <created>1749215092478</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1749215092484</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -311,7 +321,8 @@
     <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR 5" />
     <MESSAGE value="Начинаю работу с масовым импортом машин" />
     <MESSAGE value="Внедряю SEO - начал" />
-    <option name="LAST_COMMIT_MESSAGE" value="Внедряю SEO - начал" />
+    <MESSAGE value="Заработала кнопка Читать далее." />
+    <option name="LAST_COMMIT_MESSAGE" value="Заработала кнопка Читать далее." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

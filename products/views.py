@@ -1,4 +1,4 @@
-# 📁 products/views.py — ПОЛНЫЙ АКТУАЛЬНЫЙ ФАЙЛ
+# 📁 products/views.py — ИСПРАВЛЕННАЯ ВЕРСИЯ без поля parent
 # 🛍️ View-функции интернет-магазина автоковриков
 
 import random
@@ -22,23 +22,23 @@ from accounts.models import Cart, CartItem
 from .forms import ReviewForm
 
 
-# 🏠 ОБНОВЛЕНО: Каталог товаров с учётом активных категорий
+# 🏠 ИСПРАВЛЕНО: Каталог товаров без фильтра parent
 def products_catalog(request):
     """
     🛍️ Главная страница каталога товаров
 
     Отображает все товары с возможностью поиска и фильтрации.
     Поддерживает пагинацию и сортировку.
-    🆕 Теперь показывает только активные категории
+    🔧 ИСПРАВЛЕНО: убран фильтр parent=None
     """
     # 🔍 Параметры поиска и фильтрации
     search_query = request.GET.get("search", "")
     sort_by = request.GET.get("sort", "-created_at")  # По умолчанию новые первыми
     category_filter = request.GET.get("category", "")
 
-    # 📦 Базовый queryset — только основные товары (без вариантов)
+    # 📦 ИСПРАВЛЕНО: убран фильтр parent=None
     products = (
-        Product.objects.filter(parent=None)
+        Product.objects.all()
         .select_related("category")
         .prefetch_related("product_images")
     )
@@ -79,7 +79,7 @@ def products_catalog(request):
 
     # 🎯 Популярные товары (для сайдбара)
     popular_products = (
-        Product.objects.filter(parent=None, newest_product=True)
+        Product.objects.filter(newest_product=True)
         .order_by("-created_at")[:4]
     )
 
@@ -101,16 +101,16 @@ def products_catalog(request):
     return render(request, "products/catalog.html", context)
 
 
-# 📂 ОБНОВЛЕНО: Товары по категории с SEO-данными
-def products_by_category(request, category_slug):
+# 📂 ИСПРАВЛЕНО: Товары по категории без фильтра parent и правильный параметр slug
+def products_by_category(request, slug):
     """
     📂 Товары по конкретной категории
 
     Отображает товары выбранной категории с возможностью сортировки.
-    🆕 При неактивной категории выполняется редирект, передаются SEO-данные
+    🔧 ИСПРАВЛЕНО: убран фильтр parent=None, изменен параметр category_slug → slug
     """
     # 📂 Категория или 404
-    category = get_object_or_404(Category, slug=category_slug)
+    category = get_object_or_404(Category, slug=slug)
 
     # 🚫 Категория неактивна — предупреждаем и уходим
     if not category.is_active:
@@ -121,9 +121,9 @@ def products_by_category(request, category_slug):
     sort_by = request.GET.get("sort", "-created_at")
     search_query = request.GET.get("search", "")
 
-    # 📦 Товары категории
+    # 📦 ИСПРАВЛЕНО: убран фильтр parent=None
     products = (
-        Product.objects.filter(category=category, parent=None)
+        Product.objects.filter(category=category)
         .select_related("category")
         .prefetch_related("product_images")
     )
@@ -157,7 +157,7 @@ def products_by_category(request, category_slug):
         .order_by("display_order", "category_name")
     )
 
-    # 🆕 Расширенный контекст
+    # 🆕 Расширенный контекст с SEO данными
     context = {
         "category": category,
         "page_obj": page_obj,
@@ -171,14 +171,16 @@ def products_by_category(request, category_slug):
         "total_pages": paginator.num_pages,
         # 🆕 SEO
         "page_title": category.page_title or category.category_name,
-        "meta_title": category.get_meta_title(),
-        "meta_description": category.get_meta_description(),
+        "meta_title": category.get_seo_title(),
+        "meta_description": category.get_seo_description(),
         # 🆕 Контент категории
         "has_description": bool(category.description),
         "has_additional_content": bool(category.additional_content),
     }
 
-    return render(request, "products/category.html", context)
+    return render(request, "product/category.html", context)
+
+
 def get_product(request, slug):
     """
     🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
@@ -216,7 +218,6 @@ def get_product(request, slug):
     # Определяем первый доступный цвет для каждого типа (для начального выбора)
     initial_carpet_color = carpet_colors.filter(is_available=True).first() or carpet_colors.first()
     initial_border_color = border_colors.filter(is_available=True).first() or border_colors.first()
-
 
     # рейтинг / отзыв текущего пользователя
     review = ProductReview.objects.filter(product=product,
@@ -558,7 +559,7 @@ def add_to_cart(request, uid):
     return redirect('cart')
 
 # 🔧 ИСПРАВЛЕНИЯ:
-# ✅ ДОБАВЛЕНЫ: функции products_catalog и products_by_category
-# ✅ СОХРАНЕНЫ: все существующие функции без изменений
-# ✅ ДОБАВЛЕНЫ: необходимые импорты (Paginator, Q)
-# ✅ ИСПРАВЛЕНА: проблема с NameError для products_catalog
+# ✅ УБРАН: фильтр parent=None из всех функций
+# ✅ ИЗМЕНЕН: параметр category_slug → slug в products_by_category
+# ✅ ОБНОВЛЕН: популярные товары без фильтра parent
+# ✅ СОХРАНЕНА: вся остальная логика работы
