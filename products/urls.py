@@ -1,15 +1,19 @@
-# 📁 products/urls.py - ИСПРАВЛЕННЫЕ URL с консистентными параметрами
-# 🛍️ Все URL для товаров, категорий и функций каталога
+# 📁 products/urls.py - ОБНОВЛЕННЫЕ URL с системой импорта
+# 🛍️ Все URL для товаров, категорий и функций каталога + импорт
 
 from django.urls import path
 from products.views import *
+from products import admin_views  # 🆕 Импорт view-функций для админки
 from . import views
+
+# 🏷️ Указываем namespace для URL
+app_name = 'products'
 
 urlpatterns = [
     # 🏠 Главная страница каталога
     path('', products_catalog, name='products_catalog'),
 
-    # 📂 ИСПРАВЛЕНО: Категории товаров (консистентный параметр slug)
+    # 📂 Категории товаров
     path('category/<slug:slug>/', products_by_category, name='products_by_category'),
 
     # ❤️ Избранное
@@ -27,23 +31,31 @@ urlpatterns = [
     # 🛒 Корзина - ВАЖНО: добавляем выше паттерна со слагом
     path('add-to-cart/<uid>/', add_to_cart, name='add_to_cart'),
 
+    # 🆕 СИСТЕМА ИМПОРТА - URL для админки
+    path('admin/import/', admin_views.import_products_view, name='import_products'),
+    path('admin/import/preview/<str:session_key>/', admin_views.import_preview_view, name='import_preview'),
+    path('admin/import/process/<str:session_key>/', admin_views.import_process_view, name='import_process'),
+    path('admin/import/results/<str:session_key>/', admin_views.import_results_view, name='import_results'),
+    path('admin/import/progress/<str:session_key>/', admin_views.import_progress_ajax, name='import_progress'),
+    path('admin/download-template/', admin_views.download_template_view, name='download_template'),
+
     # 🔍 Товар по слагу (должен быть В КОНЦЕ, чтобы не перехватывать другие URL)
     path('<slug>/', get_product, name='get_product'),
     path('<slug>/<review_uid>/delete/', delete_review, name='delete_review'),
 ]
 
-# 🔧 ИСПРАВЛЕНИЯ:
-# ✅ ИЗМЕНЕН: category_slug → slug для консистентности
-# ✅ ПЕРЕМЕЩЕН: category/ выше <slug>/ для правильного маршрутизации
-# ✅ ЛОГИКА: теперь /products/category/byd/ работает правильно
-#
-# 💡 URL СТРУКТУРА:
+# 🔧 СТРУКТУРА URL:
 # /products/ → каталог всех товаров
 # /products/category/byd/ → товары категории byd
 # /products/some-product/ → конкретный товар
 # /products/wishlist/ → избранное
+# /products/admin/import/ → система импорта (только для админов)
+# /products/admin/download-template/ → скачивание шаблонов
 #
-# 🎯 РЕЗУЛЬТАТ:
-# URL http://localhost:8000/products/category/byd/
-# теперь попадет на products_by_category view
-# и отобразит additional_content с YouTube!
+# 🆕 НОВЫЕ URL ДЛЯ ИМПОРТА:
+# /products/admin/import/ → форма загрузки файла
+# /products/admin/import/preview/<session_key>/ → предпросмотр данных
+# /products/admin/import/process/<session_key>/ → обработка импорта
+# /products/admin/import/results/<session_key>/ → результаты импорта
+# /products/admin/import/progress/<session_key>/ → AJAX прогресс (для будущего)
+# /products/admin/download-template/ → скачивание шаблонов Excel

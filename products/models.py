@@ -1,5 +1,5 @@
-# 📁 products/models.py - ОБНОВЛЕННАЯ модель Category с TextField для additional_content
-# 🛍️ Убран CKEditor из additional_content для правильной работы с YouTube iframe
+# 📁 products/models.py - ДОПОЛНЕНИЕ к существующим моделям
+# 🔧 ОБНОВЛЕНИЕ: Добавляем поля для импорта и логику главного изображения
 
 import re
 from django.db import models
@@ -100,22 +100,15 @@ class Category(BaseModel):
     def convert_youtube_links(self, content):
         """
         🎬 Автоматическая конверсия YouTube ссылок в responsive iframe
-
-        Поддерживаемые форматы:
-        - https://www.youtube.com/watch?v=VIDEO_ID
-        - https://youtu.be/VIDEO_ID
-        - https://youtube.com/embed/VIDEO_ID
         """
         if not content:
             return content
 
         # 🔍 Регулярные выражения для разных форматов YouTube ссылок
         youtube_patterns = [
-            # youtube.com/watch?v=VIDEO_ID
             r'https?://(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})',
-            # youtu.be/VIDEO_ID
             r'https?://youtu\.be/([a-zA-Z0-9_-]{11})',
-            ]
+        ]
 
         # 🎯 Шаблон responsive iframe для YouTube
         iframe_template = '''
@@ -204,9 +197,6 @@ class Category(BaseModel):
         ordering = ['display_order', 'category_name']
 
 
-# 🔧 ВСЕ ОСТАЛЬНЫЕ МОДЕЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
-# (Product, KitVariant, ProductImage, Coupon, ProductReview, Color, Wishlist)
-
 class KitVariant(BaseModel):
     """📦 Модель комплектаций товаров"""
     name = models.CharField(max_length=100, verbose_name="Название комплектации")
@@ -226,7 +216,7 @@ class KitVariant(BaseModel):
 
 
 class Product(BaseModel):
-    """🛍️ Основная модель товаров"""
+    """🛍️ Основная модель товаров - ОБНОВЛЕННАЯ с полями для импорта"""
     product_name = models.CharField(max_length=100, verbose_name="Название товара")
     slug = models.SlugField(unique=True, null=True, blank=True, verbose_name="URL-адрес")
     category = models.ForeignKey(
@@ -240,13 +230,40 @@ class Product(BaseModel):
     )
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
+    # 🆕 НОВЫЕ ПОЛЯ ДЛЯ ИМПОРТА
+    product_sku = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Артикул товара",
+        help_text="Уникальный код товара для импорта и учета"
+    )
+
+    page_title = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Заголовок страницы (Title)",
+        help_text="SEO заголовок для страницы товара"
+    )
+
+    meta_description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Meta Description",
+        help_text="SEO описание для поисковых систем"
+    )
+
     def save(self, *args, **kwargs):
         """🔄 Автоматическое создание slug из названия товара"""
-        self.slug = slugify(self.product_name)
+        if not self.slug and self.product_name:
+            self.slug = slugify(self.product_name)
         super(Product, self).save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return self.product_name
+        sku_info = f" ({self.product_sku})" if self.product_sku else ""
+        return f"{self.product_name}{sku_info}"
 
     def get_product_price_by_kit(self, kit_code='salon'):
         """🛒 Получает цену товара с учетом выбранной комплектации"""
@@ -285,9 +302,25 @@ class Product(BaseModel):
         """🆕 Проверяет, является ли товар новым"""
         return self.newest_product
 
+    # 🖼️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ИЗОБРАЖЕНИЯМИ
     def get_main_image(self):
         """🖼️ Возвращает главное изображение товара"""
-        return self.product_images.first()
+        return self.product_images.filter(is_main=True).first()
+
+    def get_gallery_images(self):
+        """🖼️ Возвращает дополнительные изображения для галереи"""
+        return self.product_images.filter(is_main=False)
+
+    def get_main_image_url(self):
+        """🖼️ Возвращает URL главного изображения или заглушки"""
+        main_image = self.get_main_image()
+        if main_image and main_image.image:
+            return main_image.image.url
+        return '/media/images/placeholder-product.jpg'  # 🎨 Заглушка
+
+    def has_main_image(self):
+        """✅ Проверяет наличие главного изображения"""
+        return self.get_main_image() is not None
 
     class Meta:
         verbose_name = "Товар"
@@ -296,29 +329,56 @@ class Product(BaseModel):
 
 
 class ProductImage(BaseModel):
-    """🖼️ Модель изображений товаров"""
+    """🖼️ Модель изображений товаров - ОБНОВЛЕННАЯ с полем is_main"""
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE,
         related_name='product_images', verbose_name="Товар")
     image = models.ImageField(upload_to='product', verbose_name="Изображение")
 
+    # 🆕 НОВОЕ ПОЛЕ для определения главного изображения
+    is_main = models.BooleanField(
+        default=False,
+        verbose_name="Главное изображение",
+        help_text="Отображается в каталоге и как основное в карточке товара"
+    )
+
     def img_preview(self):
         """👁️ Предпросмотр изображения в админке"""
         if self.image:
+            main_badge = "🌟 ГЛАВНОЕ" if self.is_main else ""
             return mark_safe(
-                f'<img src="{self.image.url}" width="500" style="max-height: 300px; object-fit: contain;"/>')
-        return "—"
+                f'<div style="text-align: center;">'
+                f'<img src="{self.image.url}" width="150" style="max-height: 150px; object-fit: contain; border-radius: 5px;"/>'
+                f'<br><small style="color: #2a41e8; font-weight: bold;">{main_badge}</small>'
+                f'</div>'
+            )
+        return "📷 Изображение не загружено"
 
-    img_preview.short_description = "Предпросмотр изображения"
+    img_preview.short_description = "Предпросмотр"
+
+    def save(self, *args, **kwargs):
+        """💾 Логика сохранения с контролем главного изображения"""
+        if self.is_main:
+            # 🔄 Сбрасываем флаг is_main у всех других изображений этого товара
+            ProductImage.objects.filter(
+                product=self.product,
+                is_main=True
+            ).exclude(pk=self.pk).update(is_main=False)
+
+        super(ProductImage, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"Изображение для {self.product.product_name}"
+        main_info = " (главное)" if self.is_main else ""
+        return f"Изображение для {self.product.product_name}{main_info}"
 
     class Meta:
         verbose_name = "Изображение товара"
         verbose_name_plural = "Изображения товаров"
-        ordering = ['created_at']
+        ordering = ['-is_main', 'created_at']  # 🎯 Главное изображение сверху
 
+
+# 🔧 ВСЕ ОСТАЛЬНЫЕ МОДЕЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
+# (Coupon, ProductReview, Color, Wishlist)
 
 class Coupon(BaseModel):
     """🎫 Модель купонов и скидок"""
@@ -502,9 +562,6 @@ class Wishlist(BaseModel):
         verbose_name_plural = "Избранное"
         ordering = ['-added_on']
 
-# 🔧 ИЗМЕНЕНИЯ:
-# ✅ УБРАН: CKEditor5Field из поля additional_content
-# ✅ ДОБАВЛЕН: Обычный TextField для additional_content
-# ✅ ОБНОВЛЕН: help_text с пояснением о поддержке HTML
-# ✅ СОХРАНЕНА: Вся логика автоконверсии YouTube ссылок в save()
-# ✅ ОСТАВЛЕН: CKEditor для description (там нужно форматирование)
+# 🔧 СЛЕДУЮЩИЙ ШАГ:
+# Создать миграции: python manage.py makemigrations products
+# Применить миграции: python manage.py migrate
