@@ -1,415 +1,358 @@
 # 📁 products/import_utils.py
-# 🔧 Утилиты для обработки импорта данных из Excel
+# 🛠️ ПРАВИЛЬНАЯ версия утилит импорта с двойной логикой (категории + товары)
+# ✅ Учитывает структуру: строки с точкой = категории, без точки = товары
 
-import os
-import re
 import logging
-from typing import Tuple, Optional, Dict, Any
-from django.conf import settings
-from django.utils.text import slugify
-from django.core.files.storage import default_storage
-from django.core.exceptions import ValidationError
-from .models import Category, Product, ProductImage
+import openpyxl
+from typing import Dict, List, Tuple, Optional, Union
+from decimal import Decimal, InvalidOperation
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import re
 
 logger = logging.getLogger(__name__)
 
+# 🗂️ Маппинг колонок Excel (одинаковый для категорий и товаров)
+EXCEL_COLUMN_MAPPING = {
+    'identifier': 0,  # A: Категория (1.BMW) или SKU товара (10001)
+    'name': 1,  # B: Название категории или товара
+    'title': 2,  # C: Title страницы
+    'price': 3,  # D: Цена (только для товаров, у категорий пустая)
+    'description': 4,  # E: Описание
+    'meta_description': 5,  # F: Мета-описание
+    'image': 6  # G: Изображение
+}
 
-def parse_product_sku(sku_string: str) -> Tuple[Optional[int], Optional[str]]:
+# 📋 Обязательные поля
+REQUIRED_FIELDS = ['identifier', 'name']
+
+# 🎯 Максимальные длины полей
+FIELD_LIMITS = {
+    'identifier': 50,
+    'name': 200,
+    'title': 70,
+    'price': None,  # Числовое поле
+    'description': None,  # Без ограничений для CKEditor
+    'meta_description': 160,
+    'image': 255
+}
+
+
+def read_excel_file(file: InMemoryUploadedFile) -> Tuple[bool, Union[List[Dict], str]]:
     """
-    🔍 Парсинг SKU товара для извлечения категории и названия
-
-    Формат: "2.Acura MDX I" → category_sku=2, product_name="Acura MDX I"
+    📊 Чтение Excel файла с разделением на категории и товары
 
     Args:
-        sku_string: Строка SKU из Excel (колонка B)
+        file: Загруженный Excel файл
 
     Returns:
-        Tuple[category_sku, product_name] или (None, None) если формат неверный
-
-    Examples:
-        >>> parse_product_sku("2.Acura MDX I")
-        (2, "Acura MDX I")
-
-        >>> parse_product_sku("10.BMW 3 серия")
-        (10, "BMW 3 серия")
-
-        >>> parse_product_sku("Неверный формат")
-        (None, None)
+        Tuple[bool, Union[List[Dict], str]]: (success, data_or_error)
     """
-
-    if not sku_string or not isinstance(sku_string, str):
-        logger.warning(f"🚫 Пустой или неверный SKU: {sku_string}")
-        return None, None
-
-    # 🔍 Проверяем наличие точки
-    if '.' not in sku_string:
-        logger.warning(f"🚫 SKU без точки: {sku_string}")
-        return None, None
-
     try:
-        # 📝 Разбиваем по первой точке
-        parts = sku_string.split('.', 1)
+        logger.info(f"🔄 Начинаем чтение файла: {file.name}")
 
-        if len(parts) != 2:
-            logger.warning(f"🚫 Неверный формат SKU: {sku_string}")
-            return None, None
+        # 📖 Загружаем Excel файл
+        workbook = openpyxl.load_workbook(file, data_only=True)
+        worksheet = workbook.active
 
-        # 🔢 Парсим номер категории
-        category_sku_str = parts[0].strip()
-        if not category_sku_str.isdigit():
-            logger.warning(f"🚫 SKU категории не число: {category_sku_str}")
-            return None, None
+        # 📏 Получаем размеры таблицы
+        max_row = worksheet.max_row
+        max_col = worksheet.max_column
 
-        category_sku = int(category_sku_str)
+        logger.info(f"📊 Размер таблицы: {max_row} строк, {max_col} колонок")
 
-        # 📝 Извлекаем название товара
-        product_name = parts[1].strip()
-        if not product_name:
-            logger.warning(f"🚫 Пустое название товара в SKU: {sku_string}")
-            return None, None
+        if max_row < 2:
+            return False, "❌ Файл должен содержать минимум 2 строки (заголовок + данные)"
 
-        logger.debug(f"✅ Распарсен SKU: {sku_string} → категория={category_sku}, товар='{product_name}'")
-        return category_sku, product_name
+        # 📋 Читаем данные начиная со второй строки (пропускаем заголовок)
+        data = []
 
-    except (ValueError, IndexError) as e:
-        logger.error(f"❌ Ошибка парсинга SKU '{sku_string}': {e}")
-        return None, None
+        for row_num in range(2, max_row + 1):
+            try:
+                # 🔍 Получаем значения ячеек
+                row_data = {}
+
+                # 📝 Безопасное извлечение данных из каждой ячейки
+                for field_name, col_index in EXCEL_COLUMN_MAPPING.items():
+                    cell_value = None
+
+                    if col_index < max_col:
+                        cell = worksheet.cell(row=row_num, column=col_index + 1)  # +1 так как Excel 1-based
+                        cell_value = cell.value
+
+                    # 🧹 Очистка и нормализация данных
+                    if cell_value is not None:
+                        if isinstance(cell_value, str):
+                            cell_value = cell_value.strip()
+                            if not cell_value:
+                                cell_value = None
+
+                    row_data[field_name] = cell_value
+
+                # 🚫 Пропускаем строки без идентификатора
+                if not row_data.get('identifier'):
+                    logger.warning(f"⚠️ Строка {row_num}: пропущена (нет идентификатора)")
+                    continue
+
+                # 🎯 Определяем тип строки: категория или товар
+                identifier = str(row_data['identifier']).strip()
+                is_category = '.' in identifier
+
+                row_data['row_number'] = row_num
+                row_data['is_category'] = is_category
+
+                if is_category:
+                    # 📂 Это категория - извлекаем чистое название
+                    row_data['category_name'] = extract_category_name(identifier)
+                    row_data['type'] = 'category'
+                else:
+                    # 🛍️ Это товар - сохраняем SKU
+                    row_data['sku'] = identifier
+                    row_data['type'] = 'product'
+
+                data.append(row_data)
+
+            except Exception as e:
+                logger.error(f"❌ Ошибка обработки строки {row_num}: {str(e)}")
+                continue
+
+        logger.info(f"✅ Успешно прочитано {len(data)} строк данных")
+        return True, data
+
+    except Exception as e:
+        error_msg = f"❌ Ошибка чтения файла: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
 
 
-def validate_excel_row(row_data: Dict[str, Any]) -> Tuple[bool, list]:
+def extract_category_name(category_identifier: str) -> str:
     """
-    ✅ Валидация данных строки Excel
+    📂 Извлечение чистого названия категории из идентификатора
+
+    Примеры:
+    - "1.BMW" -> "BMW"
+    - "2.Acura" -> "Acura"
+    - "sky.BMW" -> "BMW"
 
     Args:
-        row_data: Словарь с данными строки {column_name: value}
+        category_identifier: Идентификатор категории с точкой
 
     Returns:
-        Tuple[is_valid, errors_list]
-
-    Проверяет:
-    - Наличие обязательных полей
-    - Корректность формата цены
-    - Длину строк
+        str: Чистое название категории
     """
+    try:
+        # 🔍 Берём часть после последней точки
+        parts = category_identifier.split('.')
+        if len(parts) >= 2:
+            category_name = parts[-1].strip().upper()
+            return category_name if category_name else 'ТОВАРЫ'
 
+        return category_identifier.strip().upper()
+
+    except Exception as e:
+        logger.error(f"Ошибка извлечения категории из '{category_identifier}': {e}")
+        return 'ТОВАРЫ'
+
+
+def validate_row(row_data: Dict) -> Tuple[bool, List[str]]:
+    """
+    ✅ Валидация строки (категории или товара)
+
+    Args:
+        row_data: Словарь с данными строки
+
+    Returns:
+        Tuple[bool, List[str]]: (is_valid, list_of_errors)
+    """
     errors = []
 
-    # 📋 Обязательные поля
-    required_fields = {
-        'Код товара': 'product_sku',
-        'Наименование товара': 'product_name',
-        'Цена': 'price'
-    }
+    try:
+        # 🔍 Проверка обязательных полей
+        for field in REQUIRED_FIELDS:
+            if not row_data.get(field):
+                errors.append(f"❌ Обязательное поле '{field}' не заполнено")
 
-    # 🔍 Проверка обязательных полей
-    for excel_col, field_name in required_fields.items():
-        value = row_data.get(excel_col)
-        if not value or (isinstance(value, str) and not value.strip()):
-            errors.append(f"Поле '{excel_col}' обязательно для заполнения")
+        # 📏 Проверка длины текстовых полей
+        for field, max_length in FIELD_LIMITS.items():
+            if max_length and row_data.get(field):
+                value = str(row_data[field])
+                if len(value) > max_length:
+                    errors.append(f"⚠️ Поле '{field}' слишком длинное ({len(value)}/{max_length})")
 
-    # 💰 Валидация цены
-    price_value = row_data.get('Цена')
-    if price_value is not None:
-        try:
-            # 🧹 Очистка от лишних символов
-            if isinstance(price_value, str):
-                price_clean = re.sub(r'[^\d,.]', '', price_value)
-                price_clean = price_clean.replace(',', '.')
-            else:
-                price_clean = str(price_value)
+        # 💰 Проверка цены - только для товаров
+        if row_data.get('type') == 'product':
+            price_value = row_data.get('price')
+            if price_value is not None:
+                try:
+                    normalized_price = normalize_price(price_value)
+                    if normalized_price < 0:
+                        errors.append(f"❌ Цена не может быть отрицательной: {normalized_price}")
+                    elif normalized_price > 999999:
+                        errors.append(f"⚠️ Цена слишком большая: {normalized_price}")
+                except Exception:
+                    errors.append(f"❌ Некорректная цена: {price_value}")
 
-            price_float = float(price_clean)
-            if price_float < 0:
-                errors.append(f"Цена не может быть отрицательной: {price_float}")
-            elif price_float > 999999:
-                errors.append(f"Цена слишком большая: {price_float}")
+        # 🎨 Проверка имени изображения
+        if row_data.get('image'):
+            image_name = str(row_data['image'])
+            valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+            if not any(image_name.lower().endswith(ext) for ext in valid_extensions):
+                errors.append(f"⚠️ Неподдерживаемый формат изображения: {image_name}")
 
-        except (ValueError, TypeError):
-            errors.append(f"Некорректная цена: {price_value}")
+        # 🏷️ Проверка идентификатора
+        identifier = str(row_data['identifier']).strip()
+        if len(identifier) > 50:
+            errors.append(f"❌ Идентификатор слишком длинный: {identifier}")
 
-    # 📏 Проверка длины строк
-    string_limits = {
-        'Код товара': 50,
-        'Наименование товара': 100,
-        'Title страницы': 200,
-        'Meta-описание': 500
-    }
+        # ✅ Дополнительная валидация названия
+        name = row_data.get('name', '').strip()
+        if name and len(name) < 3:
+            errors.append(f"⚠️ Название слишком короткое: {name}")
 
-    for field_name, max_length in string_limits.items():
-        value = row_data.get(field_name)
-        if value and isinstance(value, str) and len(value) > max_length:
-            errors.append(f"Поле '{field_name}' слишком длинное (макс. {max_length} символов)")
-
-    # 🔍 Валидация SKU товара (должен быть уникальным)
-    product_sku = row_data.get('Код товара')
-    if product_sku:
-        existing_product = Product.objects.filter(product_sku=product_sku).first()
-        if existing_product:
-            logger.info(f"ℹ️ Товар с SKU '{product_sku}' уже существует - будет обновлен")
+    except Exception as e:
+        errors.append(f"❌ Ошибка валидации: {str(e)}")
+        logger.error(f"Ошибка при валидации строки: {e}")
 
     is_valid = len(errors) == 0
     return is_valid, errors
 
 
-def get_or_create_category_by_sku(category_sku: int, category_name: str) -> Category:
+def normalize_price(price_value: Union[str, int, float, None]) -> float:
     """
-    📂 Получение или создание категории по SKU
+    💰 Нормализация цены (только для товаров)
 
     Args:
-        category_sku: Номер категории
-        category_name: Название категории для создания
+        price_value: Значение цены в любом формате
 
     Returns:
-        Category: Существующая или новая категория
+        float: Нормализованная цена (0.0 если пустая)
     """
-
     try:
-        # 🔍 Поиск существующей категории
-        category = Category.objects.get(category_sku=category_sku)
-        logger.debug(f"✅ Найдена категория: {category.category_name} (SKU: {category_sku})")
-        return category
+        if price_value is None or price_value == '':
+            return 0.0
 
-    except Category.DoesNotExist:
-        # 🆕 Создание новой категории
-        logger.info(f"🆕 Создаем новую категорию: SKU={category_sku}, название='{category_name}'")
+        if isinstance(price_value, (int, float)):
+            return float(price_value)
 
-        category = Category.objects.create(
-            category_sku=category_sku,
-            category_name=category_name,
-            slug=slugify(category_name),
-            is_active=True,
-            display_order=0
-        )
+        if isinstance(price_value, str):
+            # 🧹 Удаляем валютные символы и лишние символы
+            price_clean = re.sub(r'[^\d.,]', '', price_value.strip())
 
-        logger.info(f"✅ Создана категория: {category.category_name} (ID: {category.id})")
-        return category
+            if not price_clean:
+                return 0.0
 
+            # 🔄 Заменяем запятую на точку
+            price_clean = price_clean.replace(',', '.')
 
-def process_product_image(product: Product, image_filename: str) -> bool:
-    """
-    🖼️ Обработка изображения товара
+            # 🎯 Обрабатываем случай множественных точек
+            if price_clean.count('.') > 1:
+                parts = price_clean.split('.')
+                price_clean = ''.join(parts[:-1]) + '.' + parts[-1]
 
-    Args:
-        product: Объект товара
-        image_filename: Имя файла изображения из Excel
-
-    Returns:
-        bool: True если изображение обработано успешно
-
-    Логика:
-    1. Проверяет существование файла в media/product/
-    2. Если товар новый → создает главное изображение
-    3. Если у товара нет главного → создает главное
-    4. Если главное есть → не трогает
-    5. Если изображение уже есть → пропускает
-    """
-
-    if not image_filename or not isinstance(image_filename, str):
-        logger.warning(f"🚫 Пустое имя файла изображения для товара {product.product_name}")
-        return False
-
-    # 🧹 Очистка имени файла
-    image_filename = image_filename.strip()
-
-    # 📁 Путь к файлу изображения
-    image_path = os.path.join('product', image_filename)
-    full_image_path = os.path.join(settings.MEDIA_ROOT, image_path)
-
-    # 🔍 Проверка существования файла
-    if not os.path.exists(full_image_path):
-        logger.warning(f"📁 Файл изображения не найден: {full_image_path}")
-        return False
-
-    # 🔍 Проверяем, есть ли уже такое изображение у товара
-    existing_image = product.product_images.filter(
-        image__icontains=image_filename
-    ).first()
-
-    if existing_image:
-        logger.info(f"ℹ️ Изображение '{image_filename}' уже существует у товара {product.product_name}")
-        return True
-
-    # 🔍 Проверяем наличие главного изображения
-    has_main_image = product.has_main_image()
-
-    if has_main_image:
-        logger.info(f"ℹ️ У товара {product.product_name} уже есть главное изображение - пропускаем")
-        return True
-
-    try:
-        # 🆕 Создаем новое изображение
-        product_image = ProductImage.objects.create(
-            product=product,
-            image=image_path,
-            is_main=True  # Устанавливаем как главное, если его нет
-        )
-
-        logger.info(f"✅ Создано главное изображение для товара {product.product_name}: {image_filename}")
-        return True
+            return float(price_clean)
 
     except Exception as e:
-        logger.error(f"❌ Ошибка создания изображения для товара {product.product_name}: {e}")
-        return False
+        logger.warning(f"⚠️ Не удалось обработать цену '{price_value}': {e}")
+
+    return 0.0
 
 
-def clean_price_value(price_value: Any) -> int:
+def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     """
-    💰 Очистка и преобразование цены в integer
+    🔄 Разделение данных на категории и товары с привязкой
 
     Args:
-        price_value: Значение цены из Excel (может быть строкой или числом)
+        raw_data: Сырые данные из Excel
 
     Returns:
-        int: Очищенная цена
-
-    Raises:
-        ValueError: Если цену невозможно преобразовать
+        Tuple[List[Dict], List[Dict], List[Dict]]: (categories, products, invalid_data)
     """
+    categories = []
+    products = []
+    invalid_data = []
+    current_category = None
 
-    if price_value is None or price_value == '':
-        return 0
+    for row in raw_data:
+        try:
+            # ✅ Валидируем строку
+            is_valid, errors = validate_row(row)
 
-    # 🧹 Очистка строкового значения
-    if isinstance(price_value, str):
-        # Убираем все кроме цифр, точек и запятых
-        price_clean = re.sub(r'[^\d,.]', '', price_value.strip())
-        # Заменяем запятую на точку
-        price_clean = price_clean.replace(',', '.')
-    else:
-        price_clean = str(price_value)
+            if not is_valid:
+                row['errors'] = errors
+                invalid_data.append(row)
+                continue
 
+            if row['is_category']:
+                # 📂 Обрабатываем категорию
+                category_data = {
+                    'category_name': row['category_name'],
+                    'name': row.get('name', ''),
+                    'title': row.get('title', ''),
+                    'description': row.get('description', ''),
+                    'meta_description': row.get('meta_description', ''),
+                    'image': row.get('image', ''),
+                    'row_number': row.get('row_number', 0)
+                }
+
+                categories.append(category_data)
+                current_category = row['category_name']  # 💾 Запоминаем текущую категорию
+
+            else:
+                # 🛍️ Обрабатываем товар
+                if not current_category:
+                    # ⚠️ Товар без категории - создаём дефолтную
+                    current_category = 'ТОВАРЫ'
+
+                product_data = {
+                    'sku': row['sku'],
+                    'name': row.get('name', ''),
+                    'title': row.get('title', ''),
+                    'price': normalize_price(row.get('price')),
+                    'description': row.get('description', ''),
+                    'meta_description': row.get('meta_description', ''),
+                    'image': row.get('image', ''),
+                    'category_name': current_category,  # 🔗 Привязываем к текущей категории
+                    'row_number': row.get('row_number', 0)
+                }
+
+                products.append(product_data)
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка обработки строки {row.get('row_number', '?')}: {e}")
+            row['errors'] = [f"Ошибка обработки: {str(e)}"]
+            invalid_data.append(row)
+
+    logger.info(f"✅ Разделено: {len(categories)} категорий, {len(products)} товаров, {len(invalid_data)} ошибок")
+
+    return categories, products, invalid_data
+
+
+def get_import_statistics(categories: List[Dict], products: List[Dict], invalid_data: List[Dict]) -> Dict:
+    """
+    📊 Подсчёт статистики импорта с разделением на категории и товары
+    """
     try:
-        price_float = float(price_clean)
-        return int(price_float)  # Конвертируем в int как в модели
-    except (ValueError, TypeError) as e:
-        raise ValueError(f"Невозможно преобразовать цену '{price_value}': {e}")
+        category_names = set(cat['category_name'] for cat in categories)
+        products_with_images = sum(1 for prod in products if prod.get('image'))
+        products_with_prices = sum(1 for prod in products if prod.get('price', 0) > 0)
 
-
-def generate_product_slug(product_name: str, product_sku: str = None) -> str:
-    """
-    🔗 Генерация уникального slug для товара
-
-    Args:
-        product_name: Название товара
-        product_sku: SKU товара (опционально)
-
-    Returns:
-        str: Уникальный slug
-    """
-
-    # 🎯 Базовый slug из названия
-    base_slug = slugify(product_name)
-
-    # 🔍 Проверяем уникальность
-    if not Product.objects.filter(slug=base_slug).exists():
-        return base_slug
-
-    # 🔢 Если не уникален, добавляем SKU
-    if product_sku:
-        sku_slug = f"{base_slug}-{slugify(product_sku)}"
-        if not Product.objects.filter(slug=sku_slug).exists():
-            return sku_slug
-
-    # 🔢 Если все еще не уникален, добавляем номер
-    counter = 1
-    while True:
-        numbered_slug = f"{base_slug}-{counter}"
-        if not Product.objects.filter(slug=numbered_slug).exists():
-            return numbered_slug
-        counter += 1
-
-
-def log_import_operation(operation_type: str, details: str, level: str = 'info'):
-    """
-    📝 Унифицированное логирование операций импорта
-
-    Args:
-        operation_type: Тип операции (create, update, error, skip)
-        details: Детали операции
-        level: Уровень логирования (info, warning, error)
-    """
-
-    emoji_map = {
-        'create': '🆕',
-        'update': '🔄',
-        'error': '❌',
-        'skip': '⏭️',
-        'success': '✅'
-    }
-
-    emoji = emoji_map.get(operation_type, '📝')
-    message = f"{emoji} {operation_type.upper()}: {details}"
-
-    if level == 'error':
-        logger.error(message)
-    elif level == 'warning':
-        logger.warning(message)
-    else:
-        logger.info(message)
-
-
-# 🔧 ВСПОМОГАТЕЛЬНЫЕ КОНСТАНТЫ
-EXCEL_COLUMN_MAPPING = {
-    'A': 'Код товара',
-    'B': 'Наименование товара',
-    'C': 'Title страницы',
-    'D': 'Цена',
-    'E': 'Описание товара',
-    'F': 'Мета-описание',
-    'G': 'Изображение'
-}
-
-REQUIRED_COLUMNS = ['Код товара', 'Наименование товара', 'Цена']
-
-
-# 📊 СТАТИСТИКА ИМПОРТА (для использования в процессоре)
-class ImportStats:
-    """📊 Класс для отслеживания статистики импорта"""
-
-    def __init__(self):
-        self.total_rows = 0
-        self.processed_rows = 0
-        self.created_count = 0
-        self.updated_count = 0
-        self.error_count = 0
-        self.skipped_count = 0
-        self.errors = []
-        self.success_log = []
-
-    def add_error(self, row_num: int, error_msg: str):
-        """❌ Добавить ошибку"""
-        self.error_count += 1
-        self.errors.append(f"Строка {row_num}: {error_msg}")
-        log_import_operation('error', f"Строка {row_num}: {error_msg}", 'error')
-
-    def add_success(self, row_num: int, operation: str, item_name: str):
-        """✅ Добавить успешную операцию"""
-        if operation == 'create':
-            self.created_count += 1
-        elif operation == 'update':
-            self.updated_count += 1
-
-        message = f"Строка {row_num}: {operation} '{item_name}'"
-        self.success_log.append(message)
-        log_import_operation(operation, message)
-
-    def add_skip(self, row_num: int, reason: str):
-        """⏭️ Добавить пропуск"""
-        self.skipped_count += 1
-        message = f"Строка {row_num}: пропущена - {reason}"
-        self.errors.append(message)
-        log_import_operation('skip', message, 'warning')
-
-    def get_summary(self) -> Dict[str, Any]:
-        """📊 Получить сводку статистики"""
         return {
-            'total_rows': self.total_rows,
-            'processed_rows': self.processed_rows,
-            'created_count': self.created_count,
-            'updated_count': self.updated_count,
-            'error_count': self.error_count,
-            'skipped_count': self.skipped_count,
-            'success_rate': round((self.created_count + self.updated_count) / max(self.total_rows, 1) * 100, 2),
-            'errors': self.errors[:50],  # Ограничиваем количество ошибок в выводе
-            'success_log': self.success_log[:50]
+            'total_rows': len(categories) + len(products) + len(invalid_data),
+            'categories_count': len(categories),
+            'products_count': len(products),
+            'invalid_rows': len(invalid_data),
+            'category_names': list(category_names),
+            'products_with_images': products_with_images,
+            'products_with_prices': products_with_prices,
+            'categories_with_images': sum(1 for cat in categories if cat.get('image')),
         }
+    except Exception as e:
+        logger.error(f"Ошибка подсчёта статистики: {e}")
+        return {}
+
+# 🚀 ОСНОВНЫЕ ИЗМЕНЕНИЯ:
+# ✅ Добавлено определение типа строки (категория/товар) по наличию точки
+# ✅ Разделение данных на categories и products с привязкой
+# ✅ Отдельная валидация для категорий (цена не обязательна)
+# ✅ Правильное извлечение названия категории из "1.BMW" -> "BMW"
+# ✅ Запоминание текущей категории для привязки товаров
+# ✅ Обновлённая статистика с разделением типов данных

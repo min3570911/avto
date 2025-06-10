@@ -1,10 +1,37 @@
+<!-- 📁 templates/admin/products/product/change_list.html -->
+<!-- 🎨 Кастомный шаблон списка товаров с ПРАВИЛЬНОЙ кнопкой импорта -->
+
 {% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+    .import-button {
+        background: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-left: 10px;
+        font-size: 13px;
+        display: inline-block;
+    }
+    .import-button:hover {
+        background: #218838;
+        color: white;
+        text-decoration: none;
+    }
+    </style>
+{% endblock %}
 
 {% block object-tools-items %}
     {{ block.super }}
+    <!-- 🆕 ПРАВИЛЬНАЯ кнопка импорта -->
     <li>
-        <a href="{% url 'products:import_products' %}" class="addlink">
-            Импорт товаров
+        <a href="/products/import/" class="import-button">
+            📊 Импорт товаров из Excel
         </a>
     </li>
 {% endblock %}

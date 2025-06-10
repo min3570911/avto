@@ -1,393 +1,536 @@
-# 📁 products/import_processor.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
-# 🔄 Основной процессор для импорта данных из Excel файлов - БЕЗ ОШИБКИ 'list' object is not callable
+# 📁 products/import_processor.py
+# 🛠️ ПРАВИЛЬНАЯ версия процессора с двойной обработкой (категории → товары)
+# ✅ Сначала создаём категории, потом товары с привязкой
 
-import os
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-from django.contrib.auth.models import User
-from django.core.files.uploadedfile import UploadedFile
-from django.utils import timezone
-from django.db import transaction
-import openpyxl
-from openpyxl.workbook import Workbook
-from openpyxl.worksheet.worksheet import Worksheet
+from typing import Dict, List, Tuple, Optional
+from django.db import transaction, IntegrityError
+from django.utils.text import slugify
+from django.core.files import File
+from django.conf import settings
+import os
+from decimal import Decimal
 
-from .models import Product, Category, ProductImage
+from products.models import Product, Category, ProductImage
 from .import_utils import (
-    parse_product_sku,
-    validate_excel_row,
-    get_or_create_category_by_sku,
-    process_product_image,
-    clean_price_value,
-    generate_product_slug,
-    ImportStats,
-    EXCEL_COLUMN_MAPPING,
-    REQUIRED_COLUMNS
+    read_excel_file,
+    separate_categories_and_products,
+    get_import_statistics
 )
 
 logger = logging.getLogger(__name__)
 
 
-class ImportProcessor:
+class ProductImportProcessor:
     """
-    🔄 Основной класс для обработки импорта товаров из Excel
-
-    ИСПРАВЛЕНО: Устранена ошибка 'list' object is not callable
+    🚀 Процессор импорта с двойной логикой: категории + товары
     """
 
-    def __init__(self, excel_file: UploadedFile, user: User):
-        """🚀 Инициализация процессора"""
-        self.excel_file = excel_file
-        self.user = user
-        self.workbook: Optional[Workbook] = None
-        self.worksheet: Optional[Worksheet] = None
-        self.stats = ImportStats()
-        self.column_mapping = {}
-        self.preview_data = []
+    def __init__(self):
+        self.statistics = {
+            'total_processed': 0,
+            'categories_created': 0,
+            'categories_updated': 0,
+            'products_created': 0,
+            'products_updated': 0,
+            'errors': 0,
+            'images_processed': 0
+        }
+        self.errors = []
+        self.category_cache = {}  # 💾 Кэш созданных категорий
 
-        logger.info(f"🔄 Инициализирован импорт файла: {excel_file.name} пользователем {user.username}")
+    def process_excel_file(self, file) -> Dict:
+        """
+        📊 Основной метод обработки Excel файла с двойной логикой
 
-    def validate_file(self) -> Tuple[bool, List[str]]:
-        """✅ Валидация Excel файла"""
-        error_list = []  # 🔧 ИСПРАВЛЕНО: переименовал с errors чтобы избежать конфликта
+        Args:
+            file: Загруженный Excel файл
 
+        Returns:
+            Dict: Результаты импорта с детальной статистикой
+        """
         try:
-            # 📁 Проверка расширения файла
-            file_extension = os.path.splitext(self.excel_file.name)[1].lower()
-            if file_extension not in ['.xlsx', '.xls']:
-                error_list.append(f"Неподдерживаемый формат файла: {file_extension}. Используйте .xlsx или .xls")
-                return False, error_list
+            logger.info(f"🚀 Начинаем обработку файла: {file.name}")
 
-            # 📊 Проверка размера файла (максимум 10MB)
-            if self.excel_file.size > 10 * 1024 * 1024:
-                error_list.append(f"Файл слишком большой: {self.excel_file.size / 1024 / 1024:.1f}MB. Максимум: 10MB")
-                return False, error_list
+            # 📖 Читаем Excel файл
+            success, result = read_excel_file(file)
+            if not success:
+                return self._create_error_result(f"Ошибка чтения файла: {result}")
 
-            # 📖 Попытка открыть файл
-            self.workbook = openpyxl.load_workbook(self.excel_file, data_only=True)
-            self.worksheet = self.workbook.active
+            raw_data = result
+            logger.info(f"📋 Прочитано {len(raw_data)} строк из файла")
 
-            if not self.worksheet:
-                error_list.append("Не удалось открыть рабочий лист Excel")
-                return False, error_list
+            # 🔄 Разделяем на категории и товары
+            categories, products, invalid_data = separate_categories_and_products(raw_data)
 
-            # 📊 Проверка наличия данных
-            if self.worksheet.max_row < 2:
-                error_list.append("Файл должен содержать минимум 2 строки (заголовки + данные)")
-                return False, error_list
+            if not categories and not products:
+                return self._create_error_result("Нет валидных данных для импорта")
 
-            # 🔍 Анализ заголовков
-            header_validation = self._validate_headers()
-            if not header_validation[0]:
-                error_list.extend(header_validation[1])
-                return False, error_list
+            logger.info(f"📂 Найдено: {len(categories)} категорий, {len(products)} товаров")
 
-            logger.info(f"✅ Файл {self.excel_file.name} прошел валидацию")
-            return True, []
+            # 📊 Статистика перед импортом
+            import_stats = get_import_statistics(categories, products, invalid_data)
 
-        except Exception as e:
-            error_msg = f"Ошибка при валидации файла: {str(e)}"
-            error_list.append(error_msg)
-            logger.error(f"❌ {error_msg}")
-            return False, error_list
+            # 🚀 Выполняем импорт в транзакции
+            with transaction.atomic():
+                # 📂 Сначала импортируем категории
+                category_results = self._import_categories(categories)
 
-    def _validate_headers(self) -> Tuple[bool, List[str]]:
-        """🔍 Валидация заголовков Excel файла"""
-        error_list = []  # 🔧 ИСПРАВЛЕНО: переименовал с errors
+                # 🛍️ Затем импортируем товары
+                product_results = self._import_products(products)
 
-        try:
-            # 📋 Читаем первую строку (заголовки) - ИСПРАВЛЕНО
-            first_row = self.worksheet[1]  # Получаем первую строку
-            headers_values = [cell.value for cell in first_row]  # Извлекаем значения
-
-            # 🧹 Очищаем заголовки от None и пробелов
-            headers_list = [str(header).strip() if header else f"Колонка_{i + 1}"
-                            for i, header in enumerate(headers_values)]
-
-            logger.info(f"📋 Найденные заголовки: {headers_list}")
-
-            # 🎯 Создаем маппинг колонок
-            self.column_mapping = {i: header for i, header in enumerate(headers_list)}
-
-            # ✅ Проверка обязательных колонок
-            found_required = []
-            for required_col in REQUIRED_COLUMNS:
-                if required_col in headers_list:
-                    found_required.append(required_col)
-
-            missing_required = set(REQUIRED_COLUMNS) - set(found_required)
-            if missing_required:
-                error_list.append(f"Отсутствуют обязательные колонки: {', '.join(missing_required)}")
-
-            # 📊 Логируем найденные соответствия
-            logger.info(f"✅ Найдены обязательные колонки: {found_required}")
-            if missing_required:
-                logger.warning(f"⚠️ Отсутствуют колонки: {missing_required}")
-
-            return len(missing_required) == 0, error_list
-
-        except Exception as e:
-            error_msg = f"Ошибка анализа заголовков: {str(e)}"
-            error_list.append(error_msg)
-            logger.error(f"❌ {error_msg}")
-            return False, error_list
-
-    def preview_data(self, rows_count: int = 5) -> List[Dict[str, Any]]:
-        """👁️ Предпросмотр данных для проверки перед импортом"""
-
-        if not self.worksheet:
-            logger.error("❌ Рабочий лист не инициализирован")
-            return []
-
-        preview_data_list = []  # 🔧 ИСПРАВЛЕНО: переименовал переменную
-
-        try:
-            # 📊 Читаем строки данных (начиная со 2-й строки) - ИСПРАВЛЕНО
-            max_row_to_read = min(rows_count + 1, self.worksheet.max_row)
-
-            for row_num in range(2, max_row_to_read + 1):  # Начинаем с 2-й строки
-                row_data = {}
-                current_row = self.worksheet[row_num]  # Получаем строку по номеру
-
-                # 🔄 Преобразуем строку в словарь по заголовкам
-                for col_index, cell in enumerate(current_row):
-                    column_name = self.column_mapping.get(col_index, f"Колонка_{col_index + 1}")
-                    row_data[column_name] = cell.value
-
-                # ➕ Добавляем номер строки для отладки
-                row_data['_row_number'] = row_num
-
-                # 🔍 Добавляем результат валидации
-                is_valid, validation_errors = validate_excel_row(row_data)
-                row_data['_is_valid'] = is_valid
-                row_data['_validation_errors'] = validation_errors
-
-                # 📝 Пытаемся распарсить SKU для показа
-                product_name = row_data.get('Наименование товара', '')
-                category_sku, parsed_name = parse_product_sku(str(product_name))
-                row_data['_parsed_category_sku'] = category_sku
-                row_data['_parsed_product_name'] = parsed_name
-
-                preview_data_list.append(row_data)
-
-            self.preview_data = preview_data_list
-            logger.info(f"👁️ Подготовлен предпросмотр: {len(preview_data_list)} строк")
-
-            return preview_data_list
-
-        except Exception as e:
-            logger.error(f"❌ Ошибка предпросмотра данных: {str(e)}")
-            return []
-
-    def process_import(self, batch_size: int = 50) -> Dict[str, Any]:
-        """🚀 Основная функция импорта данных"""
-
-        if not self.worksheet:
-            error_msg = "Рабочий лист не инициализирован. Выполните валидацию файла сначала."
-            logger.error(f"❌ {error_msg}")
-            return {'success': False, 'error': error_msg}
-
-        # 📊 Инициализация статистики
-        self.stats.total_rows = self.worksheet.max_row - 1  # Минус заголовок
-
-        logger.info(f"🚀 Начинаем импорт: {self.stats.total_rows} строк данных")
-
-        try:
-            # 🔄 Обработка данных пакетами
-            processed_count = 0
-
-            with transaction.atomic():  # 🔒 Используем транзакцию для безопасности
-
-                # 📊 Читаем все строки данных - ИСПРАВЛЕНО
-                for row_num in range(2, self.worksheet.max_row + 1):
-                    current_row = self.worksheet[row_num]
-                    row_values = [cell.value for cell in current_row]  # Извлекаем значения
-
-                    # 🔄 Обработка отдельной строки
-                    result = self._process_single_row(row_num, row_values)
-
-                    processed_count += 1
-                    self.stats.processed_rows = processed_count
-
-                    # 📊 Логируем прогресс каждые 50 строк
-                    if processed_count % batch_size == 0:
-                        progress = (processed_count / self.stats.total_rows) * 100
-                        logger.info(f"📊 Обработано: {processed_count}/{self.stats.total_rows} ({progress:.1f}%)")
-
-            # 📊 Финальная статистика
-            logger.info(f"✅ Импорт завершен: {self.stats.get_summary()}")
-
+            # 📈 Формируем итоговый результат
             return {
                 'success': True,
-                'stats': self.stats.get_summary(),
-                'message': f"Импорт завершен успешно. Создано: {self.stats.created_count}, обновлено: {self.stats.updated_count}"
+                'statistics': {
+                    **self.statistics,
+                    **import_stats
+                },
+                'errors': self.errors,
+                'invalid_data': invalid_data,
+                'category_results': category_results,
+                'product_results': product_results
             }
 
         except Exception as e:
-            error_msg = f"Критическая ошибка импорта: {str(e)}"
-            logger.error(f"❌ {error_msg}")
+            error_msg = f"❌ Критическая ошибка при импорте: {str(e)}"
+            logger.error(error_msg)
+            return self._create_error_result(error_msg)
+
+    def _import_categories(self, categories_data: List[Dict]) -> List[Dict]:
+        """
+        📂 Импорт категорий с созданием моделей Category
+
+        Args:
+            categories_data: Список данных категорий
+
+        Returns:
+            List[Dict]: Результаты импорта категорий
+        """
+        results = []
+
+        for category_data in categories_data:
+            try:
+                self.statistics['total_processed'] += 1
+                result = self._process_single_category(category_data)
+                results.append(result)
+
+            except Exception as e:
+                error_msg = f"❌ Ошибка обработки категории {category_data.get('category_name', '?')}: {str(e)}"
+                logger.error(error_msg)
+                self.errors.append(error_msg)
+                self.statistics['errors'] += 1
+
+                results.append({
+                    'name': category_data.get('category_name', '?'),
+                    'status': 'error',
+                    'message': str(e)
+                })
+
+        return results
+
+    def _process_single_category(self, category_data: Dict) -> Dict:
+        """
+        📂 Обработка одной категории
+
+        Args:
+            category_data: Данные категории
+
+        Returns:
+            Dict: Результат обработки
+        """
+        category_name = category_data['category_name']
+
+        try:
+            # 🔍 Проверяем, существует ли категория
+            existing_category = Category.objects.filter(category_name=category_name).first()
+
+            if existing_category:
+                # 🔄 Обновляем существующую категорию
+                category = self._update_category(existing_category, category_data)
+                action = 'updated'
+                self.statistics['categories_updated'] += 1
+            else:
+                # 🆕 Создаём новую категорию
+                category = self._create_category(category_data)
+                action = 'created'
+                self.statistics['categories_created'] += 1
+
+            # 🖼️ Обрабатываем изображение категории
+            if category_data.get('image'):
+                self._process_category_image(category, category_data['image'])
+
+            # 💾 Добавляем в кэш для товаров
+            self.category_cache[category_name] = category
+
+            logger.info(f"✅ Категория {category_name} {action}")
 
             return {
-                'success': False,
-                'error': error_msg,
-                'stats': self.stats.get_summary()
+                'name': category_name,
+                'status': action,
+                'message': f'Категория успешно {action}'
             }
 
-    def _process_single_row(self, row_num: int, row_values: List) -> bool:
-        """🔄 Обработка одной строки данных - ИСПРАВЛЕНО"""
-
-        try:
-            # 🔄 Преобразуем строку в словарь
-            row_dict = {}
-            for col_index, cell_value in enumerate(row_values):
-                column_name = self.column_mapping.get(col_index, f"Колонка_{col_index + 1}")
-                row_dict[column_name] = cell_value
-
-            # ✅ Валидация строки
-            is_valid, validation_errors = validate_excel_row(row_dict)
-            if not is_valid:
-                for error in validation_errors:
-                    self.stats.add_error(row_num, error)
-                return False
-
-            # 🔍 Парсинг SKU
-            product_name_raw = row_dict.get('Наименование товара', '')
-            category_sku, product_name = parse_product_sku(str(product_name_raw))
-
-            if not category_sku or not product_name:
-                self.stats.add_error(row_num, f"Неверный формат названия товара: {product_name_raw}")
-                return False
-
-            # 📂 Получение/создание категории
-            try:
-                category = get_or_create_category_by_sku(category_sku, product_name.split()[0])
-            except Exception as e:
-                self.stats.add_error(row_num, f"Ошибка работы с категорией: {str(e)}")
-                return False
-
-            # 🛍️ Обработка товара
-            product_sku = row_dict.get('Код товара', '').strip()
-            if not product_sku:
-                self.stats.add_error(row_num, "Отсутствует код товара")
-                return False
-
-            # 🔍 Поиск существующего товара
-            existing_product = Product.objects.filter(product_sku=product_sku).first()
-
-            if existing_product:
-                # 🔄 Обновление существующего товара
-                updated = self._update_product(existing_product, row_dict, product_name, category)
-                if updated:
-                    self.stats.add_success(row_num, 'update', existing_product.product_name)
-
-                    # 🖼️ Обработка изображения
-                    image_filename = row_dict.get('Изображение')
-                    if image_filename:
-                        process_product_image(existing_product, str(image_filename))
-
-                return updated
-            else:
-                # 🆕 Создание нового товара
-                new_product = self._create_product(row_dict, product_name, category)
-                if new_product:
-                    self.stats.add_success(row_num, 'create', new_product.product_name)
-
-                    # 🖼️ Обработка изображения
-                    image_filename = row_dict.get('Изображение')
-                    if image_filename:
-                        process_product_image(new_product, str(image_filename))
-
-                return new_product is not None
-
         except Exception as e:
-            self.stats.add_error(row_num, f"Непредвиденная ошибка: {str(e)}")
-            logger.error(f"❌ Ошибка обработки строки {row_num}: {str(e)}")
-            return False
+            error_msg = f"Ошибка обработки категории {category_name}: {str(e)}"
+            logger.error(error_msg)
+            raise
 
-    def _create_product(self, row_dict: Dict[str, Any], product_name: str, category: Category) -> Optional[Product]:
-        """🆕 Создание нового товара"""
+    def _create_category(self, category_data: Dict) -> Category:
+        """
+        🆕 Создание новой категории
 
+        Args:
+            category_data: Данные категории
+
+        Returns:
+            Category: Созданная категория
+        """
         try:
-            # 💰 Обработка цены
-            price = clean_price_value(row_dict.get('Цена', 0))
+            category_name = category_data['category_name']
 
-            # 🔗 Генерация slug
-            product_sku = row_dict.get('Код товара', '').strip()
-            slug = generate_product_slug(product_name, product_sku)
+            # 📝 Подготавливаем данные
+            description = category_data.get('description', '') or f"Автоковрики для {category_name}"
+            title = category_data.get('title', '') or f"Автоковрики {category_name}"
+            meta_description = category_data.get('meta_description', '') or \
+                               f"Качественные автоковрики для {category_name}. Большой выбор, доставка по Беларуси."
 
-            # 🆕 Создание товара
-            product = Product.objects.create(
-                product_sku=product_sku,
-                product_name=product_name,
-                slug=slug,
-                category=category,
-                price=price,
-                product_desription=row_dict.get('Описание товара', ''),
-                page_title=row_dict.get('Title страницы', ''),
-                meta_description=row_dict.get('Мета-описание', ''),
-                newest_product=False  # По умолчанию не новый
+            # 🆕 Создаём категорию
+            category = Category.objects.create(
+                category_name=category_name,
+                slug=slugify(category_name),
+                description=description,
+                page_title=title,
+                meta_title=title[:60] if title else f"Коврики {category_name}",
+                meta_description=meta_description[:160],
+                is_active=True
             )
 
-            logger.info(f"🆕 Создан товар: {product.product_name} (SKU: {product.product_sku})")
+            logger.info(f"✅ Создана категория: {category_name}")
+            return category
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка создания категории {category_data.get('category_name', '?')}: {e}")
+            raise
+
+    def _update_category(self, category: Category, category_data: Dict) -> Category:
+        """
+        🔄 Обновление существующей категории
+
+        Args:
+            category: Существующая категория
+            category_data: Новые данные
+
+        Returns:
+            Category: Обновлённая категория
+        """
+        try:
+            # 🔄 Обновляем поля если они заполнены
+            if category_data.get('description'):
+                category.description = category_data['description']
+
+            if category_data.get('title'):
+                category.page_title = category_data['title']
+                category.meta_title = category_data['title'][:60]
+
+            if category_data.get('meta_description'):
+                category.meta_description = category_data['meta_description'][:160]
+
+            category.save()
+
+            logger.info(f"🔄 Обновлена категория: {category.category_name}")
+            return category
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка обновления категории {category.category_name}: {e}")
+            raise
+
+    def _import_products(self, products_data: List[Dict]) -> List[Dict]:
+        """
+        🛍️ Импорт товаров с привязкой к категориям
+
+        Args:
+            products_data: Список данных товаров
+
+        Returns:
+            List[Dict]: Результаты импорта товаров
+        """
+        results = []
+
+        for product_data in products_data:
+            try:
+                self.statistics['total_processed'] += 1
+                result = self._process_single_product(product_data)
+                results.append(result)
+
+            except Exception as e:
+                error_msg = f"❌ Ошибка обработки товара {product_data.get('sku', '?')}: {str(e)}"
+                logger.error(error_msg)
+                self.errors.append(error_msg)
+                self.statistics['errors'] += 1
+
+                results.append({
+                    'sku': product_data.get('sku', '?'),
+                    'status': 'error',
+                    'message': str(e)
+                })
+
+        return results
+
+    def _process_single_product(self, product_data: Dict) -> Dict:
+        """
+        🛍️ Обработка одного товара
+
+        Args:
+            product_data: Данные товара
+
+        Returns:
+            Dict: Результат обработки товара
+        """
+        product_sku = product_data['sku']
+        product_name = product_data['name']
+
+        try:
+            # 📂 Получаем категорию
+            category = self._get_category_for_product(product_data['category_name'])
+
+            # 🔍 Проверяем, существует ли товар (ищем по slug)
+            product_slug = slugify(product_name)
+            existing_product = Product.objects.filter(slug=product_slug).first()
+
+            if existing_product:
+                # 🔄 Обновляем существующий товар
+                product = self._update_product(existing_product, product_data, category)
+                action = 'updated'
+                self.statistics['products_updated'] += 1
+            else:
+                # 🆕 Создаём новый товар
+                product = self._create_product(product_data, category)
+                action = 'created'
+                self.statistics['products_created'] += 1
+
+            # 🖼️ Обрабатываем изображение товара
+            if product_data.get('image'):
+                self._process_product_image(product, product_data['image'])
+
+            logger.info(f"✅ Товар {product_sku} ({product_name}) {action}")
+
+            return {
+                'sku': product_sku,
+                'name': product_name,
+                'status': action,
+                'message': f'Товар успешно {action}'
+            }
+
+        except Exception as e:
+            error_msg = f"Ошибка обработки товара {product_sku}: {str(e)}"
+            logger.error(error_msg)
+            raise
+
+    def _get_category_for_product(self, category_name: str) -> Category:
+        """
+        📂 Получение категории для товара (из кэша или БД)
+
+        Args:
+            category_name: Название категории
+
+        Returns:
+            Category: Объект категории
+        """
+        # 🎯 Проверяем кэш
+        if category_name in self.category_cache:
+            return self.category_cache[category_name]
+
+        # 🔍 Ищем в БД
+        category = Category.objects.filter(category_name=category_name).first()
+
+        if not category:
+            # 🆕 Создаём категорию если её нет (fallback)
+            category = Category.objects.create(
+                category_name=category_name,
+                slug=slugify(category_name),
+                description=f"Автоковрики для {category_name}",
+                meta_title=f"Коврики {category_name}",
+                meta_description=f"Качественные автоковрики для {category_name}",
+                is_active=True
+            )
+            self.statistics['categories_created'] += 1
+            logger.info(f"✅ Создана fallback категория: {category_name}")
+
+        # 💾 Сохраняем в кэш
+        self.category_cache[category_name] = category
+        return category
+
+    def _create_product(self, product_data: Dict, category: Category) -> Product:
+        """
+        🆕 Создание нового товара
+
+        Args:
+            product_data: Данные товара
+            category: Категория товара
+
+        Returns:
+            Product: Созданный товар
+        """
+        try:
+            product_name = product_data['name']
+            price = max(0, int(product_data.get('price', 0)))
+
+            # 📝 Описание товара
+            description = product_data.get('description', '')
+            if not description:
+                description = f"<p>Качественные автоковрики {product_name}.</p>"
+
+            # 🆕 Создаём товар
+            product = Product.objects.create(
+                product_name=product_name,
+                slug=slugify(product_name),
+                category=category,
+                price=price,
+                product_desription=description,
+                newest_product=True
+            )
+
+            logger.info(f"✅ Создан товар: {product_name} (цена: {price}, категория: {category.category_name})")
             return product
 
         except Exception as e:
-            logger.error(f"❌ Ошибка создания товара '{product_name}': {str(e)}")
-            return None
+            logger.error(f"❌ Ошибка создания товара {product_data.get('name', '?')}: {e}")
+            raise
 
-    def _update_product(self, product: Product, row_dict: Dict[str, Any], product_name: str,
-                        category: Category) -> bool:
-        """🔄 Обновление существующего товара"""
-
+    def _update_product(self, product: Product, product_data: Dict, category: Category) -> Product:
+        """
+        🔄 Обновление существующего товара
+        """
         try:
-            # 💰 Обработка цены
-            price = clean_price_value(row_dict.get('Цена', 0))
-
-            # 🔄 Обновление полей
-            product.product_name = product_name
+            # 🔄 Обновляем поля
+            product.product_name = product_data['name']
             product.category = category
-            product.price = price
-            product.product_desription = row_dict.get('Описание товара', '')
-            product.page_title = row_dict.get('Title страницы', '')
-            product.meta_description = row_dict.get('Мета-описание', '')
 
-            # 🔗 Обновляем slug только если он изменился
-            new_slug = generate_product_slug(product_name, product.product_sku)
-            if product.slug != new_slug:
-                product.slug = new_slug
+            # 💰 Обновляем цену только если она больше 0
+            new_price = max(0, int(product_data.get('price', 0)))
+            if new_price > 0:
+                product.price = new_price
+
+            # 📝 Обновляем описание если оно есть
+            if product_data.get('description'):
+                product.product_desription = product_data['description']
 
             product.save()
 
-            logger.info(f"🔄 Обновлен товар: {product.product_name} (SKU: {product.product_sku})")
-            return True
+            logger.info(f"🔄 Обновлён товар: {product.product_name}")
+            return product
 
         except Exception as e:
-            logger.error(f"❌ Ошибка обновления товара '{product.product_name}': {str(e)}")
-            return False
+            logger.error(f"❌ Ошибка обновления товара {product.product_name}: {e}")
+            raise
 
-    def get_file_info(self) -> Dict[str, Any]:
-        """📊 Получение информации о файле"""
+    def _process_product_image(self, product: Product, image_filename: str):
+        """🖼️ Обработка изображения товара"""
+        try:
+            image_path = os.path.join(settings.MEDIA_ROOT, 'product', image_filename)
 
-        if not self.worksheet:
-            return {'error': 'Файл не загружен'}
+            if not os.path.exists(image_path):
+                logger.warning(f"⚠️ Изображение не найдено: {image_path}")
+                return
+
+            # 🔍 Проверяем существующее изображение
+            existing_image = ProductImage.objects.filter(
+                product=product,
+                image__icontains=image_filename
+            ).first()
+
+            if existing_image:
+                if not existing_image.is_main:
+                    ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
+                    existing_image.is_main = True
+                    existing_image.save()
+                return existing_image
+
+            # 🆕 Создаём новое изображение
+            with open(image_path, 'rb') as f:
+                ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
+
+                product_image = ProductImage.objects.create(product=product, is_main=True)
+                product_image.image.save(image_filename, File(f), save=True)
+
+            self.statistics['images_processed'] += 1
+            logger.info(f"✅ Добавлено изображение: {image_filename}")
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка обработки изображения {image_filename}: {e}")
+
+    def _process_category_image(self, category: Category, image_filename: str):
+        """🖼️ Обработка изображения категории"""
+        try:
+            image_path = os.path.join(settings.MEDIA_ROOT, 'categories', image_filename)
+
+            if os.path.exists(image_path):
+                with open(image_path, 'rb') as f:
+                    category.category_image.save(image_filename, File(f), save=True)
+                logger.info(f"✅ Добавлено изображение категории: {image_filename}")
+            else:
+                logger.warning(f"⚠️ Изображение категории не найдено: {image_path}")
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка обработки изображения категории {image_filename}: {e}")
+
+    def _create_error_result(self, error_message: str) -> Dict:
+        """❌ Создание результата с ошибкой"""
+        self.errors.append(error_message)
 
         return {
-            'filename': self.excel_file.name,
-            'file_size': f"{self.excel_file.size / 1024:.1f} KB",
-            'total_rows': self.worksheet.max_row - 1,  # Минус заголовок
-            'total_columns': self.worksheet.max_column,
-            'column_mapping': self.column_mapping,
-            'preview_available': len(self.preview_data) > 0
+            'success': False,
+            'error': error_message,
+            'statistics': self.statistics,
+            'errors': self.errors
         }
 
-    def cleanup(self):
-        """🧹 Очистка ресурсов"""
-        if self.workbook:
-            self.workbook.close()
-        logger.info("🧹 Ресурсы импорта очищены")
 
-# 🔧 ОСНОВНЫЕ ИСПРАВЛЕНИЯ:
-# ✅ ИСПРАВЛЕНО: Переименованы переменные errors -> error_list
-# ✅ ИСПРАВЛЕНО: Изменен способ чтения строк Excel без iter_rows
-# ✅ ИСПРАВЛЕНО: Убрана передача tuple в _process_single_row
-# ✅ ИСПРАВЛЕНО: Прямое обращение к ячейкам worksheet[row_num]
+def preview_excel_data(file) -> Dict:
+    """
+    👁️ Предпросмотр данных с разделением на категории и товары
+    """
+    try:
+        # 📖 Читаем файл
+        success, result = read_excel_file(file)
+        if not success:
+            return {'success': False, 'error': result}
+
+        raw_data = result
+
+        # 🔄 Разделяем данные
+        categories, products, invalid_data = separate_categories_and_products(raw_data)
+
+        # 📊 Статистика
+        stats = get_import_statistics(categories, products, invalid_data)
+
+        # 👁️ Ограничиваем для предпросмотра
+        preview_categories = categories[:5]
+        preview_products = products[:10]
+        preview_invalid = invalid_data[:5]
+
+        return {
+            'success': True,
+            'statistics': stats,
+            'categories': preview_categories,
+            'products': preview_products,
+            'invalid_data': preview_invalid,
+            'total_categories': len(categories),
+            'total_products': len(products),
+            'total_invalid': len(invalid_data)
+        }
+
+    except Exception as e:
+        return {
+            'success': False,
+            'error': f"Ошибка предпросмотра: {str(e)}"
+        }
+
+# 🚀 ОСНОВНЫЕ ИЗМЕНЕНИЯ:
+# ✅ Двойная обработка: сначала категории, потом товары
+# ✅ Правильная привязка товаров к категориям через category_name
+# ✅ Кэширование категорий для производительности
+# ✅ Отдельная обработка изображений категорий и товаров
+# ✅ Обновлённая статистика с разделением типов
+# ✅ Fallback создание категорий для товаров без категории

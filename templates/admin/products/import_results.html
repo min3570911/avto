@@ -1,580 +1,396 @@
+<!-- 📁 templates/admin/products/import_results.html -->
+<!-- 📈 Результаты импорта товаров и категорий -->
+<!-- ✅ Отображает детальную статистику и ошибки -->
+
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block title %}{{ title }} | Django Админка{% endblock %}
+{% block title %}Результаты импорта товаров{% endblock %}
 
 {% block extrahead %}
+{{ block.super }}
 <style>
-    /* 🎨 Стили для страницы результатов импорта */
-    .results-container {
-        max-width: 1000px;
-        margin: 20px auto;
-        padding: 20px;
-    }
-    
-    .results-card {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-    
-    .results-header {
-        padding: 25px 30px;
-        text-align: center;
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-    
-    .results-header.has-errors {
-        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    }
-    
-    .results-header.failed {
-        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-    }
-    
-    .results-header h1 {
-        margin: 0 0 10px 0;
-        font-size: 28px;
-    }
-    
-    .results-header p {
-        margin: 0;
-        opacity: 0.9;
-        font-size: 16px;
-    }
-    
-    .status-icon {
-        font-size: 64px;
-        margin-bottom: 15px;
-        display: block;
-    }
-    
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 20px;
-        padding: 25px;
-        background: #f8f9fa;
-    }
-    
-    .summary-item {
-        text-align: center;
-        padding: 20px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        border-left: 4px solid #dee2e6;
-    }
-    
-    .summary-item.success {
-        border-left-color: #28a745;
-    }
-    
-    .summary-item.warning {
-        border-left-color: #ffc107;
-    }
-    
-    .summary-item.danger {
-        border-left-color: #dc3545;
-    }
-    
-    .summary-item.info {
-        border-left-color: #17a2b8;
-    }
-    
-    .summary-number {
-        font-size: 28px;
-        font-weight: bold;
-        display: block;
-        margin-bottom: 8px;
-    }
-    
-    .summary-number.success { color: #28a745; }
-    .summary-number.warning { color: #ffc107; }
-    .summary-number.danger { color: #dc3545; }
-    .summary-number.info { color: #17a2b8; }
-    
-    .summary-label {
-        font-size: 14px;
-        color: #666;
-        font-weight: 500;
-    }
-    
-    .details-section {
-        padding: 25px 30px;
-    }
-    
-    .details-section h3 {
-        margin: 0 0 20px 0;
-        color: #333;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .logs-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        background: #f8f9fa;
-    }
-    
-    .log-item {
-        padding: 12px 15px;
-        border-bottom: 1px solid #e9ecef;
-        font-family: 'Courier New', monospace;
-        font-size: 13px;
-        line-height: 1.4;
-    }
-    
-    .log-item:last-child {
-        border-bottom: none;
-    }
-    
-    .log-item.success {
-        background: #f8fff9;
-        color: #155724;
-        border-left: 3px solid #28a745;
-    }
-    
-    .log-item.error {
-        background: #fff5f5;
-        color: #721c24;
-        border-left: 3px solid #dc3545;
-    }
-    
-    .log-item.warning {
-        background: #fffaf0;
-        color: #856404;
-        border-left: 3px solid #ffc107;
-    }
-    
-    .log-icon {
-        display: inline-block;
-        width: 20px;
-        text-align: center;
-        margin-right: 8px;
-        font-weight: bold;
-    }
-    
-    .progress-section {
-        padding: 20px 30px;
-        background: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-    }
-    
-    .progress-bar-container {
-        background: #e9ecef;
-        border-radius: 6px;
-        height: 20px;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 15px;
-    }
-    
-    .progress-bar {
-        height: 100%;
-        border-radius: 6px;
-        transition: width 0.3s ease;
-        position: relative;
-    }
-    
-    .progress-bar.success {
-        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
-    }
-    
-    .progress-bar.warning {
-        background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
-    }
-    
-    .progress-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-weight: bold;
-        font-size: 12px;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-    
-    .file-info-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-    
-    .file-info-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 15px;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
-    }
-    
-    .file-info-label {
-        font-weight: 600;
-        color: #555;
-    }
-    
-    .file-info-value {
-        color: #333;
-    }
-    
-    .action-section {
-        padding: 25px 30px;
-        background: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-        text-align: center;
-    }
-    
-    .btn {
-        padding: 12px 24px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin: 0 10px;
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-success {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-    
-    .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .btn-secondary:hover {
-        background: #545b62;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .empty-logs {
-        text-align: center;
-        padding: 40px 20px;
-        color: #666;
-        font-style: italic;
-    }
-    
-    .metrics-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .metric-item {
-        text-align: center;
-        padding: 15px;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e9ecef;
-    }
-    
-    .metric-value {
-        font-size: 18px;
-        font-weight: bold;
-        color: #333;
-        display: block;
-    }
-    
-    .metric-label {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-    }
-    
-    @media (max-width: 768px) {
-        .results-container {
-            margin: 10px;
-            padding: 10px;
-        }
-        
-        .results-header,
-        .details-section,
-        .progress-section,
-        .action-section {
-            padding: 20px;
-        }
-        
-        .summary-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 20px;
-        }
-        
-        .file-info-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .metrics-row {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .btn {
-            width: 100%;
-            margin: 5px 0;
-            justify-content: center;
-        }
-    }
+.results-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.success-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.error-header {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #007cba;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    color: #007cba;
+}
+
+.stat-label {
+    color: #666;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.section-header {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: bold;
+    color: #495057;
+}
+
+.section-content {
+    padding: 20px;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.results-table th, .results-table td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 13px;
+}
+
+.results-table th {
+    background: #f5f5f5;
+    font-weight: bold;
+}
+
+.status-created {
+    background: #d4edda;
+    color: #155724;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.status-updated {
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.btn-primary {
+    background: #007cba;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px 5px;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px 5px;
+}
+
+.btn-primary:hover { background: #005a87; color: white; text-decoration: none; }
+.btn-secondary:hover { background: #545b62; color: white; text-decoration: none; }
+
+.error-list {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.error-item {
+    color: #c53030;
+    margin: 5px 0;
+    padding: 5px;
+    border-left: 3px solid #c53030;
+    padding-left: 10px;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="results-container">
-    <!-- 🎉 Заголовок с результатом -->
-    <div class="results-card">
-        <div class="results-header {% if stats.error_count > 0 %}has-errors{% endif %}">
-            {% if stats.error_count == 0 %}
-                <span class="status-icon">🎉</span>
-                <h1>Импорт завершен успешно!</h1>
-                <p>Все данные были успешно обработаны и добавлены в каталог</p>
-            {% elif stats.created_count > 0 or stats.updated_count > 0 %}
-                <span class="status-icon">⚠️</span>
-                <h1>Импорт завершен с предупреждениями</h1>
-                <p>Большая часть данных обработана, но некоторые строки содержали ошибки</p>
-            {% else %}
-                <span class="status-icon">❌</span>
-                <h1>Импорт не выполнен</h1>
-                <p>Данные не были импортированы из-за критических ошибок</p>
+    <!-- 📈 Заголовок результатов -->
+    {% if results.success %}
+    <div class="success-header">
+        <h1>✅ Импорт завершён успешно!</h1>
+        <p>Данные успешно импортированы в базу данных</p>
+    </div>
+    {% else %}
+    <div class="error-header">
+        <h1>❌ Импорт завершён с ошибками</h1>
+        <p>{{ results.error|default:"Произошли ошибки при импорте данных" }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- 📊 Общая статистика -->
+    <div class="section">
+        <div class="section-header">📊 Статистика импорта</div>
+        <div class="section-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.total_processed|default:0 }}</div>
+                    <div class="stat-label">Всего обработано</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.categories_created|default:0 }}</div>
+                    <div class="stat-label">📂 Категорий создано</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.categories_updated|default:0 }}</div>
+                    <div class="stat-label">📂 Категорий обновлено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.products_created|default:0 }}</div>
+                    <div class="stat-label">🛍️ Товаров создано</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.products_updated|default:0 }}</div>
+                    <div class="stat-label">🛍️ Товаров обновлено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.images_processed|default:0 }}</div>
+                    <div class="stat-label">🖼️ Изображений</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ statistics.errors|default:0 }}</div>
+                    <div class="stat-label">❌ Ошибок</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 📂 Результаты категорий -->
+    {% if results.category_results %}
+    <div class="section">
+        <div class="section-header">📂 Результаты импорта категорий</div>
+        <div class="section-content">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Название категории</th>
+                        <th>Статус</th>
+                        <th>Сообщение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results.category_results %}
+                    <tr>
+                        <td><strong>{{ result.name }}</strong></td>
+                        <td>
+                            {% if result.status == 'created' %}
+                                <span class="status-created">✅ Создана</span>
+                            {% elif result.status == 'updated' %}
+                                <span class="status-updated">🔄 Обновлена</span>
+                            {% else %}
+                                <span class="status-error">❌ Ошибка</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result.message }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 🛍️ Результаты товаров -->
+    {% if results.product_results %}
+    <div class="section">
+        <div class="section-header">🛍️ Результаты импорта товаров</div>
+        <div class="section-content">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Название товара</th>
+                        <th>Статус</th>
+                        <th>Сообщение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results.product_results %}
+                    <tr>
+                        <td><strong>{{ result.sku|default:result.code }}</strong></td>
+                        <td>{{ result.name|truncatechars:50 }}</td>
+                        <td>
+                            {% if result.status == 'created' %}
+                                <span class="status-created">✅ Создан</span>
+                            {% elif result.status == 'updated' %}
+                                <span class="status-updated">🔄 Обновлён</span>
+                            {% else %}
+                                <span class="status-error">❌ Ошибка</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result.message }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ❌ Ошибки -->
+    {% if errors %}
+    <div class="section">
+        <div class="section-header">❌ Ошибки импорта</div>
+        <div class="section-content">
+            <div class="error-list">
+                {% for error in errors %}
+                    <div class="error-item">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 🚫 Невалидные данные -->
+    {% if invalid_data %}
+    <div class="section">
+        <div class="section-header">🚫 Пропущенные данные ({{ invalid_data|length }} строк)</div>
+        <div class="section-content">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Строка</th>
+                        <th>Данные</th>
+                        <th>Ошибки</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invalid in invalid_data|slice:":10" %}
+                    <tr>
+                        <td>{{ invalid.row_number }}</td>
+                        <td>{{ invalid.identifier|default:"—" }} | {{ invalid.name|default:"—"|truncatechars:30 }}</td>
+                        <td style="color: #c53030;">
+                            {% for error in invalid.errors %}
+                                <div>• {{ error }}</div>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% if invalid_data|length > 10 %}
+            <p style="color: #666; font-style: italic; margin-top: 10px;">
+                ... и ещё {{ invalid_data|length|add:"-10" }} ошибок
+            </p>
             {% endif %}
         </div>
-        
-        <!-- 📊 Сводная статистика -->
-        <div class="summary-grid">
-            <div class="summary-item success">
-                <span class="summary-number success">{{ stats.created_count }}</span>
-                <div class="summary-label">🆕 Создано товаров</div>
-            </div>
-            
-            <div class="summary-item info">
-                <span class="summary-number info">{{ stats.updated_count }}</span>
-                <div class="summary-label">🔄 Обновлено товаров</div>
-            </div>
-            
-            <div class="summary-item danger">
-                <span class="summary-number danger">{{ stats.error_count }}</span>
-                <div class="summary-label">❌ Ошибок</div>
-            </div>
-            
-            <div class="summary-item warning">
-                <span class="summary-number warning">{{ stats.skipped_count }}</span>
-                <div class="summary-label">⏭️ Пропущено</div>
-            </div>
-        </div>
-        
-        <!-- 📈 Прогресс импорта -->
-        <div class="progress-section">
-            <h3>📈 Прогресс обработки</h3>
-            
-            <div class="progress-bar-container">
-                <div class="progress-bar {% if stats.error_count == 0 %}success{% else %}warning{% endif %}" 
-                     style="width: {{ stats.success_rate }}%">
-                    <div class="progress-text">{{ stats.success_rate }}% успешно</div>
-                </div>
-            </div>
-            
-            <div class="metrics-row">
-                <div class="metric-item">
-                    <span class="metric-value">{{ stats.total_rows }}</span>
-                    <div class="metric-label">Всего строк</div>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-value">{{ stats.processed_rows }}</span>
-                    <div class="metric-label">Обработано</div>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-value">{{ stats.success_rate }}%</span>
-                    <div class="metric-label">Успешность</div>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-value">{{ completed_at|date:"H:i:s" }}</span>
-                    <div class="metric-label">Завершено</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 📁 Информация о файле -->
-    <div class="results-card">
-        <div class="details-section">
-            <h3>📁 Обработанный файл</h3>
-            
-            <div class="file-info-grid">
-                <div class="file-info-item">
-                    <span class="file-info-label">Файл:</span>
-                    <span class="file-info-value">{{ file_info.filename }}</span>
-                </div>
-                <div class="file-info-item">
-                    <span class="file-info-label">Размер:</span>
-                    <span class="file-info-value">{{ file_info.file_size }}</span>
-                </div>
-                <div class="file-info-item">
-                    <span class="file-info-label">Колонок:</span>
-                    <span class="file-info-value">{{ file_info.total_columns }}</span>
-                </div>
-                <div class="file-info-item">
-                    <span class="file-info-label">Строк данных:</span>
-                    <span class="file-info-value">{{ file_info.total_rows }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- ✅ Лог успешных операций -->
-    {% if stats.success_log %}
-    <div class="results-card">
-        <div class="details-section">
-            <h3>✅ Успешные операции</h3>
-            
-            <div class="logs-container">
-                {% for log_entry in stats.success_log %}
-                <div class="log-item success">
-                    <span class="log-icon">✅</span>
-                    {{ log_entry }}
-                </div>
-                {% endfor %}
-                
-                {% if stats.created_count|add:stats.updated_count > stats.success_log|length %}
-                <div class="log-item success">
-                    <span class="log-icon">📝</span>
-                    ... и еще {{ stats.created_count|add:stats.updated_count|add:"-"|add:stats.success_log|length }} операций
-                </div>
-                {% endif %}
-            </div>
-        </div>
     </div>
     {% endif %}
     
-    <!-- ❌ Лог ошибок -->
-    {% if stats.errors %}
-    <div class="results-card">
-        <div class="details-section">
-            <h3>❌ Ошибки и предупреждения</h3>
-            
-            <div class="logs-container">
-                {% for error in stats.errors %}
-                <div class="log-item error">
-                    <span class="log-icon">❌</span>
-                    {{ error }}
-                </div>
-                {% endfor %}
-                
-                {% if stats.error_count > stats.errors|length %}
-                <div class="log-item error">
-                    <span class="log-icon">📝</span>
-                    ... и еще {{ stats.error_count|add:"-"|add:stats.errors|length }} ошибок
-                </div>
-                {% endif %}
+    <!-- 🎯 Что было сделано -->
+    <div class="section">
+        <div class="section-header">🎯 Итоги импорта</div>
+        <div class="section-content">
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                <ul style="margin: 0; padding-left: 20px;">
+                    {% if statistics.categories_created %}
+                    <li><strong>📂 Создано категорий:</strong> {{ statistics.categories_created }}</li>
+                    {% endif %}
+                    {% if statistics.categories_updated %}
+                    <li><strong>📂 Обновлено категорий:</strong> {{ statistics.categories_updated }}</li>
+                    {% endif %}
+                    {% if statistics.products_created %}
+                    <li><strong>🛍️ Создано товаров:</strong> {{ statistics.products_created }}</li>
+                    {% endif %}
+                    {% if statistics.products_updated %}
+                    <li><strong>🛍️ Обновлено товаров:</strong> {{ statistics.products_updated }}</li>
+                    {% endif %}
+                    {% if statistics.images_processed %}
+                    <li><strong>🖼️ Обработано изображений:</strong> {{ statistics.images_processed }}</li>
+                    {% endif %}
+                    {% if statistics.errors %}
+                    <li style="color: #dc3545;"><strong>❌ Ошибок:</strong> {{ statistics.errors }}</li>
+                    {% endif %}
+                </ul>
             </div>
+            
+            {% if results.success %}
+            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                <strong>🎉 Импорт завершён успешно!</strong>
+                Все данные сохранены в базе данных и готовы к использованию.
+            </div>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
     
     <!-- 🚀 Действия -->
-    <div class="results-card">
-        <div class="action-section">
-            <h3 style="margin-bottom: 20px;">🚀 Что дальше?</h3>
-            
-            <a href="{% url 'admin:products_product_changelist' %}" class="btn btn-success">
-                📦 Посмотреть товары
-            </a>
-            
-            <a href="{% url 'products:import_products' %}" class="btn btn-primary">
-                📊 Новый импорт
-            </a>
-            
-            <a href="{% url 'admin:index' %}" class="btn btn-secondary">
-                🏠 В админку
-            </a>
-        </div>
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{% url 'products_import_form' %}" class="btn-primary">
+            📤 Импортировать ещё файл
+        </a>
+        
+        <a href="{% url 'admin:products_product_changelist' %}" class="btn-secondary">
+            📋 Перейти к товарам
+        </a>
+        
+        <a href="{% url 'admin:products_category_changelist' %}" class="btn-secondary">
+            📂 Перейти к категориям
+        </a>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 🎉 Анимация чисел
-    const numbers = document.querySelectorAll('.summary-number');
-    numbers.forEach(number => {
-        const finalValue = parseInt(number.textContent);
-        if (finalValue > 0) {
-            animateNumber(number, finalValue);
-        }
-    });
-    
-    // 📈 Анимация прогресс-бара
-    const progressBar = document.querySelector('.progress-bar');
-    if (progressBar) {
-        const targetWidth = progressBar.style.width;
-        progressBar.style.width = '0%';
-        setTimeout(() => {
-            progressBar.style.width = targetWidth;
-        }, 500);
-    }
-});
-
-function animateNumber(element, target) {
-    let current = 0;
-    const increment = target / 30; // 30 кадров анимации
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-        element.textContent = Math.floor(current);
-    }, 50);
-}
-
-// 📋 Копирование логов в буфер обмена
-function copyLogs() {
-    const logs = document.querySelectorAll('.log-item');
-    let logText = '';
-    
-    logs.forEach(log => {
-        logText += log.textContent.trim() + '\n';
-    });
-    
-    navigator.clipboard.writeText(logText).then(() => {
-        alert('📋 Логи скопированы в буфер обмена');
-    });
-}
-</script>
-
 {% endblock %}
