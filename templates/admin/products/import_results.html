@@ -1,6 +1,6 @@
 <!-- 📁 templates/admin/products/import_results.html -->
 <!-- 📈 Результаты импорта товаров и категорий -->
-<!-- ✅ Отображает детальную статистику и ошибки -->
+<!-- ✅ ИСПРАВЛЕНО: Убрано обращение к несуществующему полю 'code' -->
 
 {% extends "admin/base_site.html" %}
 {% load static %}
@@ -271,7 +271,8 @@
                 <tbody>
                     {% for result in results.product_results %}
                     <tr>
-                        <td><strong>{{ result.sku|default:result.code }}</strong></td>
+                        <!-- 🔧 ИСПРАВЛЕНО: Убрано обращение к несуществующему 'code' -->
+                        <td><strong>{{ result.sku|default:"—" }}</strong></td>
                         <td>{{ result.name|truncatechars:50 }}</td>
                         <td>
                             {% if result.status == 'created' %}
@@ -380,7 +381,7 @@
     
     <!-- 🚀 Действия -->
     <div style="text-align: center; margin: 30px 0;">
-        <a href="{% url 'products_import_form' %}" class="btn-primary">
+        <a href="{% url 'import_form' %}" class="btn-primary">
             📤 Импортировать ещё файл
         </a>
         

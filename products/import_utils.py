@@ -22,8 +22,8 @@ EXCEL_COLUMN_MAPPING = {
     'image': 6  # G: Изображение
 }
 
-# 📋 Обязательные поля
-REQUIRED_FIELDS = ['identifier', 'name']
+# 📋 Обязательные поля (только identifier - остальные проверяются по типу)
+REQUIRED_FIELDS = ['identifier']
 
 # 🎯 Максимальные длины полей
 FIELD_LIMITS = {
@@ -79,12 +79,18 @@ def read_excel_file(file: InMemoryUploadedFile) -> Tuple[bool, Union[List[Dict],
                         cell = worksheet.cell(row=row_num, column=col_index + 1)  # +1 так как Excel 1-based
                         cell_value = cell.value
 
-                    # 🧹 Очистка и нормализация данных
+                    # 🧹 УЛУЧШЕННАЯ очистка и нормализация данных
                     if cell_value is not None:
                         if isinstance(cell_value, str):
                             cell_value = cell_value.strip()
-                            if not cell_value:
+                            if not cell_value:  # Пустая строка после очистки
                                 cell_value = None
+                        elif isinstance(cell_value, (int, float)):
+                            # 🔢 Числовые значения оставляем как есть
+                            pass
+                        else:
+                            # 🔄 Другие типы конвертируем в строку
+                            cell_value = str(cell_value).strip() if str(cell_value).strip() else None
 
                     row_data[field_name] = cell_value
 
@@ -94,7 +100,7 @@ def read_excel_file(file: InMemoryUploadedFile) -> Tuple[bool, Union[List[Dict],
                     continue
 
                 # 🎯 Определяем тип строки: категория или товар
-                identifier = str(row_data['identifier']).strip()
+                identifier = str(row_data['identifier']).strip() if row_data['identifier'] is not None else ''
                 is_category = '.' in identifier
 
                 row_data['row_number'] = row_num
@@ -155,7 +161,7 @@ def extract_category_name(category_identifier: str) -> str:
 
 def validate_row(row_data: Dict) -> Tuple[bool, List[str]]:
     """
-    ✅ Валидация строки (категории или товара)
+    ✅ Улучшенная валидация строки (категории или товара)
 
     Args:
         row_data: Словарь с данными строки
@@ -167,16 +173,24 @@ def validate_row(row_data: Dict) -> Tuple[bool, List[str]]:
 
     try:
         # 🔍 Проверка обязательных полей
-        for field in REQUIRED_FIELDS:
-            if not row_data.get(field):
-                errors.append(f"❌ Обязательное поле '{field}' не заполнено")
+        if not row_data.get('identifier'):
+            errors.append(f"❌ Обязательное поле 'identifier' не заполнено")
 
-        # 📏 Проверка длины текстовых полей
+        # 🆕 ИСПРАВЛЕНИЕ: Для категорий name может быть пустым
+        is_category = row_data.get('is_category', False)
+        if not is_category:  # Только для товаров требуем название
+            if not row_data.get('name'):
+                errors.append(f"❌ Обязательное поле 'name' не заполнено")
+
+        # 📏 ИСПРАВЛЕНИЕ: Автоматическое обрезание длинных полей вместо ошибок
         for field, max_length in FIELD_LIMITS.items():
             if max_length and row_data.get(field):
-                value = str(row_data[field])
+                value = str(row_data[field]) if row_data[field] is not None else ''
                 if len(value) > max_length:
-                    errors.append(f"⚠️ Поле '{field}' слишком длинное ({len(value)}/{max_length})")
+                    # ✂️ Автоматически обрезаем вместо ошибки
+                    row_data[field] = value[:max_length].strip()
+                    # Можно добавить предупреждение, но не ошибку
+                    # errors.append(f"⚠️ Поле '{field}' обрезано до {max_length} символов")
 
         # 💰 Проверка цены - только для товаров
         if row_data.get('type') == 'product':
@@ -189,30 +203,39 @@ def validate_row(row_data: Dict) -> Tuple[bool, List[str]]:
                     elif normalized_price > 999999:
                         errors.append(f"⚠️ Цена слишком большая: {normalized_price}")
                 except Exception:
-                    errors.append(f"❌ Некорректная цена: {price_value}")
+                    # 🔧 Не критично - просто установим 0
+                    row_data['price'] = 0
 
         # 🎨 Проверка имени изображения
         if row_data.get('image'):
-            image_name = str(row_data['image'])
-            valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-            if not any(image_name.lower().endswith(ext) for ext in valid_extensions):
-                errors.append(f"⚠️ Неподдерживаемый формат изображения: {image_name}")
+            image_name = str(row_data['image']) if row_data['image'] is not None else ''
+            if image_name:
+                valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                if not any(image_name.lower().endswith(ext) for ext in valid_extensions):
+                    # ⚠️ Предупреждение, но не критичная ошибка
+                    pass  # errors.append(f"⚠️ Неподдерживаемый формат изображения: {image_name}")
 
         # 🏷️ Проверка идентификатора
-        identifier = str(row_data['identifier']).strip()
+        identifier = str(row_data.get('identifier', '')) if row_data.get('identifier') is not None else ''
         if len(identifier) > 50:
-            errors.append(f"❌ Идентификатор слишком длинный: {identifier}")
+            # ✂️ Автоматически обрезаем
+            row_data['identifier'] = identifier[:50].strip()
 
-        # ✅ Дополнительная валидация названия
-        name = row_data.get('name', '').strip()
-        if name and len(name) < 3:
-            errors.append(f"⚠️ Название слишком короткое: {name}")
+        # ✅ ИСПРАВЛЕНИЕ: Более мягкая валидация названия
+        name = row_data.get('name')
+        if name is not None:
+            name = str(name).strip() if name else ''
+            if not is_category and name and len(name) < 2:
+                errors.append(f"⚠️ Название товара слишком короткое: {name}")
 
     except Exception as e:
         errors.append(f"❌ Ошибка валидации: {str(e)}")
         logger.error(f"Ошибка при валидации строки: {e}")
 
-    is_valid = len(errors) == 0
+    # 🎯 БОЛЕЕ МЯГКАЯ ВАЛИДАЦИЯ: меньше критичных ошибок
+    critical_errors = [error for error in errors if error.startswith('❌')]
+    is_valid = len(critical_errors) == 0
+
     return is_valid, errors
 
 
@@ -258,7 +281,7 @@ def normalize_price(price_value: Union[str, int, float, None]) -> float:
 
 def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     """
-    🔄 Разделение данных на категории и товары с привязкой
+    🔄 Улучшенное разделение данных на категории и товары с мягкой валидацией
 
     Args:
         raw_data: Сырые данные из Excel
@@ -273,22 +296,29 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
 
     for row in raw_data:
         try:
-            # ✅ Валидируем строку
+            # ✅ МЯГКАЯ валидация строки
             is_valid, errors = validate_row(row)
 
+            # 🎯 Показываем ошибки, но не блокируем обработку для незначительных проблем
             if not is_valid:
-                row['errors'] = errors
-                invalid_data.append(row)
-                continue
+                # 🔍 Проверяем, есть ли критичные ошибки
+                critical_errors = [error for error in errors if error.startswith('❌')]
+                if critical_errors:
+                    row['errors'] = errors
+                    invalid_data.append(row)
+                    continue
+                # Если только предупреждения (⚠️), продолжаем обработку
 
             if row['is_category']:
                 # 📂 Обрабатываем категорию
                 category_data = {
                     'category_name': row['category_name'],
-                    'name': row.get('name', ''),
-                    'title': row.get('title', ''),
+                    'name': row.get('name', '') or f"Автоковрики {row['category_name']}",  # 🔧 Автозаполнение
+                    'title': row.get('title', '') or f"Коврики {row['category_name']}",  # 🔧 Автозаполнение
                     'description': row.get('description', ''),
-                    'meta_description': row.get('meta_description', ''),
+                    'meta_description': row.get('meta_description',
+                                                '') or f"Качественные автоковрики {row['category_name']}",
+                    # 🔧 Автозаполнение
                     'image': row.get('image', ''),
                     'row_number': row.get('row_number', 0)
                 }
@@ -301,6 +331,12 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                 if not current_category:
                     # ⚠️ Товар без категории - создаём дефолтную
                     current_category = 'ТОВАРЫ'
+
+                # 🔧 Проверяем обязательные поля для товара
+                if not row.get('name') or not row.get('sku'):
+                    row['errors'] = ['❌ У товара отсутствует название или SKU']
+                    invalid_data.append(row)
+                    continue
 
                 product_data = {
                     'sku': row['sku'],

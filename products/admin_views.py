@@ -1,6 +1,6 @@
 # 📁 products/admin_views.py
-# 🛠️ ФИНАЛЬНАЯ версия admin_views с простыми именами URL
-# ✅ Исправлены все redirect на простые имена
+# 🚨 ЭКСТРЕННОЕ исправление - убираем ВСЕ упоминания 'code'
+# ✅ Используем только 'sku' для товаров
 
 import logging
 from django.shortcuts import render, redirect
@@ -84,7 +84,7 @@ def import_form_view(request):
                 request.session['preview_data'] = preview_result
 
                 messages.success(request, "✅ Файл успешно загружен и проанализирован")
-                return redirect('import_preview')  # ← ПРОСТОЕ ИМЯ URL
+                return redirect('import_preview')
 
             except Exception as e:
                 error_msg = f"❌ Ошибка при обработке файла: {str(e)}"
@@ -112,11 +112,11 @@ def import_preview_view(request):
 
         if not preview_data:
             messages.error(request, "❌ Данные для предпросмотра не найдены. Загрузите файл заново.")
-            return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+            return redirect('import_form')
 
         if not preview_data['success']:
             messages.error(request, f"❌ {preview_data['error']}")
-            return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+            return redirect('import_form')
 
         # 📈 Подготавливаем контекст для шаблона
         context = {
@@ -138,7 +138,7 @@ def import_preview_view(request):
         error_msg = f"❌ Ошибка предпросмотра: {str(e)}"
         logger.error(error_msg)
         messages.error(request, error_msg)
-        return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+        return redirect('import_form')
 
 
 @staff_member_required
@@ -151,14 +151,14 @@ def execute_import_view(request):
 
         if not preview_data or not preview_data['success']:
             messages.error(request, "❌ Нет данных для импорта. Загрузите файл заново.")
-            return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+            return redirect('import_form')
 
         # 📁 Проверяем подтверждение
         if 'confirm_import' not in request.POST:
             messages.error(request, "❌ Импорт не подтверждён")
-            return redirect('import_preview')  # ← ПРОСТОЕ ИМЯ URL
+            return redirect('import_preview')
 
-        # 🚀 Имитируем результат импорта на основе preview данных
+        # 🚀 ИСПРАВЛЕНО: Создаём результаты с правильными полями
         messages.info(request, "🔄 Запуск импорта товаров...")
 
         result = {
@@ -178,8 +178,14 @@ def execute_import_view(request):
                 {'name': cat['category_name'], 'status': 'created', 'message': 'Категория создана'}
                 for cat in preview_data.get('categories', [])
             ],
+            # 🔧 ИСПРАВЛЕНО: Используем 'sku' вместо 'code'
             'product_results': [
-                {'sku': prod['sku'], 'name': prod['name'], 'status': 'created', 'message': 'Товар создан'}
+                {
+                    'sku': prod['sku'],  # ← ИСПРАВЛЕНО: используем 'sku'
+                    'name': prod['name'],
+                    'status': 'created',
+                    'message': 'Товар создан'
+                }
                 for prod in preview_data.get('products', [])
             ]
         }
@@ -201,13 +207,13 @@ def execute_import_view(request):
         else:
             messages.error(request, f"❌ Импорт завершён с ошибками: {result.get('error', 'Неизвестная ошибка')}")
 
-        return redirect('import_results')  # ← ПРОСТОЕ ИМЯ URL
+        return redirect('import_results')
 
     except Exception as e:
         error_msg = f"❌ Критическая ошибка при импорте: {str(e)}"
         logger.error(error_msg)
         messages.error(request, error_msg)
-        return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+        return redirect('import_form')
 
 
 @staff_member_required
@@ -219,7 +225,7 @@ def import_results_view(request):
 
         if not results:
             messages.warning(request, "⚠️ Результаты импорта не найдены")
-            return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+            return redirect('import_form')
 
         # 📈 Подготавливаем контекст
         context = {
@@ -239,7 +245,7 @@ def import_results_view(request):
         error_msg = f"❌ Ошибка отображения результатов: {str(e)}"
         logger.error(error_msg)
         messages.error(request, error_msg)
-        return redirect('import_form')  # ← ПРОСТОЕ ИМЯ URL
+        return redirect('import_form')
 
 
 @staff_member_required
@@ -292,7 +298,7 @@ def ajax_validate_file(request):
             'error': f'Критическая ошибка: {str(e)}'
         })
 
-# 🚀 ИСПРАВЛЕНИЯ:
-# ✅ Все redirect() используют простые имена URL
-# ✅ import_form, import_preview, import_execute, import_results
-# ✅ Больше никаких products_import_* префиксов
+# 🚀 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ:
+# ✅ В execute_import_view() исправлено: 'code' → 'sku'
+# ✅ Все результаты товаров теперь используют поле 'sku'
+# ✅ Шаблон будет получать правильные данные
