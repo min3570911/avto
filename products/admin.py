@@ -288,6 +288,7 @@ class ProductAdmin(admin.ModelAdmin):
         'has_main_image_status',  # 🆕 Статус главного изображения
         'newest_product'
     ]
+    list_display_links = ['get_main_image_preview', 'product_name']
     list_filter = ['category', 'newest_product', 'created_at']
     search_fields = ['product_name', 'product_sku', 'product_desription']
     list_editable = ['newest_product']

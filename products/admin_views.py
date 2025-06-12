@@ -1,8 +1,11 @@
 # 📁 products/admin_views.py
-# 🚨 ЭКСТРЕННОЕ исправление - убираем ВСЕ упоминания 'code'
-# ✅ Используем только 'sku' для товаров
+# 🛠️ ИСПРАВЛЕННАЯ версия БЕЗ сохранения bytes в сессии
+# ✅ Использует прямой импорт с полными данными из import_utils
 
 import logging
+import tempfile
+import openpyxl
+import io
 from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -13,6 +16,7 @@ from django import forms
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from .import_processor import ProductImportProcessor, preview_excel_data
+from .import_utils import read_excel_file, separate_categories_and_products
 
 logger = logging.getLogger(__name__)
 
@@ -65,30 +69,49 @@ def import_form_view(request):
             try:
                 excel_file = form.cleaned_data['excel_file']
 
-                # 💾 Сохраняем файл в сессии
+                # 💾 Сохраняем базовую информацию о файле
                 request.session['uploaded_file_name'] = excel_file.name
                 request.session['uploaded_file_size'] = excel_file.size
 
-                # 🔄 Временно сохраняем файл для обработки
-                file_content = excel_file.read()
-                excel_file.seek(0)
+                # 🔄 Обрабатываем файл дважды: для preview и для полных данных
 
-                # 👁️ Получаем предпросмотр данных
+                # 👁️ PREVIEW: Получаем ограниченные данные для отображения
+                excel_file.seek(0)
                 preview_result = preview_excel_data(excel_file)
 
                 if not preview_result['success']:
                     messages.error(request, f"❌ {preview_result['error']}")
                     return render(request, 'admin/products/import_form.html', {'form': form})
 
-                # 💾 Сохраняем результат предпросмотра в сессии
-                request.session['preview_data'] = preview_result
+                # 📊 ПОЛНЫЕ ДАННЫЕ: Читаем весь файл для импорта
+                excel_file.seek(0)
+                success, raw_data = read_excel_file(excel_file)
+
+                if not success:
+                    messages.error(request, f"❌ Ошибка чтения файла: {raw_data}")
+                    return render(request, 'admin/products/import_form.html', {'form': form})
+
+                # 🔄 Разделяем на категории и товары (БЕЗ ограничений)
+                categories, products, invalid_data = separate_categories_and_products(raw_data)
+
+                # 💾 Сохраняем ПОЛНЫЕ данные в сессии
+                full_data = {
+                    'categories': categories,
+                    'products': products,
+                    'invalid_data': invalid_data,
+                    'success': True
+                }
+
+                # 💾 Сохраняем оба набора данных в сессии
+                request.session['preview_data'] = preview_result  # Для отображения
+                request.session['full_import_data'] = full_data  # Для импорта
 
                 messages.success(request, "✅ Файл успешно загружен и проанализирован")
                 return redirect('import_preview')
 
             except Exception as e:
                 error_msg = f"❌ Ошибка при обработке файла: {str(e)}"
-                logger.error(error_msg)
+                logger.error(error_msg, exc_info=True)
                 messages.error(request, error_msg)
 
         else:
@@ -144,65 +167,126 @@ def import_preview_view(request):
 @staff_member_required
 @require_http_methods(["POST"])
 def execute_import_view(request):
-    """🚀 Выполнение импорта товаров"""
+    """🚀 Выполнение импорта с ПОЛНЫМИ данными (не preview)"""
     try:
-        # 📊 Проверяем наличие данных в сессии
-        preview_data = request.session.get('preview_data')
-
-        if not preview_data or not preview_data['success']:
-            messages.error(request, "❌ Нет данных для импорта. Загрузите файл заново.")
-            return redirect('import_form')
-
         # 📁 Проверяем подтверждение
         if 'confirm_import' not in request.POST:
             messages.error(request, "❌ Импорт не подтверждён")
             return redirect('import_preview')
 
-        # 🚀 ИСПРАВЛЕНО: Создаём результаты с правильными полями
-        messages.info(request, "🔄 Запуск импорта товаров...")
+        # 📊 Получаем ПОЛНЫЕ данные из сессии (не preview!)
+        full_data = request.session.get('full_import_data')
 
-        result = {
-            'success': True,
-            'statistics': {
-                'total_processed': preview_data.get('total_categories', 0) + preview_data.get('total_products', 0),
-                'categories_created': preview_data.get('total_categories', 0),
-                'categories_updated': 0,
-                'products_created': preview_data.get('total_products', 0),
-                'products_updated': 0,
-                'errors': preview_data['total_invalid'],
-                'images_processed': preview_data['statistics'].get('products_with_images', 0)
-            },
-            'errors': [],
-            'invalid_data': preview_data['invalid_data'],
-            'category_results': [
-                {'name': cat['category_name'], 'status': 'created', 'message': 'Категория создана'}
-                for cat in preview_data.get('categories', [])
-            ],
-            # 🔧 ИСПРАВЛЕНО: Используем 'sku' вместо 'code'
-            'product_results': [
-                {
-                    'sku': prod['sku'],  # ← ИСПРАВЛЕНО: используем 'sku'
-                    'name': prod['name'],
-                    'status': 'created',
-                    'message': 'Товар создан'
-                }
-                for prod in preview_data.get('products', [])
-            ]
-        }
+        if not full_data or not full_data.get('success'):
+            messages.error(request, "❌ Полные данные для импорта не найдены. Загрузите файл заново.")
+            return redirect('import_form')
+
+        # 🚀 Импорт с использованием существующего процессора
+        messages.info(request, "🔄 Запуск импорта ВСЕХ товаров...")
+
+        # 📦 Получаем ПОЛНЫЕ данные (все категории и товары)
+        categories_data = full_data.get('categories', [])
+        products_data = full_data.get('products', [])
+        invalid_data = full_data.get('invalid_data', [])
+
+        logger.info(f"📊 Начинаем импорт: {len(categories_data)} категорий, {len(products_data)} товаров")
+
+        # 🔄 Создаем временный Excel файл с ПОЛНЫМИ данными в правильном порядке
+        all_rows = []
+
+        # 📂 Добавляем категории с их номерами строк
+        for cat in categories_data:
+            all_rows.append({
+                'type': 'category',
+                'row_number': cat.get('row_number', 0),
+                'data': cat
+            })
+
+        # 🛍️ Добавляем товары с их номерами строк
+        for prod in products_data:
+            all_rows.append({
+                'type': 'product',
+                'row_number': prod.get('row_number', 0),
+                'data': prod
+            })
+
+        # 🔄 СОРТИРУЕМ по номеру строки для восстановления порядка
+        all_rows.sort(key=lambda x: x['row_number'])
+
+        logger.info(f"📊 Восстановлен порядок: {len(all_rows)} строк")
+
+        # 📊 Создаем временный Excel файл с ПРАВИЛЬНЫМ порядком
+        workbook = openpyxl.Workbook()
+        worksheet = workbook.active
+
+        # 📋 Заголовки
+        worksheet.append(['Идентификатор', 'Название', 'Title', 'Цена', 'Описание', 'Meta-описание', 'Изображение'])
+
+        # 🔄 Добавляем строки в ОРИГИНАЛЬНОМ порядке
+        for row_info in all_rows:
+            row_type = row_info['type']
+            data = row_info['data']
+
+            if row_type == 'category':
+                # 📂 Категория (с точкой в идентификаторе)
+                worksheet.append([
+                    f"1.{data['category_name']}",  # ✅ Идентификатор с точкой = категория
+                    data.get('name', ''),
+                    data.get('title', ''),
+                    '',  # 💰 Пустая цена для категории
+                    data.get('description', ''),
+                    data.get('meta_description', ''),
+                    data.get('image', '')
+                ])
+
+            else:  # product
+                # 🛍️ Товар (без точки в идентификаторе)
+                worksheet.append([
+                    data.get('sku', ''),  # ✅ SKU без точки = товар
+                    data.get('name', ''),
+                    data.get('title', ''),
+                    data.get('price', 0),
+                    data.get('description', ''),
+                    data.get('meta_description', ''),
+                    data.get('image', '')
+                ])
+
+        # 💾 Сохраняем во временный буфер
+        temp_buffer = io.BytesIO()
+        workbook.save(temp_buffer)
+        temp_buffer.seek(0)
+
+        # 📁 Создаем файл-объект для процессора
+        temp_file = InMemoryUploadedFile(
+            temp_buffer, None, 'import_data.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            temp_buffer.getbuffer().nbytes, None
+        )
+
+        # 🚀 Используем существующий процессор для РЕАЛЬНОГО сохранения в БД
+        logger.info("🔄 Запуск ProductImportProcessor с ПОЛНЫМИ данными...")
+        processor = ProductImportProcessor()
+        result = processor.process_excel_file(temp_file)
+
+        # 📊 Логируем результат
+        logger.info(f"📈 Результат импорта: {result['success']}, статистика: {result.get('statistics', {})}")
 
         # 🧹 Очищаем сессию
-        for key in ['preview_data', 'uploaded_file_name', 'uploaded_file_size']:
+        for key in ['preview_data', 'full_import_data', 'uploaded_file_name', 'uploaded_file_size']:
             request.session.pop(key, None)
 
         # 📈 Сохраняем результаты в сессии для отображения
         request.session['import_results'] = result
 
         if result['success']:
+            stats = result['statistics']
             messages.success(
                 request,
-                f"✅ Импорт завершён! Обработано: {result['statistics']['total_processed']}, "
-                f"создано: {result['statistics']['categories_created'] + result['statistics']['products_created']}, "
-                f"ошибок: {result['statistics']['errors']}"
+                f"✅ Импорт завершён! Создано категорий: {stats.get('categories_created', 0)}, "
+                f"товаров: {stats.get('products_created', 0)}, "
+                f"обновлено категорий: {stats.get('categories_updated', 0)}, "
+                f"товаров: {stats.get('products_updated', 0)}, "
+                f"ошибок: {stats.get('errors', 0)}"
             )
         else:
             messages.error(request, f"❌ Импорт завершён с ошибками: {result.get('error', 'Неизвестная ошибка')}")
@@ -211,7 +295,7 @@ def execute_import_view(request):
 
     except Exception as e:
         error_msg = f"❌ Критическая ошибка при импорте: {str(e)}"
-        logger.error(error_msg)
+        logger.error(error_msg, exc_info=True)
         messages.error(request, error_msg)
         return redirect('import_form')
 
@@ -298,7 +382,9 @@ def ajax_validate_file(request):
             'error': f'Критическая ошибка: {str(e)}'
         })
 
-# 🚀 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ:
-# ✅ В execute_import_view() исправлено: 'code' → 'sku'
-# ✅ Все результаты товаров теперь используют поле 'sku'
-# ✅ Шаблон будет получать правильные данные
+# 🔧 ИСПРАВЛЕНИЯ:
+# ✅ УБРАНО: Сохранение bytes в сессии (вызывало JSON ошибку)
+# ✅ ДОБАВЛЕНО: Двойная обработка файла (preview + полные данные)
+# ✅ ДОБАВЛЕНО: Сохранение полных данных в session['full_import_data']
+# ✅ ДОБАВЛЕНО: Использование ПОЛНЫХ данных в execute_import_view
+# ✅ РЕЗУЛЬТАТ: Все товары импортируются, правильный порядок категорий
