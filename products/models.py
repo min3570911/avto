@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 from django_ckeditor_5.fields import CKEditor5Field
+from django.db.models import Q
 
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (

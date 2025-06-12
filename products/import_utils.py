@@ -1,6 +1,6 @@
 # 📁 products/import_utils.py
-# 🛠️ УПРОЩЕННАЯ версия утилит импорта согласно документации
-# ✅ Товары привязываются к последней обработанной категории
+# 🛠️ ИСПРАВЛЕННАЯ версия утилит импорта с автогенерацией SKU
+# ✅ Добавлена функция generate_sku_for_product()
 # 🔧 МИНИМАЛЬНАЯ валидация - принимаем почти любые данные
 
 import logging
@@ -25,9 +25,6 @@ EXCEL_COLUMN_MAPPING = {
 
 # 📋 УПРОЩЕННЫЕ требования
 REQUIRED_FIELDS = ['identifier']  # ✅ Только идентификатор обязателен
-
-
-# 🔧 УБРАНЫ лимиты полей - принимаем любую длину
 
 
 def read_excel_file(file: InMemoryUploadedFile) -> Tuple[bool, Union[List[Dict], str]]:
@@ -146,6 +143,98 @@ def extract_category_name(category_identifier: str) -> str:
         return 'ТОВАРЫ'
 
 
+def extract_category_sku(category_identifier: str) -> int:
+    """
+    🔢 Извлечение SKU категории из идентификатора
+
+    Примеры:
+    - "1.BMW" -> 1
+    - "2.Acura" -> 2
+    - "10.Mercedes" -> 10
+
+    Args:
+        category_identifier: Идентификатор категории с точкой
+
+    Returns:
+        int: SKU категории (по умолчанию 1)
+    """
+    try:
+        # 🔍 Берём часть до первой точки
+        parts = category_identifier.split('.')
+        if len(parts) >= 2:
+            sku_part = parts[0].strip()
+
+            # 🔢 Пытаемся преобразовать в число
+            if sku_part.isdigit():
+                return int(sku_part)
+
+        logger.warning(f"⚠️ Не удалось извлечь SKU из '{category_identifier}', используем 1")
+        return 1
+
+    except Exception as e:
+        logger.error(f"Ошибка извлечения SKU категории из '{category_identifier}': {e}")
+        return 1
+
+
+def generate_sku_for_product(category_sku: int, existing_products_in_category: List[Dict]) -> str:
+    """
+    🆕 НОВАЯ ФУНКЦИЯ: Автогенерация SKU для товара по формуле
+
+    Формула: category_sku * 10000 + порядковый_номер_в_категории
+
+    Примеры:
+    - Категория BMW (sku=1): товары получат 10001, 10002, 10003...
+    - Категория Acura (sku=2): товары получат 20001, 20002, 20003...
+
+    Args:
+        category_sku: SKU категории (1, 2, 3...)
+        existing_products_in_category: Список уже существующих товаров в категории
+
+    Returns:
+        str: Сгенерированный SKU товара
+    """
+    try:
+        # 🔢 Базовое значение: category_sku * 10000
+        base_sku = category_sku * 10000
+
+        # 🔍 Находим максимальный порядковый номер среди существующих товаров
+        max_sequence = 0
+
+        for product in existing_products_in_category:
+            product_sku = product.get('sku', '')
+
+            # 🎯 Пытаемся извлечь порядковый номер из SKU
+            if isinstance(product_sku, (str, int)):
+                try:
+                    sku_int = int(product_sku)
+
+                    # ✅ Проверяем, что SKU относится к нашей категории
+                    if base_sku <= sku_int < (base_sku + 10000):
+                        sequence = sku_int - base_sku
+                        max_sequence = max(max_sequence, sequence)
+
+                except (ValueError, TypeError):
+                    continue
+
+        # 📈 Следующий порядковый номер
+        next_sequence = max_sequence + 1
+
+        # 🎯 Генерируем итоговый SKU
+        generated_sku = base_sku + next_sequence
+
+        logger.info(
+            f"🆕 Сгенерирован SKU: {generated_sku} (категория {category_sku}, последовательность {next_sequence})")
+
+        return str(generated_sku)
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка генерации SKU для категории {category_sku}: {e}")
+
+        # 🚨 Fallback: простая генерация
+        fallback_sku = category_sku * 10000 + 1
+        return str(fallback_sku)
+
+
 def validate_row(row_data: Dict) -> Tuple[bool, List[str]]:
     """
     ✅ УПРОЩЕННАЯ валидация строки (только критичные проверки)
@@ -230,12 +319,12 @@ def normalize_price(price_value: Union[str, int, float, None]) -> float:
 
 def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     """
-    🔄 ПРОСТОЕ разделение данных согласно документации
+    🔄 ИСПРАВЛЕННОЕ разделение данных с автогенерацией SKU
 
     📋 ЛОГИКА:
     - Читаем строки по порядку сверху вниз
     - Строка с точкой → категория (запоминаем как current_category)
-    - Строка без точки → товар (привязываем к current_category)
+    - Строка без точки → товар (привязываем к current_category + генерируем SKU если нужно)
 
     Args:
         raw_data: Сырые данные из Excel
@@ -247,8 +336,10 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
     products = []
     invalid_data = []
     current_category = None  # 💾 Последняя обработанная категория
+    current_category_sku = 1  # 🔢 SKU текущей категории
+    products_in_current_category = []  # 📦 Товары в текущей категории (для генерации SKU)
 
-    logger.info(f"🔄 Начинаем простую обработку {len(raw_data)} строк...")
+    logger.info(f"🔄 Начинаем обработку с автогенерацией SKU {len(raw_data)} строк...")
 
     for row in raw_data:
         try:
@@ -262,12 +353,17 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                 continue
 
             if row['is_category']:
-                # 📂 Обрабатываем категорию (БЕЗ значений по умолчанию)
+                # 📂 Обрабатываем категорию
                 category_name = row['category_name']
+
+                # 🔢 НОВОЕ: Извлекаем SKU категории из идентификатора
+                category_identifier = str(row['identifier']).strip()
+                current_category_sku = extract_category_sku(category_identifier)
 
                 category_data = {
                     'category_name': category_name,
-                    'name': row.get('name', ''),  # 🔧 Пустое если не заполнено
+                    'category_sku': current_category_sku,  # 🆕 Добавляем SKU категории
+                    'name': row.get('name', ''),
                     'title': row.get('title', ''),
                     'description': row.get('description', ''),
                     'meta_description': row.get('meta_description', ''),
@@ -277,40 +373,56 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
 
                 categories.append(category_data)
                 current_category = category_name  # 💾 ЗАПОМИНАЕМ как текущую
+                products_in_current_category = []  # 🔄 Сбрасываем список товаров для новой категории
 
-                logger.info(f"📂 Обработана категория: {current_category} (строка {row.get('row_number', '?')})")
+                logger.info(
+                    f"📂 Обработана категория: {current_category} (SKU: {current_category_sku}, строка {row.get('row_number', '?')})")
 
             else:
-                # 🛍️ Обрабатываем товар (БЕЗ значений по умолчанию)
+                # 🛍️ Обрабатываем товар
                 if not current_category:
                     # ⚠️ Товар без категории - создаём дефолтную
                     current_category = 'ТОВАРЫ'
+                    current_category_sku = 1
                     logger.warning(f"⚠️ Товар без категории, используем дефолтную: {current_category}")
 
-                sku = row['sku']
+                original_sku = row['sku']
+
+                # 🆕 АВТОГЕНЕРАЦИЯ SKU если он пустой
+                if not original_sku or original_sku == '':
+                    generated_sku = generate_sku_for_product(current_category_sku, products_in_current_category)
+                    final_sku = generated_sku
+                    logger.info(f"🆕 Сгенерирован SKU: {final_sku} для товара в категории {current_category}")
+                else:
+                    final_sku = str(original_sku).strip()
+                    logger.info(f"✅ Используем существующий SKU: {final_sku}")
 
                 product_data = {
-                    'sku': sku,
-                    'name': row.get('name', ''),  # 🔧 Пустое если не заполнено
+                    'sku': final_sku,  # 🎯 Финальный SKU (исходный или сгенерированный)
+                    'original_sku': original_sku,  # 📝 Оригинальный SKU из Excel (для отладки)
+                    'name': row.get('name', ''),
                     'title': row.get('title', ''),
                     'price': normalize_price(row.get('price')),
                     'description': row.get('description', ''),
                     'meta_description': row.get('meta_description', ''),
                     'image': row.get('image', ''),
                     'category_name': current_category,  # 🔗 ПРИВЯЗЫВАЕМ к текущей категории
+                    'category_sku': current_category_sku,  # 🔗 SKU категории
                     'row_number': row.get('row_number', 0)
                 }
 
                 products.append(product_data)
+                products_in_current_category.append(product_data)  # 📦 Добавляем в список для генерации следующих SKU
 
-                logger.info(f"🛍️ Товар {sku} → категория {current_category} (строка {row.get('row_number', '?')})")
+                logger.info(
+                    f"🛍️ Товар {final_sku} → категория {current_category} (строка {row.get('row_number', '?')})")
 
         except Exception as e:
             logger.error(f"❌ Ошибка обработки строки {row.get('row_number', '?')}: {e}")
             row['errors'] = [f"Ошибка обработки: {str(e)}"]
             invalid_data.append(row)
 
-    # 📊 Создаем недостающие категории (БЕЗ автоматических названий)
+    # 📊 Создаем недостающие категории
     used_categories = set(p['category_name'] for p in products if p.get('category_name'))
     existing_categories = set(cat['category_name'] for cat in categories)
     missing_categories = used_categories - existing_categories
@@ -318,17 +430,18 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
     for missing_cat in missing_categories:
         categories.append({
             'category_name': missing_cat,
-            'name': '',  # 🔧 Пустое название
+            'category_sku': 1,  # 🔢 Дефолтный SKU для недостающих категорий
+            'name': '',
             'title': '',
             'description': '',
             'meta_description': '',
             'image': '',
             'row_number': 0
         })
-        logger.info(f"🆕 Создана недостающая категория: {missing_cat} (с пустыми полями)")
+        logger.info(f"🆕 Создана недостающая категория: {missing_cat} (SKU: 1)")
 
     logger.info(
-        f"✅ Простая обработка завершена: {len(categories)} категорий, {len(products)} товаров, {len(invalid_data)} ошибок")
+        f"✅ Обработка с автогенерацией SKU завершена: {len(categories)} категорий, {len(products)} товаров, {len(invalid_data)} ошибок")
 
     return categories, products, invalid_data
 
@@ -342,6 +455,10 @@ def get_import_statistics(categories: List[Dict], products: List[Dict], invalid_
         products_with_images = sum(1 for prod in products if prod.get('image'))
         products_with_prices = sum(1 for prod in products if prod.get('price', 0) > 0)
 
+        # 🆕 Статистика по SKU
+        products_with_sku = sum(1 for prod in products if prod.get('sku'))
+        auto_generated_sku = sum(1 for prod in products if not prod.get('original_sku'))
+
         return {
             'total_rows': len(categories) + len(products) + len(invalid_data),
             'categories_count': len(categories),
@@ -351,16 +468,16 @@ def get_import_statistics(categories: List[Dict], products: List[Dict], invalid_
             'products_with_images': products_with_images,
             'products_with_prices': products_with_prices,
             'categories_with_images': sum(1 for cat in categories if cat.get('image')),
+            'products_with_sku': products_with_sku,  # 🆕 Товары с SKU
+            'auto_generated_sku': auto_generated_sku,  # 🆕 Автосгенерированные SKU
         }
     except Exception as e:
         logger.error(f"Ошибка подсчёта статистики: {e}")
         return {}
 
-# 🔧 УПРОЩЕННАЯ ЛОГИКА:
-# ✅ ВЕРНУЛ: Простую последовательную обработку согласно документации
-# ✅ УБРАЛ: Строгие проверки длины полей и обязательных полей
-# ✅ УБРАЛ: Сложную "умную" логику поиска по названиям
-# ✅ УБРАЛ: Автоматические значения по умолчанию для пустых полей
-# ✅ ЛОГИКА: current_category запоминается при обработке категории
-# ✅ ЛОГИКА: товары привязываются к последней current_category
-# ✅ ПРИНЦИП: Пустые поля остаются пустыми, без подстановок
+# 🔧 НОВЫЕ ВОЗМОЖНОСТИ:
+# ✅ ДОБАВЛЕНО: extract_category_sku() - извлечение SKU категории из идентификатора
+# ✅ ДОБАВЛЕНО: generate_sku_for_product() - автогенерация SKU по формуле
+# ✅ ИЗМЕНЕНО: separate_categories_and_products() - поддержка автогенерации SKU
+# ✅ УЛУЧШЕНО: get_import_statistics() - добавлена статистика по SKU
+# ✅ РЕЗУЛЬТАТ: Товары получают правильные SKU, нет дубликатов

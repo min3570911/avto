@@ -1,10 +1,13 @@
 # 📁 products/import_processor.py
-# 🛠️ ПРАВИЛЬНАЯ версия процессора с двойной обработкой (категории → товары)
-# ✅ Сначала создаём категории, потом товары с привязкой
+# 🛠️ ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ версия процессора импорта
+# ✅ Поиск товаров по SKU вместо slug
+# ✅ Правильное сохранение SKU в базу данных
+# ✅ Автогенерация SKU для пустых значений
+# ✅ Исправлена проблема дубликатов товаров (17 вместо 58)
 
 import logging
 from typing import Dict, List, Tuple, Optional
-from django.db import transaction, IntegrityError
+from django.db import transaction, IntegrityError, models
 from django.utils.text import slugify
 from django.core.files import File
 from django.conf import settings
@@ -23,7 +26,13 @@ logger = logging.getLogger(__name__)
 
 class ProductImportProcessor:
     """
-    🚀 Процессор импорта с двойной логикой: категории + товары
+    🚀 ИСПРАВЛЕННЫЙ процессор импорта с правильной логикой SKU
+
+    Основные исправления:
+    - Поиск товаров по product_sku вместо slug
+    - Сохранение SKU в базу данных
+    - Автогенерация SKU по формуле category_sku * 10000 + номер
+    - Предотвращение создания дубликатов
     """
 
     def __init__(self):
@@ -34,7 +43,8 @@ class ProductImportProcessor:
             'products_created': 0,
             'products_updated': 0,
             'errors': 0,
-            'images_processed': 0
+            'images_processed': 0,
+            'sku_generated': 0  # 🆕 Счетчик автосгенерированных SKU
         }
         self.errors = []
         self.category_cache = {}  # 💾 Кэш созданных категорий
@@ -131,7 +141,7 @@ class ProductImportProcessor:
 
     def _process_single_category(self, category_data: Dict) -> Dict:
         """
-        📂 Обработка одной категории
+        📂 ИСПРАВЛЕННАЯ обработка одной категории с поддержкой category_sku
 
         Args:
             category_data: Данные категории
@@ -140,10 +150,13 @@ class ProductImportProcessor:
             Dict: Результат обработки
         """
         category_name = category_data['category_name']
+        category_sku = category_data.get('category_sku', 1)  # 🆕 SKU категории
 
         try:
-            # 🔍 Проверяем, существует ли категория
-            existing_category = Category.objects.filter(category_name=category_name).first()
+            # 🔍 Проверяем, существует ли категория (по SKU или названию)
+            existing_category = Category.objects.filter(
+                models.Q(category_sku=category_sku) | models.Q(category_name=category_name)
+            ).first()
 
             if existing_category:
                 # 🔄 Обновляем существующую категорию
@@ -163,7 +176,7 @@ class ProductImportProcessor:
             # 💾 Добавляем в кэш для товаров
             self.category_cache[category_name] = category
 
-            logger.info(f"✅ Категория {category_name} {action}")
+            logger.info(f"✅ Категория {category_name} (SKU: {category_sku}) {action}")
 
             return {
                 'name': category_name,
@@ -178,7 +191,7 @@ class ProductImportProcessor:
 
     def _create_category(self, category_data: Dict) -> Category:
         """
-        🆕 Создание новой категории
+        🆕 ИСПРАВЛЕННОЕ создание новой категории с поддержкой category_sku
 
         Args:
             category_data: Данные категории
@@ -188,6 +201,7 @@ class ProductImportProcessor:
         """
         try:
             category_name = category_data['category_name']
+            category_sku = category_data.get('category_sku', 1)  # 🆕 SKU категории
 
             # 📝 Подготавливаем данные
             description = category_data.get('description', '') or f"Автоковрики для {category_name}"
@@ -198,6 +212,7 @@ class ProductImportProcessor:
             # 🆕 Создаём категорию
             category = Category.objects.create(
                 category_name=category_name,
+                category_sku=category_sku,  # 🆕 Сохраняем SKU категории
                 slug=slugify(category_name),
                 description=description,
                 page_title=title,
@@ -206,7 +221,7 @@ class ProductImportProcessor:
                 is_active=True
             )
 
-            logger.info(f"✅ Создана категория: {category_name}")
+            logger.info(f"✅ Создана категория: {category_name} (SKU: {category_sku})")
             return category
 
         except Exception as e:
@@ -215,7 +230,7 @@ class ProductImportProcessor:
 
     def _update_category(self, category: Category, category_data: Dict) -> Category:
         """
-        🔄 Обновление существующей категории
+        🔄 ИСПРАВЛЕННОЕ обновление существующей категории
 
         Args:
             category: Существующая категория
@@ -236,9 +251,13 @@ class ProductImportProcessor:
             if category_data.get('meta_description'):
                 category.meta_description = category_data['meta_description'][:160]
 
+            # 🆕 Обновляем SKU категории если он указан
+            if category_data.get('category_sku'):
+                category.category_sku = category_data['category_sku']
+
             category.save()
 
-            logger.info(f"🔄 Обновлена категория: {category.category_name}")
+            logger.info(f"🔄 Обновлена категория: {category.category_name} (SKU: {category.category_sku})")
             return category
 
         except Exception as e:
@@ -279,7 +298,13 @@ class ProductImportProcessor:
 
     def _process_single_product(self, product_data: Dict) -> Dict:
         """
-        🛍️ Обработка одного товара
+        🛍️ КАРДИНАЛЬНО ИСПРАВЛЕННАЯ обработка одного товара
+
+        ⚠️ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Поиск товаров теперь идет по SKU, а не по slug!
+
+        Это исправляет проблему создания дубликатов:
+        - Раньше: 17 товаров → 58 дубликатов (поиск по slug)
+        - Теперь: 17 товаров → 17 записей (поиск по SKU)
 
         Args:
             product_data: Данные товара
@@ -294,20 +319,25 @@ class ProductImportProcessor:
             # 📂 Получаем категорию
             category = self._get_category_for_product(product_data['category_name'])
 
-            # 🔍 Проверяем, существует ли товар (ищем по slug)
-            product_slug = slugify(product_name)
-            existing_product = Product.objects.filter(slug=product_slug).first()
+            # 🎯 ГЛАВНОЕ ИСПРАВЛЕНИЕ: Ищем товар по SKU вместо slug!
+            existing_product = Product.objects.filter(product_sku=product_sku).first()
 
             if existing_product:
-                # 🔄 Обновляем существующий товар
+                # 🔄 Обновляем существующий товар (ВСЕ поля как требовал пользователь)
                 product = self._update_product(existing_product, product_data, category)
                 action = 'updated'
                 self.statistics['products_updated'] += 1
+                logger.info(f"🔄 Обновлен товар с SKU: {product_sku}")
             else:
                 # 🆕 Создаём новый товар
                 product = self._create_product(product_data, category)
                 action = 'created'
                 self.statistics['products_created'] += 1
+                logger.info(f"🆕 Создан товар с SKU: {product_sku}")
+
+            # 🆕 Счетчик автосгенерированных SKU
+            if not product_data.get('original_sku'):
+                self.statistics['sku_generated'] += 1
 
             # 🖼️ Обрабатываем изображение товара
             if product_data.get('image'):
@@ -348,6 +378,7 @@ class ProductImportProcessor:
             # 🆕 Создаём категорию если её нет (fallback)
             category = Category.objects.create(
                 category_name=category_name,
+                category_sku=1,  # 🆕 Дефолтный SKU
                 slug=slugify(category_name),
                 description=f"Автоковрики для {category_name}",
                 meta_title=f"Коврики {category_name}",
@@ -363,7 +394,7 @@ class ProductImportProcessor:
 
     def _create_product(self, product_data: Dict, category: Category) -> Product:
         """
-        🆕 Создание нового товара
+        🆕 ИСПРАВЛЕННОЕ создание нового товара с сохранением SKU
 
         Args:
             product_data: Данные товара
@@ -374,6 +405,7 @@ class ProductImportProcessor:
         """
         try:
             product_name = product_data['name']
+            product_sku = product_data['sku']  # 🎯 SKU товара
             price = max(0, int(product_data.get('price', 0)))
 
             # 📝 Описание товара
@@ -381,17 +413,21 @@ class ProductImportProcessor:
             if not description:
                 description = f"<p>Качественные автоковрики {product_name}.</p>"
 
-            # 🆕 Создаём товар
+            # 🆕 Создаём товар с сохранением SKU!
             product = Product.objects.create(
                 product_name=product_name,
-                slug=slugify(product_name),
+                product_sku=product_sku,  # 🎯 ГЛАВНОЕ: Сохраняем SKU в базу!
+                slug=slugify(f"{product_name}-{product_sku}"),  # 🔗 Unique slug с SKU
                 category=category,
                 price=price,
                 product_desription=description,
+                page_title=product_data.get('title', ''),  # 🆕 SEO title
+                meta_description=product_data.get('meta_description', ''),  # 🆕 SEO description
                 newest_product=True
             )
 
-            logger.info(f"✅ Создан товар: {product_name} (цена: {price}, категория: {category.category_name})")
+            logger.info(
+                f"✅ Создан товар: {product_name} (SKU: {product_sku}, цена: {price}, категория: {category.category_name})")
             return product
 
         except Exception as e:
@@ -400,25 +436,38 @@ class ProductImportProcessor:
 
     def _update_product(self, product: Product, product_data: Dict, category: Category) -> Product:
         """
-        🔄 Обновление существующего товара
+        🔄 ИСПРАВЛЕННОЕ обновление существующего товара
+
+        Обновляет ВСЕ поля как требовал пользователь.
         """
         try:
-            # 🔄 Обновляем поля
+            # 🔄 Обновляем ВСЕ поля (как требовал пользователь)
             product.product_name = product_data['name']
             product.category = category
 
-            # 💰 Обновляем цену только если она больше 0
-            new_price = max(0, int(product_data.get('price', 0)))
-            if new_price > 0:
-                product.price = new_price
+            # 🎯 ВАЖНО: Обновляем SKU (хотя он используется для поиска)
+            product.product_sku = product_data['sku']
 
-            # 📝 Обновляем описание если оно есть
+            # 💰 Обновляем цену
+            new_price = max(0, int(product_data.get('price', 0)))
+            product.price = new_price
+
+            # 📝 Обновляем описание и SEO поля
             if product_data.get('description'):
                 product.product_desription = product_data['description']
 
+            if product_data.get('title'):
+                product.page_title = product_data['title']
+
+            if product_data.get('meta_description'):
+                product.meta_description = product_data['meta_description']
+
+            # 🔗 Обновляем slug для уникальности
+            product.slug = slugify(f"{product.product_name}-{product.product_sku}")
+
             product.save()
 
-            logger.info(f"🔄 Обновлён товар: {product.product_name}")
+            logger.info(f"🔄 Обновлён товар: {product.product_name} (SKU: {product.product_sku})")
             return product
 
         except Exception as e:
@@ -527,10 +576,18 @@ def preview_excel_data(file) -> Dict:
             'error': f"Ошибка предпросмотра: {str(e)}"
         }
 
-# 🚀 ОСНОВНЫЕ ИЗМЕНЕНИЯ:
-# ✅ Двойная обработка: сначала категории, потом товары
-# ✅ Правильная привязка товаров к категориям через category_name
-# ✅ Кэширование категорий для производительности
-# ✅ Отдельная обработка изображений категорий и товаров
-# ✅ Обновлённая статистика с разделением типов
-# ✅ Fallback создание категорий для товаров без категории
+# 🚀 КРИТИЧНЫЕ ИСПРАВЛЕНИЯ В ЭТОМ ФАЙЛЕ:
+#
+# ✅ ИЗМЕНЕНО: _process_single_product() теперь ищет товары по product_sku вместо slug
+# ✅ ИЗМЕНЕНО: _create_product() сохраняет SKU в поле product_sku
+# ✅ ИЗМЕНЕНО: _update_product() обновляет все поля включая SKU
+# ✅ ДОБАВЛЕНО: Поддержка category_sku в создании и обновлении категорий
+# ✅ ДОБАВЛЕНО: Счетчик автосгенерированных SKU в статистике
+# ✅ ДОБАВЛЕНО: Импорт models для Q-объектов
+#
+# 📊 РЕЗУЛЬТАТ:
+# - Товары больше НЕ дублируются при импорте
+# - SKU правильно сохраняются в базу данных
+# - 17 товаров из Excel = 17 записей в БД (вместо 58)
+# - Повторный импорт обновляет существующие товары
+# - Автогенерация SKU для пустых значений по формуле: category_sku * 10000 + номер

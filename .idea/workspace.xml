@@ -4,19 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Успешное сообщение- но нет импорта">
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Заработал импорт. допиливаю">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/admin.py.backup_1748161301" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/forms.py.backup_django_countries" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/models.py.backup_1748161301" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/urls.py.backup_1748161301" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/accounts/views.py.backup_1748161301" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ecomm/settings.py.backup_django_countries" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/home/admin.py.backup_django_countries" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/home/models.py.backup_django_countries" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/import_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/import_processor.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/products/import_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/import_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -157,7 +149,7 @@
       <workItem from="1748927362537" duration="5787000" />
       <workItem from="1749187804480" duration="14101000" />
       <workItem from="1749446539651" duration="19056000" />
-      <workItem from="1749532631347" duration="31007000" />
+      <workItem from="1749532631347" duration="36281000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -327,7 +319,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749560289355</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Заработал импорт. допиливаю">
+      <option name="closed" value="true" />
+      <created>1749726980220</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1749726980220</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -364,7 +364,8 @@
     <MESSAGE value="Внедрил импорт. не работает пока." />
     <MESSAGE value="поле превью отображается - исправляю ошибки" />
     <MESSAGE value="Успешное сообщение- но нет импорта" />
-    <option name="LAST_COMMIT_MESSAGE" value="Успешное сообщение- но нет импорта" />
+    <MESSAGE value="Заработал импорт. допиливаю" />
+    <option name="LAST_COMMIT_MESSAGE" value="Заработал импорт. допиливаю" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
