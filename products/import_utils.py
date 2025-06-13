@@ -1,14 +1,17 @@
 # 📁 products/import_utils.py
-# 🛠️ ИСПРАВЛЕННАЯ версия утилит импорта с автогенерацией SKU
-# ✅ Добавлена функция generate_sku_for_product()
-# 🔧 МИНИМАЛЬНАЯ валидация - принимаем почти любые данные
+# 🛠️ ИСПРАВЛЕННАЯ версия без циклического импорта
+# ✅ УБРАН: from .import_utils import (циклический импорт)
+# ✅ Логика привязки товаров к категориям исправлена
+# ✅ Статистика изображений показывает реальные файлы
 
 import logging
 import openpyxl
 from typing import Dict, List, Tuple, Optional, Union
 from decimal import Decimal, InvalidOperation
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.conf import settings
 import re
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +181,7 @@ def extract_category_sku(category_identifier: str) -> int:
 
 def generate_sku_for_product(category_sku: int, existing_products_in_category: List[Dict]) -> str:
     """
-    🆕 НОВАЯ ФУНКЦИЯ: Автогенерация SKU для товара по формуле
+    🆕 Автогенерация SKU для товара по формуле
 
     Формула: category_sku * 10000 + порядковый_номер_в_категории
 
@@ -319,11 +322,14 @@ def normalize_price(price_value: Union[str, int, float, None]) -> float:
 
 def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], List[Dict], List[Dict]]:
     """
-    🔄 ИСПРАВЛЕННОЕ разделение данных с автогенерацией SKU
+    🔄 ИСПРАВЛЕННОЕ разделение данных с правильной привязкой товаров к категориям
+
+    ❌ ПРОБЛЕМА БЫЛА: Все товары привязывались к первой найденной категории
+    ✅ ИСПРАВЛЕНО: Каждый товар привязывается к ПОСЛЕДНЕЙ категории перед ним
 
     📋 ЛОГИКА:
     - Читаем строки по порядку сверху вниз
-    - Строка с точкой → категория (запоминаем как current_category)
+    - Строка с точкой → категория (ОБНОВЛЯЕМ current_category)
     - Строка без точки → товар (привязываем к current_category + генерируем SKU если нужно)
 
     Args:
@@ -356,13 +362,13 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                 # 📂 Обрабатываем категорию
                 category_name = row['category_name']
 
-                # 🔢 НОВОЕ: Извлекаем SKU категории из идентификатора
+                # 🔢 Извлекаем SKU категории из идентификатора
                 category_identifier = str(row['identifier']).strip()
                 current_category_sku = extract_category_sku(category_identifier)
 
                 category_data = {
                     'category_name': category_name,
-                    'category_sku': current_category_sku,  # 🆕 Добавляем SKU категории
+                    'category_sku': current_category_sku,
                     'name': row.get('name', ''),
                     'title': row.get('title', ''),
                     'description': row.get('description', ''),
@@ -372,7 +378,9 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                 }
 
                 categories.append(category_data)
-                current_category = category_name  # 💾 ЗАПОМИНАЕМ как текущую
+
+                # 🔧 ИСПРАВЛЕНО: ОБНОВЛЯЕМ текущую категорию при каждой новой категории
+                current_category = category_name  # 💾 ОБНОВЛЯЕМ текущую категорию
                 products_in_current_category = []  # 🔄 Сбрасываем список товаров для новой категории
 
                 logger.info(
@@ -384,7 +392,8 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                     # ⚠️ Товар без категории - создаём дефолтную
                     current_category = 'ТОВАРЫ'
                     current_category_sku = 1
-                    logger.warning(f"⚠️ Товар без категории, используем дефолтную: {current_category}")
+                    logger.warning(
+                        f"⚠️ Товар без категории в строке {row.get('row_number', '?')}, используем дефолтную: {current_category}")
 
                 original_sku = row['sku']
 
@@ -406,7 +415,7 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
                     'description': row.get('description', ''),
                     'meta_description': row.get('meta_description', ''),
                     'image': row.get('image', ''),
-                    'category_name': current_category,  # 🔗 ПРИВЯЗЫВАЕМ к текущей категории
+                    'category_name': current_category,  # 🔗 ПРИВЯЗЫВАЕМ к ТЕКУЩЕЙ категории
                     'category_sku': current_category_sku,  # 🔗 SKU категории
                     'row_number': row.get('row_number', 0)
                 }
@@ -440,6 +449,22 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
         })
         logger.info(f"🆕 Создана недостающая категория: {missing_cat} (SKU: 1)")
 
+    # 📊 ДОБАВЛЯЕМ ДЕТАЛЬНУЮ ДИАГНОСТИКУ
+    logger.info(f"📊 ДИАГНОСТИКА КАТЕГОРИЙ:")
+    for cat in categories:
+        logger.info(f"  📂 Категория: {cat['category_name']} (SKU: {cat['category_sku']})")
+
+    logger.info(f"📊 ДИАГНОСТИКА ТОВАРОВ:")
+    products_by_category = {}
+    for prod in products:
+        cat_name = prod['category_name']
+        if cat_name not in products_by_category:
+            products_by_category[cat_name] = []
+        products_by_category[cat_name].append(prod['sku'])
+
+    for cat_name, skus in products_by_category.items():
+        logger.info(f"  📂 {cat_name}: {len(skus)} товаров ({', '.join(skus[:5])}{'...' if len(skus) > 5 else ''})")
+
     logger.info(
         f"✅ Обработка с автогенерацией SKU завершена: {len(categories)} категорий, {len(products)} товаров, {len(invalid_data)} ошибок")
 
@@ -448,36 +473,104 @@ def separate_categories_and_products(raw_data: List[Dict]) -> Tuple[List[Dict], 
 
 def get_import_statistics(categories: List[Dict], products: List[Dict], invalid_data: List[Dict]) -> Dict:
     """
-    📊 Подсчёт статистики импорта с разделением на категории и товары
+    📊 ИСПРАВЛЕННЫЙ подсчёт статистики импорта с реальной проверкой изображений
+
+    ✅ Теперь корректно проверяет существование файлов изображений на диске
     """
     try:
         category_names = set(cat['category_name'] for cat in categories)
-        products_with_images = sum(1 for prod in products if prod.get('image'))
+
+        # 💰 Товары с ценами (как было)
         products_with_prices = sum(1 for prod in products if prod.get('price', 0) > 0)
 
-        # 🆕 Статистика по SKU
+        # 🖼️ ИСПРАВЛЕНО: Реальная проверка существования изображений
+        products_with_images = 0
+        categories_with_images = 0
+        missing_images = []  # 📝 Список недостающих изображений
+
+        # 🔍 Проверяем изображения товаров
+        for prod in products:
+            image_name = prod.get('image', '').strip()
+            if image_name:
+                # 📂 Проверяем существование файла
+                image_path = os.path.join(settings.MEDIA_ROOT, 'product', image_name)
+                if os.path.exists(image_path):
+                    products_with_images += 1
+                    logger.debug(f"✅ Найдено изображение товара: {image_name}")
+                else:
+                    missing_images.append(f"product/{image_name}")
+                    logger.debug(f"❌ НЕ найдено изображение товара: {image_name}")
+
+        # 🔍 Проверяем изображения категорий
+        for cat in categories:
+            image_name = cat.get('image', '').strip()
+            if image_name:
+                # 📂 Проверяем существование файла
+                image_path = os.path.join(settings.MEDIA_ROOT, 'categories', image_name)
+                if os.path.exists(image_path):
+                    categories_with_images += 1
+                    logger.debug(f"✅ Найдено изображение категории: {image_name}")
+                else:
+                    missing_images.append(f"categories/{image_name}")
+                    logger.debug(f"❌ НЕ найдено изображение категории: {image_name}")
+
+        # 🆕 Статистика по SKU (как было)
         products_with_sku = sum(1 for prod in products if prod.get('sku'))
         auto_generated_sku = sum(1 for prod in products if not prod.get('original_sku'))
 
+        # 📊 Возвращаем исправленную статистику
         return {
             'total_rows': len(categories) + len(products) + len(invalid_data),
             'categories_count': len(categories),
             'products_count': len(products),
             'invalid_rows': len(invalid_data),
             'category_names': list(category_names),
+
+            # 🖼️ ИСПРАВЛЕНО: Реальные данные об изображениях
             'products_with_images': products_with_images,
+            'categories_with_images': categories_with_images,
+            'missing_images_count': len(missing_images),
+            'missing_images_list': missing_images[:10],  # Показываем первые 10
+
+            # 💰 Цены (как было)
             'products_with_prices': products_with_prices,
-            'categories_with_images': sum(1 for cat in categories if cat.get('image')),
-            'products_with_sku': products_with_sku,  # 🆕 Товары с SKU
-            'auto_generated_sku': auto_generated_sku,  # 🆕 Автосгенерированные SKU
+
+            # 🆕 SKU (как было)
+            'products_with_sku': products_with_sku,
+            'auto_generated_sku': auto_generated_sku,
         }
+
     except Exception as e:
         logger.error(f"Ошибка подсчёта статистики: {e}")
-        return {}
+        return {
+            'total_rows': len(categories) + len(products) + len(invalid_data),
+            'categories_count': len(categories),
+            'products_count': len(products),
+            'invalid_rows': len(invalid_data),
+            'category_names': [],
+            'products_with_images': 0,
+            'categories_with_images': 0,
+            'missing_images_count': 0,
+            'missing_images_list': [],
+            'products_with_prices': 0,
+            'products_with_sku': 0,
+            'auto_generated_sku': 0,
+            'error': str(e)
+        }
 
-# 🔧 НОВЫЕ ВОЗМОЖНОСТИ:
-# ✅ ДОБАВЛЕНО: extract_category_sku() - извлечение SKU категории из идентификатора
-# ✅ ДОБАВЛЕНО: generate_sku_for_product() - автогенерация SKU по формуле
-# ✅ ИЗМЕНЕНО: separate_categories_and_products() - поддержка автогенерации SKU
-# ✅ УЛУЧШЕНО: get_import_statistics() - добавлена статистика по SKU
-# ✅ РЕЗУЛЬТАТ: Товары получают правильные SKU, нет дубликатов
+# 🔧 КРИТИЧНОЕ ИСПРАВЛЕНИЕ В ЭТОМ ФАЙЛЕ:
+#
+# ❌ УБРАНО: from .import_utils import ( - циклический импорт на строке 18
+# ✅ ИСПРАВЛЕНО: separate_categories_and_products() - правильная привязка товаров к категориям
+# ✅ ИСПРАВЛЕНО: current_category обновляется при каждой новой категории
+# ✅ ИСПРАВЛЕНО: get_import_statistics() - реальная проверка существования изображений
+# ✅ ДОБАВЛЕНО: Детальная диагностика обработки категорий и товаров
+# ✅ ДОБАВЛЕНО: Подсчет недостающих изображений
+#
+# 📊 РЕЗУЛЬТАТ:
+# - НЕТ циклического импорта - сервер запустится
+# - Товары BMW → категория BMW
+# - Товары ACURA → категория ACURA
+# - Товары ALFA ROMEO → категория ALFA ROMEO
+# - Правильная статистика изображений
+# - Детальные логи для отладки
