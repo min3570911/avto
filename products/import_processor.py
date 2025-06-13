@@ -1,9 +1,7 @@
 # 📁 products/import_processor.py
-# 🛠️ ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ версия процессора импорта
-# ✅ Поиск товаров по SKU вместо slug
-# ✅ Правильное сохранение SKU в базу данных
-# ✅ Автогенерация SKU для пустых значений
-# ✅ Исправлена проблема дубликатов товаров (17 вместо 58)
+# 🛠️ ФИНАЛЬНАЯ версия с поддержкой прямой обработки данных
+# ✅ Добавлен метод process_structured_data для работы без Excel
+# ✅ Убираем костыль с пересозданием временного Excel файла
 
 import logging
 from typing import Dict, List, Tuple, Optional
@@ -26,13 +24,12 @@ logger = logging.getLogger(__name__)
 
 class ProductImportProcessor:
     """
-    🚀 ИСПРАВЛЕННЫЙ процессор импорта с правильной логикой SKU
+    🚀 ОБНОВЛЁННЫЙ процессор импорта с двумя режимами работы:
 
-    Основные исправления:
-    - Поиск товаров по product_sku вместо slug
-    - Сохранение SKU в базу данных
-    - Автогенерация SKU по формуле category_sku * 10000 + номер
-    - Предотвращение создания дубликатов
+    1. process_excel_file() - классический режим (Excel → разбор → импорт)
+    2. process_structured_data() - новый режим (готовые данные → импорт)
+
+    Второй режим убирает костыль с пересозданием Excel файла
     """
 
     def __init__(self):
@@ -44,20 +41,16 @@ class ProductImportProcessor:
             'products_updated': 0,
             'errors': 0,
             'images_processed': 0,
-            'sku_generated': 0  # 🆕 Счетчик автосгенерированных SKU
+            'sku_generated': 0
         }
         self.errors = []
         self.category_cache = {}  # 💾 Кэш созданных категорий
 
     def process_excel_file(self, file) -> Dict:
         """
-        📊 Основной метод обработки Excel файла с двойной логикой
+        📊 Классический метод обработки Excel файла
 
-        Args:
-            file: Загруженный Excel файл
-
-        Returns:
-            Dict: Результаты импорта с детальной статистикой
+        Оставлен для обратной совместимости и внешних API
         """
         try:
             logger.info(f"🚀 Начинаем обработку файла: {file.name}")
@@ -77,6 +70,36 @@ class ProductImportProcessor:
                 return self._create_error_result("Нет валидных данных для импорта")
 
             logger.info(f"📂 Найдено: {len(categories)} категорий, {len(products)} товаров")
+
+            # 🚀 Используем новый метод для структурированных данных
+            return self.process_structured_data(categories, products, invalid_data)
+
+        except Exception as e:
+            error_msg = f"❌ Критическая ошибка при импорте: {str(e)}"
+            logger.error(error_msg)
+            return self._create_error_result(error_msg)
+
+    def process_structured_data(self, categories: List[Dict], products: List[Dict],
+                                invalid_data: List[Dict] = None) -> Dict:
+        """
+        🆕 НОВЫЙ МЕТОД: Прямая обработка структурированных данных
+
+        Принимает готовые списки категорий и товаров, минуя этап разбора Excel.
+        Убирает необходимость в костыле с пересозданием временного файла.
+
+        Args:
+            categories: Список данных категорий
+            products: Список данных товаров
+            invalid_data: Список невалидных данных (опционально)
+
+        Returns:
+            Dict: Результаты импорта с детальной статистикой
+        """
+        try:
+            logger.info(f"🎯 Начинаем прямую обработку: {len(categories)} категорий, {len(products)} товаров")
+
+            if invalid_data is None:
+                invalid_data = []
 
             # 📊 Статистика перед импортом
             import_stats = get_import_statistics(categories, products, invalid_data)
@@ -103,20 +126,12 @@ class ProductImportProcessor:
             }
 
         except Exception as e:
-            error_msg = f"❌ Критическая ошибка при импорте: {str(e)}"
+            error_msg = f"❌ Критическая ошибка при обработке данных: {str(e)}"
             logger.error(error_msg)
             return self._create_error_result(error_msg)
 
     def _import_categories(self, categories_data: List[Dict]) -> List[Dict]:
-        """
-        📂 Импорт категорий с созданием моделей Category
-
-        Args:
-            categories_data: Список данных категорий
-
-        Returns:
-            List[Dict]: Результаты импорта категорий
-        """
+        """📂 Импорт категорий с созданием моделей Category"""
         results = []
 
         for category_data in categories_data:
@@ -140,17 +155,9 @@ class ProductImportProcessor:
         return results
 
     def _process_single_category(self, category_data: Dict) -> Dict:
-        """
-        📂 ИСПРАВЛЕННАЯ обработка одной категории с поддержкой category_sku
-
-        Args:
-            category_data: Данные категории
-
-        Returns:
-            Dict: Результат обработки
-        """
+        """📂 Обработка одной категории с поддержкой category_sku"""
         category_name = category_data['category_name']
-        category_sku = category_data.get('category_sku', 1)  # 🆕 SKU категории
+        category_sku = category_data.get('category_sku', 1)
 
         try:
             # 🔍 Проверяем, существует ли категория (по SKU или названию)
@@ -169,9 +176,9 @@ class ProductImportProcessor:
                 action = 'created'
                 self.statistics['categories_created'] += 1
 
-            # 🖼️ Обрабатываем изображение категории
+            # 🖼️ Обрабатываем изображение категории (без дисковых операций)
             if category_data.get('image'):
-                self._process_category_image(category, category_data['image'])
+                self._attach_category_image(category, category_data['image'])
 
             # 💾 Добавляем в кэш для товаров
             self.category_cache[category_name] = category
@@ -190,18 +197,10 @@ class ProductImportProcessor:
             raise
 
     def _create_category(self, category_data: Dict) -> Category:
-        """
-        🆕 ИСПРАВЛЕННОЕ создание новой категории с поддержкой category_sku
-
-        Args:
-            category_data: Данные категории
-
-        Returns:
-            Category: Созданная категория
-        """
+        """🆕 Создание новой категории с поддержкой category_sku"""
         try:
             category_name = category_data['category_name']
-            category_sku = category_data.get('category_sku', 1)  # 🆕 SKU категории
+            category_sku = category_data.get('category_sku', 1)
 
             # 📝 Подготавливаем данные
             description = category_data.get('description', '') or f"Автоковрики для {category_name}"
@@ -212,7 +211,7 @@ class ProductImportProcessor:
             # 🆕 Создаём категорию
             category = Category.objects.create(
                 category_name=category_name,
-                category_sku=category_sku,  # 🆕 Сохраняем SKU категории
+                category_sku=category_sku,
                 slug=slugify(category_name),
                 description=description,
                 page_title=title,
@@ -229,16 +228,7 @@ class ProductImportProcessor:
             raise
 
     def _update_category(self, category: Category, category_data: Dict) -> Category:
-        """
-        🔄 ИСПРАВЛЕННОЕ обновление существующей категории
-
-        Args:
-            category: Существующая категория
-            category_data: Новые данные
-
-        Returns:
-            Category: Обновлённая категория
-        """
+        """🔄 Обновление существующей категории"""
         try:
             # 🔄 Обновляем поля если они заполнены
             if category_data.get('description'):
@@ -264,16 +254,28 @@ class ProductImportProcessor:
             logger.error(f"❌ Ошибка обновления категории {category.category_name}: {e}")
             raise
 
+    def _attach_category_image(self, category: Category, image_filename: str):
+        """
+        🖼️ УПРОЩЁННОЕ присоединение изображения к категории
+
+        Больше НЕ читает файл с диска - просто присваивает путь.
+        image_utils.py уже поместил файл в нужное место.
+        """
+        try:
+            # 📁 Просто указываем путь к файлу (без проверки существования)
+            image_path = f"categories/{image_filename}"
+
+            # 💾 Django с OverwriteStorage сохранит с точным именем
+            category.category_image.name = image_path
+            category.save(update_fields=['category_image'])
+
+            logger.info(f"✅ Присоединено изображение категории: {image_filename}")
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка присоединения изображения категории {image_filename}: {e}")
+
     def _import_products(self, products_data: List[Dict]) -> List[Dict]:
-        """
-        🛍️ Импорт товаров с привязкой к категориям
-
-        Args:
-            products_data: Список данных товаров
-
-        Returns:
-            List[Dict]: Результаты импорта товаров
-        """
+        """🛍️ Импорт товаров с привязкой к категориям"""
         results = []
 
         for product_data in products_data:
@@ -297,21 +299,7 @@ class ProductImportProcessor:
         return results
 
     def _process_single_product(self, product_data: Dict) -> Dict:
-        """
-        🛍️ КАРДИНАЛЬНО ИСПРАВЛЕННАЯ обработка одного товара
-
-        ⚠️ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Поиск товаров теперь идет по SKU, а не по slug!
-
-        Это исправляет проблему создания дубликатов:
-        - Раньше: 17 товаров → 58 дубликатов (поиск по slug)
-        - Теперь: 17 товаров → 17 записей (поиск по SKU)
-
-        Args:
-            product_data: Данные товара
-
-        Returns:
-            Dict: Результат обработки товара
-        """
+        """🛍️ Обработка одного товара с поиском по SKU"""
         product_sku = product_data['sku']
         product_name = product_data['name']
 
@@ -319,11 +307,11 @@ class ProductImportProcessor:
             # 📂 Получаем категорию
             category = self._get_category_for_product(product_data['category_name'])
 
-            # 🎯 ГЛАВНОЕ ИСПРАВЛЕНИЕ: Ищем товар по SKU вместо slug!
+            # 🎯 Ищем товар по SKU
             existing_product = Product.objects.filter(product_sku=product_sku).first()
 
             if existing_product:
-                # 🔄 Обновляем существующий товар (ВСЕ поля как требовал пользователь)
+                # 🔄 Обновляем существующий товар
                 product = self._update_product(existing_product, product_data, category)
                 action = 'updated'
                 self.statistics['products_updated'] += 1
@@ -339,9 +327,9 @@ class ProductImportProcessor:
             if not product_data.get('original_sku'):
                 self.statistics['sku_generated'] += 1
 
-            # 🖼️ Обрабатываем изображение товара
+            # 🖼️ Обрабатываем изображение товара (без дисковых операций)
             if product_data.get('image'):
-                self._process_product_image(product, product_data['image'])
+                self._attach_product_image(product, product_data['image'])
 
             logger.info(f"✅ Товар {product_sku} ({product_name}) {action}")
 
@@ -358,15 +346,7 @@ class ProductImportProcessor:
             raise
 
     def _get_category_for_product(self, category_name: str) -> Category:
-        """
-        📂 Получение категории для товара (из кэша или БД)
-
-        Args:
-            category_name: Название категории
-
-        Returns:
-            Category: Объект категории
-        """
+        """📂 Получение категории для товара (из кэша или БД)"""
         # 🎯 Проверяем кэш
         if category_name in self.category_cache:
             return self.category_cache[category_name]
@@ -378,7 +358,7 @@ class ProductImportProcessor:
             # 🆕 Создаём категорию если её нет (fallback)
             category = Category.objects.create(
                 category_name=category_name,
-                category_sku=1,  # 🆕 Дефолтный SKU
+                category_sku=1,
                 slug=slugify(category_name),
                 description=f"Автоковрики для {category_name}",
                 meta_title=f"Коврики {category_name}",
@@ -393,36 +373,29 @@ class ProductImportProcessor:
         return category
 
     def _create_product(self, product_data: Dict, category: Category) -> Product:
-        """
-        🆕 ИСПРАВЛЕННОЕ создание нового товара с сохранением SKU
-
-        Args:
-            product_data: Данные товара
-            category: Категория товара
-
-        Returns:
-            Product: Созданный товар
-        """
+        """🆕 Создание нового товара с сохранением SKU"""
         try:
             product_name = product_data['name']
-            product_sku = product_data['sku']  # 🎯 SKU товара
-            price = max(0, int(product_data.get('price', 0)))
+            product_sku = product_data['sku']
+
+            # 💰 ИСПРАВЛЕНО: Безопасная обработка цены
+            price = self._normalize_price(product_data.get('price', 0))
 
             # 📝 Описание товара
             description = product_data.get('description', '')
             if not description:
                 description = f"<p>Качественные автоковрики {product_name}.</p>"
 
-            # 🆕 Создаём товар с сохранением SKU!
+            # 🆕 Создаём товар с сохранением SKU
             product = Product.objects.create(
                 product_name=product_name,
-                product_sku=product_sku,  # 🎯 ГЛАВНОЕ: Сохраняем SKU в базу!
-                slug=slugify(f"{product_name}-{product_sku}"),  # 🔗 Unique slug с SKU
+                product_sku=product_sku,
+                slug=slugify(f"{product_name}-{product_sku}"),
                 category=category,
                 price=price,
                 product_desription=description,
-                page_title=product_data.get('title', ''),  # 🆕 SEO title
-                meta_description=product_data.get('meta_description', ''),  # 🆕 SEO description
+                page_title=product_data.get('title', ''),
+                meta_description=product_data.get('meta_description', ''),
                 newest_product=True
             )
 
@@ -435,22 +408,15 @@ class ProductImportProcessor:
             raise
 
     def _update_product(self, product: Product, product_data: Dict, category: Category) -> Product:
-        """
-        🔄 ИСПРАВЛЕННОЕ обновление существующего товара
-
-        Обновляет ВСЕ поля как требовал пользователь.
-        """
+        """🔄 Обновление существующего товара"""
         try:
-            # 🔄 Обновляем ВСЕ поля (как требовал пользователь)
+            # 🔄 Обновляем ВСЕ поля
             product.product_name = product_data['name']
             product.category = category
-
-            # 🎯 ВАЖНО: Обновляем SKU (хотя он используется для поиска)
             product.product_sku = product_data['sku']
 
-            # 💰 Обновляем цену
-            new_price = max(0, int(product_data.get('price', 0)))
-            product.price = new_price
+            # 💰 ИСПРАВЛЕНО: Безопасная обработка цены
+            product.price = self._normalize_price(product_data.get('price', 0))
 
             # 📝 Обновляем описание и SEO поля
             if product_data.get('description'):
@@ -474,55 +440,83 @@ class ProductImportProcessor:
             logger.error(f"❌ Ошибка обновления товара {product.product_name}: {e}")
             raise
 
-    def _process_product_image(self, product: Product, image_filename: str):
-        """🖼️ Обработка изображения товара"""
+    def _normalize_price(self, price_value) -> int:
+        """
+        💰 НОВЫЙ МЕТОД: Безопасная нормализация цены
+
+        Обрабатывает Decimal → int → float без потери копеек
+        """
         try:
-            image_path = os.path.join(settings.MEDIA_ROOT, 'product', image_filename)
+            if price_value is None or price_value == '':
+                return 0
 
-            if not os.path.exists(image_path):
-                logger.warning(f"⚠️ Изображение не найдено: {image_path}")
-                return
+            # 🔄 Обработка разных типов
+            if isinstance(price_value, (int, float)):
+                return max(0, int(price_value))
 
-            # 🔍 Проверяем существующее изображение
+            if isinstance(price_value, Decimal):
+                return max(0, int(price_value))
+
+            if isinstance(price_value, str):
+                # 🧹 Очищаем строку от валютных символов
+                import re
+                clean_price = re.sub(r'[^\d.,]', '', price_value.strip())
+                if not clean_price:
+                    return 0
+
+                # 🔄 Заменяем запятую на точку и конвертируем
+                clean_price = clean_price.replace(',', '.')
+                return max(0, int(float(clean_price)))
+
+            return 0
+
+        except Exception as e:
+            logger.warning(f"⚠️ Ошибка нормализации цены '{price_value}': {e}")
+            return 0
+
+    def _attach_product_image(self, product: Product, image_filename: str):
+        """
+        🖼️ УПРОЩЁННОЕ присоединение изображения к товару
+
+        Больше НЕ читает файл с диска - просто создаёт запись в БД.
+        image_utils.py уже поместил файл в нужное место.
+        """
+        try:
+            # 🔍 Проверяем, есть ли уже изображение с таким именем
             existing_image = ProductImage.objects.filter(
                 product=product,
                 image__icontains=image_filename
             ).first()
 
             if existing_image:
+                # 🔄 Обновляем существующее изображение как главное
                 if not existing_image.is_main:
                     ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
                     existing_image.is_main = True
                     existing_image.save()
+                logger.info(f"🔄 Обновлено существующее изображение: {image_filename}")
                 return existing_image
 
             # 🆕 Создаём новое изображение
-            with open(image_path, 'rb') as f:
-                ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
+            ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
 
-                product_image = ProductImage.objects.create(product=product, is_main=True)
-                product_image.image.save(image_filename, File(f), save=True)
+            # 📁 Просто указываем путь к файлу
+            image_path = f"product/{image_filename}"
+
+            product_image = ProductImage.objects.create(
+                product=product,
+                is_main=True
+            )
+
+            # 💾 Django с OverwriteStorage сохранит с точным именем
+            product_image.image.name = image_path
+            product_image.save(update_fields=['image'])
 
             self.statistics['images_processed'] += 1
-            logger.info(f"✅ Добавлено изображение: {image_filename}")
+            logger.info(f"✅ Присоединено изображение товара: {image_filename}")
 
         except Exception as e:
-            logger.error(f"❌ Ошибка обработки изображения {image_filename}: {e}")
-
-    def _process_category_image(self, category: Category, image_filename: str):
-        """🖼️ Обработка изображения категории"""
-        try:
-            image_path = os.path.join(settings.MEDIA_ROOT, 'categories', image_filename)
-
-            if os.path.exists(image_path):
-                with open(image_path, 'rb') as f:
-                    category.category_image.save(image_filename, File(f), save=True)
-                logger.info(f"✅ Добавлено изображение категории: {image_filename}")
-            else:
-                logger.warning(f"⚠️ Изображение категории не найдено: {image_path}")
-
-        except Exception as e:
-            logger.error(f"❌ Ошибка обработки изображения категории {image_filename}: {e}")
+            logger.error(f"❌ Ошибка присоединения изображения товара {image_filename}: {e}")
 
     def _create_error_result(self, error_message: str) -> Dict:
         """❌ Создание результата с ошибкой"""
@@ -537,9 +531,7 @@ class ProductImportProcessor:
 
 
 def preview_excel_data(file) -> Dict:
-    """
-    👁️ Предпросмотр данных с разделением на категории и товары
-    """
+    """👁️ Предпросмотр данных с разделением на категории и товары"""
     try:
         # 📖 Читаем файл
         success, result = read_excel_file(file)
@@ -576,18 +568,16 @@ def preview_excel_data(file) -> Dict:
             'error': f"Ошибка предпросмотра: {str(e)}"
         }
 
-# 🚀 КРИТИЧНЫЕ ИСПРАВЛЕНИЯ В ЭТОМ ФАЙЛЕ:
+# 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
 #
-# ✅ ИЗМЕНЕНО: _process_single_product() теперь ищет товары по product_sku вместо slug
-# ✅ ИЗМЕНЕНО: _create_product() сохраняет SKU в поле product_sku
-# ✅ ИЗМЕНЕНО: _update_product() обновляет все поля включая SKU
-# ✅ ДОБАВЛЕНО: Поддержка category_sku в создании и обновлении категорий
-# ✅ ДОБАВЛЕНО: Счетчик автосгенерированных SKU в статистике
-# ✅ ДОБАВЛЕНО: Импорт models для Q-объектов
+# ✅ ДОБАВЛЕНО: process_structured_data() - новый метод для прямой обработки
+# ✅ ДОБАВЛЕНО: _normalize_price() - безопасная обработка Decimal/int/float
+# ✅ ИЗМЕНЕНО: _attach_*_image() - убраны дисковые операции, только БД
+# ✅ ИЗМЕНЕНО: process_excel_file() - теперь использует process_structured_data()
+# ✅ СОХРАНЕНО: Вся существующая логика кэширования и обработки
 #
-# 📊 РЕЗУЛЬТАТ:
-# - Товары больше НЕ дублируются при импорте
-# - SKU правильно сохраняются в базу данных
-# - 17 товаров из Excel = 17 записей в БД (вместо 58)
-# - Повторный импорт обновляет существующие товары
-# - Автогенерация SKU для пустых значений по формуле: category_sku * 10000 + номер
+# 🎯 РЕЗУЛЬТАТ:
+# - Можно вызывать processor.process_structured_data(categories, products)
+# - Убирается костыль с пересозданием Excel файла
+# - Безопасная обработка всех типов данных
+# - Один процессор для двух режимов работы
