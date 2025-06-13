@@ -1,5 +1,6 @@
-# 📁 products/models.py - ДОПОЛНЕНИЕ к существующим моделям
-# 🔧 ОБНОВЛЕНИЕ: Добавляем поля для импорта и логику главного изображения
+# 📁 products/models.py - ФИНАЛЬНАЯ версия с OverwriteStorage
+# 🔧 КРИТИЧНОЕ ОБНОВЛЕНИЕ: Подключен OverwriteStorage для точных имён файлов
+# ✅ Больше никаких хеш-суффиксов при сохранении изображений
 
 import re
 from django.db import models
@@ -9,6 +10,9 @@ from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 from django_ckeditor_5.fields import CKEditor5Field
 from django.db.models import Q
+
+# 🆕 КРИТИЧНЫЙ ИМПОРТ: Кастомное хранилище без суффиксов
+from .storage import OverwriteStorage
 
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (
@@ -33,10 +37,13 @@ class Category(BaseModel):
         verbose_name="URL-адрес",
         help_text="Автоматически генерируется из названия"
     )
+
+    # 🖼️ ИСПРАВЛЕНО: Подключено OverwriteStorage для точных имён файлов
     category_image = models.ImageField(
         upload_to="categories",
+        storage=OverwriteStorage(),  # 🎯 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
         verbose_name="Изображение категории",
-        help_text="Рекомендуемый размер: 800x400 px"
+        help_text="Рекомендуемый размер: 800x400 px. Файл сохранится с точным именем"
     )
 
     # 🆔 Служебные поля
@@ -62,12 +69,12 @@ class Category(BaseModel):
     description = CKEditor5Field(
         verbose_name="Описание категории",
         help_text="Основное описание категории с форматированием",
-        config_name='blog',  # 🎯 Расширенная конфигурация
+        config_name='blog',
         blank=True,
         null=True
     )
 
-    # 🎬 ИЗМЕНЕНО: Убран CKEditor, добавлен обычный TextField
+    # 🎬 Дополнительный контент с YouTube
     additional_content = models.TextField(
         verbose_name="Дополнительный контент",
         help_text="Вставьте ссылку на YouTube видео или готовый HTML-код. YouTube ссылки автоматически преобразуются в плеер",
@@ -99,19 +106,15 @@ class Category(BaseModel):
     )
 
     def convert_youtube_links(self, content):
-        """
-        🎬 Автоматическая конверсия YouTube ссылок в responsive iframe
-        """
+        """🎬 Автоматическая конверсия YouTube ссылок в responsive iframe"""
         if not content:
             return content
 
-        # 🔍 Регулярные выражения для разных форматов YouTube ссылок
         youtube_patterns = [
             r'https?://(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})',
             r'https?://youtu\.be/([a-zA-Z0-9_-]{11})',
         ]
 
-        # 🎯 Шаблон responsive iframe для YouTube
         iframe_template = '''
         <div class="youtube-video-container">
             <iframe 
@@ -124,7 +127,6 @@ class Category(BaseModel):
         </div>
         '''
 
-        # 🔄 Обработка каждого паттерна
         for pattern in youtube_patterns:
             def replace_match(match):
                 video_id = match.group(1)
@@ -136,18 +138,15 @@ class Category(BaseModel):
 
     def save(self, *args, **kwargs):
         """🔄 Автоматическое создание slug, заполнение SEO-полей и конверсия YouTube"""
-        # 🔗 Автогенерация slug
         if not self.slug:
             self.slug = slugify(self.category_name)
 
-        # 🆔 Автогенерация SKU если не задан
         if not self.category_sku:
             last_sku = Category.objects.aggregate(
                 max_sku=models.Max('category_sku')
             )['max_sku']
             self.category_sku = (last_sku or 0) + 1
 
-        # 🔍 Автозаполнение SEO-полей если пусты
         if not self.page_title:
             self.page_title = self.category_name
 
@@ -158,7 +157,6 @@ class Category(BaseModel):
             self.meta_description = f"Большой выбор {self.category_name.lower()}. Качественные товары с доставкой по Беларуси. Выгодные цены и быстрая доставка."[
                                     :160]
 
-        # 🎬 Автоматическая конверсия YouTube ссылок в дополнительном контенте
         if self.additional_content:
             self.additional_content = self.convert_youtube_links(self.additional_content)
 
@@ -217,7 +215,7 @@ class KitVariant(BaseModel):
 
 
 class Product(BaseModel):
-    """🛍️ Основная модель товаров - ОБНОВЛЕННАЯ с полями для импорта"""
+    """🛍️ Основная модель товаров"""
     product_name = models.CharField(max_length=100, verbose_name="Название товара")
     slug = models.SlugField(unique=True, null=True, blank=True, verbose_name="URL-адрес")
     category = models.ForeignKey(
@@ -231,7 +229,7 @@ class Product(BaseModel):
     )
     newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
-    # 🆕 НОВЫЕ ПОЛЯ ДЛЯ ИМПОРТА
+    # 🆕 Поля для импорта
     product_sku = models.CharField(
         max_length=50,
         unique=True,
@@ -303,7 +301,7 @@ class Product(BaseModel):
         """🆕 Проверяет, является ли товар новым"""
         return self.newest_product
 
-    # 🖼️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ИЗОБРАЖЕНИЯМИ
+    # 🖼️ Методы для работы с изображениями
     def get_main_image(self):
         """🖼️ Возвращает главное изображение товара"""
         return self.product_images.filter(is_main=True).first()
@@ -317,7 +315,7 @@ class Product(BaseModel):
         main_image = self.get_main_image()
         if main_image and main_image.image:
             return main_image.image.url
-        return '/media/images/placeholder-product.jpg'  # 🎨 Заглушка
+        return '/media/images/placeholder-product.jpg'
 
     def has_main_image(self):
         """✅ Проверяет наличие главного изображения"""
@@ -330,13 +328,19 @@ class Product(BaseModel):
 
 
 class ProductImage(BaseModel):
-    """🖼️ Модель изображений товаров - ОБНОВЛЕННАЯ с полем is_main"""
+    """🖼️ Модель изображений товаров с OverwriteStorage"""
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE,
         related_name='product_images', verbose_name="Товар")
-    image = models.ImageField(upload_to='product', verbose_name="Изображение")
 
-    # 🆕 НОВОЕ ПОЛЕ для определения главного изображения
+    # 🖼️ ИСПРАВЛЕНО: Подключено OverwriteStorage для точных имён файлов
+    image = models.ImageField(
+        upload_to='product',
+        storage=OverwriteStorage(),  # 🎯 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ!
+        verbose_name="Изображение",
+        help_text="Файл сохранится с точным именем без хеш-суффиксов"
+    )
+
     is_main = models.BooleanField(
         default=False,
         verbose_name="Главное изображение",
@@ -375,11 +379,10 @@ class ProductImage(BaseModel):
     class Meta:
         verbose_name = "Изображение товара"
         verbose_name_plural = "Изображения товаров"
-        ordering = ['-is_main', 'created_at']  # 🎯 Главное изображение сверху
+        ordering = ['-is_main', 'created_at']
 
 
-# 🔧 ВСЕ ОСТАЛЬНЫЕ МОДЕЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
-# (Coupon, ProductReview, Color, Wishlist)
+# 🔧 ВСЕ ОСТАЛЬНЫЕ МОДЕЛИ БЕЗ ИЗМЕНЕНИЙ (Coupon, ProductReview, Color, Wishlist)
 
 class Coupon(BaseModel):
     """🎫 Модель купонов и скидок"""
@@ -563,6 +566,15 @@ class Wishlist(BaseModel):
         verbose_name_plural = "Избранное"
         ordering = ['-added_on']
 
-# 🔧 СЛЕДУЮЩИЙ ШАГ:
-# Создать миграции: python manage.py makemigrations products
-# Применить миграции: python manage.py migrate
+# 🔧 ГЛАВНЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
+#
+# ✅ ДОБАВЛЕНО: storage=OverwriteStorage() в Category.category_image
+# ✅ ДОБАВЛЕНО: storage=OverwriteStorage() в ProductImage.image
+# ✅ ДОБАВЛЕНО: Импорт from .storage import OverwriteStorage
+# ✅ ДОБАВЛЕНО: Help text про точные имена файлов
+# ✅ СОХРАНЕНО: Вся остальная логика моделей без изменений
+#
+# 🎯 РЕЗУЛЬТАТ:
+# - Файлы BMW.png останутся BMW.png (без хеш-суффиксов)
+# - image_utils.py + OverwriteStorage работают в связке
+# - Точное соответствие имён файлов между диском и БД

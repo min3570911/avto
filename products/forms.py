@@ -1,6 +1,6 @@
-# 📁 products/forms.py - ДОПОЛНЕННАЯ ВЕРСИЯ с поддержкой ZIP
-# 🔧 Добавлены формы для импорта данных с изображениями
-# ✅ Сохранена вся существующая логика
+# 📁 products/forms.py - ОЧИЩЕННАЯ версия с единой формой импорта
+# 🔧 УБРАНО: Дублирование ExcelUploadForm и ProductImportForm
+# ✅ ОСТАВЛЕНО: Одна универсальная форма + существующие формы отзывов
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -8,37 +8,40 @@ from django.core.files.uploadedfile import UploadedFile
 import os
 import zipfile
 
-# Если уже есть импорт ReviewForm, оставляем его
-try:
-    from .forms import ReviewForm
-except ImportError:
-    # Если файла forms.py еще нет, создаем ReviewForm
-    from .models import ProductReview
+# 📝 Импорт модели для отзывов
+from .models import ProductReview
 
 
-    class ReviewForm(forms.ModelForm):
-        class Meta:
-            model = ProductReview
-            fields = ['stars', 'content']
-            widgets = {
-                "stars": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
-                "content": forms.Textarea(
-                    attrs={"class": "form-control", "rows": 4, "placeholder": "Напишите ваш отзыв здесь..."}),
-            }
-            labels = {
-                "stars": "Оценка",
-                "content": "Комментарий"
-            }
+class ReviewForm(forms.ModelForm):
+    """📝 Форма для отзывов о товарах"""
+
+    class Meta:
+        model = ProductReview
+        fields = ['stars', 'content']
+        widgets = {
+            "stars": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 5}),
+            "content": forms.Textarea(
+                attrs={"class": "form-control", "rows": 4, "placeholder": "Напишите ваш отзыв здесь..."}
+            ),
+        }
+        labels = {
+            "stars": "Оценка",
+            "content": "Комментарий"
+        }
 
 
 class ProductImportForm(forms.Form):
     """
-    📊 ОБНОВЛЕННАЯ форма для загрузки Excel файла с товарами + ZIP с изображениями
+    📊 ЕДИНАЯ УНИВЕРСАЛЬНАЯ форма для импорта товаров
+
+    Заменяет все предыдущие формы импорта:
+    - ExcelUploadForm ❌
+    - ProductImportForm (старая версия) ❌
+    - UnifiedImportForm ❌
 
     Поддерживает:
-    - Валидацию формата Excel файла
-    - Валидацию ZIP архива с изображениями
-    - Ограничение размера файлов
+    - Excel файлы с товарами и категориями
+    - ZIP архивы с изображениями
     - Настройки импорта
     """
 
@@ -52,11 +55,10 @@ class ProductImportForm(forms.Form):
         })
     )
 
-    # 🆕 НОВОЕ ПОЛЕ: ZIP архив с изображениями
     images_zip = forms.FileField(
         label="🖼️ ZIP архив с изображениями",
         help_text="Необязательно. Поддерживаемый формат: .zip. Максимальный размер: 10MB",
-        required=False,  # 🎯 Необязательное поле
+        required=False,
         widget=forms.FileInput(attrs={
             'class': 'form-control',
             'accept': '.zip',
@@ -64,6 +66,7 @@ class ProductImportForm(forms.Form):
         })
     )
 
+    # ⚙️ Настройки импорта
     update_existing = forms.BooleanField(
         label="🔄 Обновлять существующие товары",
         help_text="Если товар с таким SKU уже существует, обновить его данные",
@@ -106,7 +109,6 @@ class ProductImportForm(forms.Form):
 
     def clean_excel_file(self):
         """✅ Валидация загруженного Excel файла"""
-
         excel_file = self.cleaned_data.get('excel_file')
 
         if not excel_file:
@@ -137,8 +139,7 @@ class ProductImportForm(forms.Form):
         return excel_file
 
     def clean_images_zip(self):
-        """🆕 НОВАЯ ВАЛИДАЦИЯ: ZIP архив с изображениями"""
-
+        """🖼️ Валидация ZIP архива с изображениями"""
         images_zip = self.cleaned_data.get('images_zip')
 
         # 🎯 Если файл не загружен - это нормально (поле необязательное)
@@ -188,19 +189,21 @@ class ProductImportForm(forms.Form):
                         continue
 
                     file_ext = os.path.splitext(filename)[1].lower()
-                    if file_ext not in allowed_image_extensions:
+                    if file_ext and file_ext not in allowed_image_extensions:
                         invalid_files.append(filename)
 
-                # ⚠️ Предупреждение о неподдерживаемых файлах
+                # ⚠️ Предупреждение о неподдерживаемых файлах (не блокируем импорт)
                 if invalid_files:
-                    # Ограничиваем список до 5 файлов для читаемости
-                    files_sample = invalid_files[:5]
-                    if len(invalid_files) > 5:
-                        files_sample.append(f"... и еще {len(invalid_files) - 5} файлов")
+                    files_sample = invalid_files[:3]
+                    if len(invalid_files) > 3:
+                        files_sample.append(f"... и еще {len(invalid_files) - 3}")
 
-                    raise ValidationError(
-                        f"Обнаружены файлы неподдерживаемых форматов: {', '.join(files_sample)}. "
-                        f"Разрешены только: {', '.join(allowed_image_extensions)}"
+                    # 🔄 Логируем предупреждение, но не блокируем
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(
+                        f"⚠️ Найдены файлы неподдерживаемых форматов: {', '.join(files_sample)}. "
+                        f"Они будут пропущены."
                     )
 
         except zipfile.BadZipFile:
@@ -214,7 +217,6 @@ class ProductImportForm(forms.Form):
 
     def get_import_settings(self) -> dict:
         """⚙️ Получение настроек импорта в виде словаря"""
-
         return {
             'update_existing': self.cleaned_data.get('update_existing', True),
             'create_categories': self.cleaned_data.get('create_categories', True),
@@ -223,15 +225,8 @@ class ProductImportForm(forms.Form):
         }
 
 
-# 🔧 ВСЕ ОСТАЛЬНЫЕ ФОРМЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
-# (ImportPreviewForm, CategoryImportForm, ImportTemplateDownloadForm, BulkProductUpdateForm)
-
 class ImportPreviewForm(forms.Form):
-    """
-    👁️ Форма для подтверждения импорта после предпросмотра
-
-    Используется на этапе подтверждения данных перед импортом
-    """
+    """👁️ Форма для подтверждения импорта после предпросмотра"""
 
     confirm_import = forms.BooleanField(
         label="✅ Подтвердить импорт данных",
@@ -255,7 +250,6 @@ class ImportPreviewForm(forms.Form):
 
     def clean_confirm_import(self):
         """✅ Валидация подтверждения"""
-
         confirm = self.cleaned_data.get('confirm_import')
 
         if not confirm:
@@ -265,11 +259,7 @@ class ImportPreviewForm(forms.Form):
 
 
 class CategoryImportForm(forms.Form):
-    """
-    📂 Форма для импорта категорий (отдельно от товаров)
-
-    Используется для массового импорта категорий
-    """
+    """📂 Форма для импорта только категорий"""
 
     excel_file = forms.FileField(
         label="📂 Excel файл с категориями",
@@ -302,7 +292,6 @@ class CategoryImportForm(forms.Form):
 
     def clean_excel_file(self):
         """✅ Валидация файла категорий"""
-
         excel_file = self.cleaned_data.get('excel_file')
 
         if not excel_file:
@@ -321,11 +310,7 @@ class CategoryImportForm(forms.Form):
 
 
 class ImportTemplateDownloadForm(forms.Form):
-    """
-    📥 Форма для скачивания шаблонов Excel файлов
-
-    Позволяет пользователям скачать правильно оформленные шаблоны
-    """
+    """📥 Форма для скачивания шаблонов Excel файлов"""
 
     TEMPLATE_CHOICES = [
         ('products', '🛍️ Шаблон для товаров'),
@@ -354,11 +339,7 @@ class ImportTemplateDownloadForm(forms.Form):
 
 
 class BulkProductUpdateForm(forms.Form):
-    """
-    🔄 Форма для массового обновления товаров
-
-    Позволяет обновить определенные поля у всех товаров из файла
-    """
+    """🔄 Форма для массового обновления товаров"""
 
     excel_file = forms.FileField(
         label="📊 Excel файл с обновлениями",
@@ -397,7 +378,6 @@ class BulkProductUpdateForm(forms.Form):
 
     def clean_excel_file(self):
         """✅ Валидация файла обновлений"""
-
         excel_file = self.cleaned_data.get('excel_file')
 
         if not excel_file:
@@ -440,16 +420,15 @@ class ImportSettingsWidget(forms.Widget):
 
 # 🔧 ОСНОВНЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
 #
-# ✅ ДОБАВЛЕНО: Поле images_zip в ProductImportForm
-# ✅ ДОБАВЛЕНО: Метод clean_images_zip() с полной валидацией ZIP архива
-# ✅ ДОБАВЛЕНО: Проверка количества файлов (макс. 100)
-# ✅ ДОБАВЛЕНО: Проверка форматов изображений (jpg, png, webp)
-# ✅ ДОБАВЛЕНО: Проверка целостности ZIP архива
-# ✅ СОХРАНЕНО: Вся существующая логика форм
-# ✅ СОХРАНЕНО: Все остальные формы без изменений
+# ✅ УБРАНО: ExcelUploadForm (дублирование)
+# ✅ УБРАНО: Старая версия ProductImportForm
+# ✅ УБРАНО: UnifiedImportForm из admin_views
+# ✅ СОЗДАНО: Новая универсальная ProductImportForm с полной валидацией
+# ✅ СОХРАНЕНО: Все остальные формы (ReviewForm, ImportPreviewForm, etc.)
+# ✅ УЛУЧШЕНО: Валидация ZIP файлов с предупреждениями вместо блокировки
 #
-# 📊 РЕЗУЛЬТАТ:
-# - Форма теперь поддерживает загрузку ZIP архива
-# - Полная валидация архива и изображений
-# - Сохранена обратная совместимость
-# - Поле ZIP необязательное - можно импортировать только Excel
+# 🎯 РЕЗУЛЬТАТ:
+# - Одна форма импорта вместо трёх разных
+# - Полная валидация Excel и ZIP файлов
+# - Гибкие настройки импорта
+# - Чистая архитектура форм

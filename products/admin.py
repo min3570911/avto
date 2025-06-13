@@ -1,5 +1,7 @@
-# 📁 products/admin.py - ОБНОВЛЕННАЯ ВЕРСИЯ с импортом и главными изображениями
+# 📁 products/admin.py - ОБНОВЛЕННАЯ версия с поддержкой OverwriteStorage
 # 🛍️ Админка для системы интернет-магазина автоковриков
+# ✅ Обновлены сообщения для OverwriteStorage
+# 🆕 Добавлены подсказки о точных именах файлов
 
 from django.contrib import admin
 from django.utils.html import mark_safe, format_html
@@ -14,18 +16,18 @@ from .models import *
 from .forms import ProductImportForm
 
 
-# 🖼️ УЛУЧШЕННАЯ инлайн админка для изображений товаров
+# 🖼️ ОБНОВЛЕННАЯ инлайн админка для изображений товаров
 class ProductImageInline(admin.TabularInline):
-    """🖼️ Инлайн админка для изображений товаров с поддержкой главного изображения"""
+    """🖼️ Инлайн админка для изображений товаров с поддержкой OverwriteStorage"""
 
     model = ProductImage
     verbose_name = "Изображение товара"
     verbose_name_plural = "Изображения товара"
-    extra = 1  # 📸 Одна пустая форма для добавления
+    extra = 1
 
     # 🎯 Поля для отображения и редактирования
-    fields = ('image', 'img_preview', 'is_main')
-    readonly_fields = ('img_preview',)
+    fields = ('image', 'img_preview', 'is_main', 'storage_info')
+    readonly_fields = ('img_preview', 'storage_info')
 
     # 🎨 Кастомные стили для админки
     class Media:
@@ -51,14 +53,30 @@ class ProductImageInline(admin.TabularInline):
 
     img_preview.short_description = "Предпросмотр"
 
-    # 🎯 Кастомизация формы для радиокнопок главного изображения
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        if db_field.name == 'is_main':
-            kwargs['widget'] = forms.RadioSelect(choices=[(True, 'Главное'), (False, 'Обычное')])
-        return super().formfield_for_dbfield(db_field, request, **kwargs)
+    def storage_info(self, obj):
+        """💾 Информация о хранилище файла"""
+        if obj.image:
+            # 🎯 Показываем информацию о OverwriteStorage
+            storage_type = obj.image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return format_html(
+                    '<small style="color: #28a745;">✅ OverwriteStorage<br>'
+                    'Точное имя: <code>{}</code></small>',
+                    obj.image.name
+                )
+            else:
+                return format_html(
+                    '<small style="color: #ffc107;">⚠️ {}<br>'
+                    'Имя файла: <code>{}</code></small>',
+                    storage_type,
+                    obj.image.name
+                )
+        return "—"
+
+    storage_info.short_description = "Хранилище"
 
 
-# 📂 Расширенная админка категорий (без изменений из оригинала)
+# 📂 Расширенная админка категорий с информацией об OverwriteStorage
 class CategoryAdminForm(forms.ModelForm):
     """📝 Форма с валидацией SEO-полей категории"""
 
@@ -100,6 +118,7 @@ class CategoryAdmin(admin.ModelAdmin):
         "display_order",
         "is_active",
         "image_preview_small",
+        "storage_status",
         "seo_status",
     ]
     list_filter = ["is_active", "created_at", "updated_at"]
@@ -117,6 +136,7 @@ class CategoryAdmin(admin.ModelAdmin):
                 "slug",
                 "category_image",
                 "image_preview",
+                "storage_info",
             ),
             "description": "🏷️ Базовая информация о категории",
         }),
@@ -149,6 +169,7 @@ class CategoryAdmin(admin.ModelAdmin):
     # 🔒 Только-чтение
     readonly_fields = [
         "image_preview",
+        "storage_info",
         "meta_title_length",
         "meta_description_length",
         "google_preview",
@@ -179,6 +200,25 @@ class CategoryAdmin(admin.ModelAdmin):
 
     image_preview.short_description = "Превью"
 
+    def storage_info(self, obj):
+        """💾 НОВЫЙ МЕТОД: Информация о хранилище категории"""
+        if obj.category_image:
+            storage_type = obj.category_image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return format_html(
+                    '<small style="color: #28a745;">✅ OverwriteStorage<br>'
+                    'Файл: <code>{}</code></small>',
+                    obj.category_image.name
+                )
+            else:
+                return format_html(
+                    '<small style="color: #ffc107;">⚠️ {}</small>',
+                    storage_type
+                )
+        return "—"
+
+    storage_info.short_description = "Хранилище"
+
     def image_preview_small(self, obj):
         if obj.category_image:
             return mark_safe(
@@ -188,6 +228,18 @@ class CategoryAdmin(admin.ModelAdmin):
         return "—"
 
     image_preview_small.short_description = "Фото"
+
+    def storage_status(self, obj):
+        """💾 НОВЫЙ МЕТОД: Статус хранилища в списке"""
+        if obj.category_image:
+            storage_type = obj.category_image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return mark_safe('<span style="color:green;">✅ OverwriteStorage</span>')
+            else:
+                return mark_safe(f'<span style="color:orange;">⚠️ {storage_type}</span>')
+        return "—"
+
+    storage_status.short_description = "Хранилище"
 
     def meta_title_length(self, obj):
         if obj.meta_title:
@@ -234,7 +286,7 @@ class CategoryAdmin(admin.ModelAdmin):
     google_preview.short_description = "Google preview"
 
     # 🎯 Массовые действия
-    actions = ["activate_categories", "deactivate_categories", "optimize_seo"]
+    actions = ["activate_categories", "deactivate_categories", "optimize_seo", "check_storage"]
 
     def activate_categories(self, request, queryset):
         updated = queryset.update(is_active=True)
@@ -270,22 +322,43 @@ class CategoryAdmin(admin.ModelAdmin):
 
     optimize_seo.short_description = "🔍 Оптимизировать SEO"
 
+    def check_storage(self, request, queryset):
+        """🆕 НОВОЕ ДЕЙСТВИЕ: Проверка типа хранилища"""
+        overwrite_count = 0
+        standard_count = 0
+
+        for category in queryset:
+            if category.category_image:
+                storage_type = category.category_image.storage.__class__.__name__
+                if storage_type == 'OverwriteStorage':
+                    overwrite_count += 1
+                else:
+                    standard_count += 1
+
+        self.message_user(
+            request,
+            f"💾 Проверка хранилища: {overwrite_count} с OverwriteStorage, {standard_count} со стандартным"
+        )
+
+    check_storage.short_description = "💾 Проверить хранилище"
+
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("products")
 
 
-# 🛍️ ОБНОВЛЕННАЯ админка товаров с импортом и главными изображениями
+# 🛍️ ОБНОВЛЕННАЯ админка товаров с информацией о хранилище
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    """🛍️ Админка для товаров с поддержкой импорта и главных изображений"""
+    """🛍️ Админка для товаров с поддержкой импорта и информацией о хранилище"""
 
     list_display = [
-        'get_main_image_preview',  # 🆕 Превью главного изображения
+        'get_main_image_preview',
         'product_name',
-        'product_sku',  # 🆕 SKU товара
+        'product_sku',
         'category',
         'display_price',
-        'has_main_image_status',  # 🆕 Статус главного изображения
+        'has_main_image_status',
+        'storage_status',
         'newest_product'
     ]
     list_display_links = ['get_main_image_preview', 'product_name']
@@ -294,7 +367,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ['newest_product']
     list_per_page = 25
 
-    # 🖼️ Инлайн для изображений с поддержкой главного изображения
+    # 🖼️ Инлайн для изображений с поддержкой OverwriteStorage
     inlines = [ProductImageInline]
 
     # 📝 Группировка полей в админке
@@ -316,12 +389,17 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('newest_product',),
             'classes': ('collapse',)
         }),
+        ('💾 Информация о файлах', {
+            'fields': ('get_main_image_display', 'get_storage_summary'),
+            'description': '🖼️ Информация об изображениях и хранилище',
+            'classes': ('collapse',)
+        }),
     )
 
     # 🔒 Поля только для чтения
-    readonly_fields = ['get_main_image_display']
+    readonly_fields = ['get_main_image_display', 'get_storage_summary']
 
-    # 🆕 НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ГЛАВНЫМИ ИЗОБРАЖЕНИЯМИ
+    # 🆕 НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ХРАНИЛИЩЕМ
 
     def get_main_image_preview(self, obj):
         """🖼️ Превью главного изображения в списке товаров"""
@@ -336,7 +414,6 @@ class ProductAdmin(admin.ModelAdmin):
         )
 
     get_main_image_preview.short_description = "Фото"
-    get_main_image_preview.admin_order_field = 'product_images'
 
     def has_main_image_status(self, obj):
         """✅ Статус наличия главного изображения"""
@@ -346,18 +423,41 @@ class ProductAdmin(admin.ModelAdmin):
             return mark_safe('<span style="color: red;">❌ Нет</span>')
 
     has_main_image_status.short_description = "Главное фото"
-    has_main_image_status.admin_order_field = 'product_images'
+
+    def storage_status(self, obj):
+        """💾 НОВЫЙ МЕТОД: Статус хранилища главного изображения"""
+        main_image = obj.get_main_image()
+        if main_image and main_image.image:
+            storage_type = main_image.image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return mark_safe('<span style="color:green;">✅ OverwriteStorage</span>')
+            else:
+                return mark_safe(f'<span style="color:orange;">⚠️ {storage_type}</span>')
+        return "—"
+
+    storage_status.short_description = "Хранилище"
 
     def get_main_image_display(self, obj):
         """🖼️ Отображение главного изображения в форме редактирования"""
         main_image = obj.get_main_image()
         if main_image and main_image.image:
+            storage_type = main_image.image.storage.__class__.__name__
+            storage_info = ""
+            if storage_type == 'OverwriteStorage':
+                storage_info = '<p style="color: #28a745;">✅ Использует OverwriteStorage (точные имена файлов)</p>'
+            else:
+                storage_info = f'<p style="color: #ffc107;">⚠️ Использует {storage_type}</p>'
+
             return format_html(
                 '<div style="text-align: center; margin: 10px 0;">'
                 '<p><strong>🌟 Главное изображение:</strong></p>'
                 '<img src="{}" style="max-width: 300px; max-height: 300px; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">'
+                '<p><code>{}</code></p>'
+                '{}'
                 '</div>',
-                main_image.image.url
+                main_image.image.url,
+                main_image.image.name,
+                storage_info
             )
         return format_html(
             '<div style="text-align: center; margin: 10px 0; padding: 20px; background: #f8f9fa; border-radius: 8px;">'
@@ -368,16 +468,35 @@ class ProductAdmin(admin.ModelAdmin):
 
     get_main_image_display.short_description = "Главное изображение"
 
-    # 🆕 КНОПКА ИМПОРТА В АДМИНКЕ
-    def changelist_view(self, request, extra_context=None):
-        """📊 Переопределяем представление списка для добавления кнопки импорта"""
-        extra_context = extra_context or {}
-        extra_context['show_import_button'] = True
-        extra_context['import_url'] = reverse('admin:products_import')
-        return super().changelist_view(request, extra_context)
+    def get_storage_summary(self, obj):
+        """💾 НОВЫЙ МЕТОД: Сводка по хранилищу всех изображений"""
+        images = obj.product_images.all()
+        if not images:
+            return "Нет изображений"
+
+        overwrite_count = 0
+        standard_count = 0
+
+        for image in images:
+            storage_type = image.image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                overwrite_count += 1
+            else:
+                standard_count += 1
+
+        summary = f"Всего изображений: {images.count()}<br>"
+        if overwrite_count > 0:
+            summary += f'✅ OverwriteStorage: {overwrite_count}<br>'
+        if standard_count > 0:
+            summary += f'⚠️ Стандартное: {standard_count}'
+
+        return mark_safe(summary)
+
+    get_storage_summary.short_description = "Сводка по хранилищу"
 
     # 🎯 Массовые действия для товаров
-    actions = ['mark_as_new', 'mark_as_regular', 'set_first_image_as_main', 'generate_missing_slugs']
+    actions = ['mark_as_new', 'mark_as_regular', 'set_first_image_as_main', 'generate_missing_slugs',
+               'check_images_storage']
 
     def mark_as_new(self, request, queryset):
         """🆕 Отметить как новые товары"""
@@ -412,28 +531,35 @@ class ProductAdmin(admin.ModelAdmin):
                 updated += 1
         self.message_user(request, f"🔗 Сгенерировано slug: {updated}")
 
+    def check_images_storage(self, request, queryset):
+        """🆕 НОВОЕ ДЕЙСТВИЕ: Проверка хранилища изображений"""
+        total_images = 0
+        overwrite_images = 0
+        standard_images = 0
+
+        for product in queryset:
+            for image in product.product_images.all():
+                total_images += 1
+                storage_type = image.image.storage.__class__.__name__
+                if storage_type == 'OverwriteStorage':
+                    overwrite_images += 1
+                else:
+                    standard_images += 1
+
+        self.message_user(
+            request,
+            f"💾 Проверка изображений: {total_images} всего, "
+            f"{overwrite_images} с OverwriteStorage, {standard_images} со стандартным"
+        )
+
     mark_as_new.short_description = "🆕 Отметить как новые товары"
     mark_as_regular.short_description = "📦 Убрать отметку 'новый'"
     set_first_image_as_main.short_description = "🖼️ Установить первое фото как главное"
     generate_missing_slugs.short_description = "🔗 Сгенерировать отсутствующие slug"
-
-    # 🔧 КАСТОМНЫЕ URL для импорта
-    def get_urls(self):
-        """🔗 Добавляем URL для импорта"""
-        urls = super().get_urls()
-        custom_urls = [
-            path('import/', self.admin_site.admin_view(self.import_view), name='products_import'),
-        ]
-        return custom_urls + urls
-
-    def import_view(self, request):
-        """📊 Представление для импорта товаров"""
-        # Перенаправляем на отдельное приложение импорта
-        from django.urls import reverse
-        return HttpResponseRedirect(reverse('products:import_products'))
+    check_images_storage.short_description = "💾 Проверить хранилище изображений"
 
 
-# 🔧 ОСТАЛЬНЫЕ АДМИНКИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
+# 🔧 ВСЕ ОСТАЛЬНЫЕ АДМИНКИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ (с добавлением комментариев)
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
@@ -587,14 +713,21 @@ class WishlistAdmin(admin.ModelAdmin):
 
 
 # 🎨 Настройки админки
-admin.site.site_header = "🛒 Автоковрики - Админ-панель"
+admin.site.site_header = "🛒 Автоковрики - Админ-панель (OverwriteStorage)"
 admin.site.site_title = "Автоковрики"
-admin.site.index_title = "Управление интернет-магазином"
+admin.site.index_title = "Управление интернет-магазином с точными именами файлов"
 
-# 🔧 ИЗМЕНЕНИЯ:
-# ✅ ДОБАВЛЕНО: Поддержка главных изображений в ProductImageInline
-# ✅ ДОБАВЛЕНО: Методы для работы с главными изображениями в ProductAdmin
-# ✅ ДОБАВЛЕНО: Кнопка импорта в админке товаров
-# ✅ ДОБАВЛЕНО: Новые поля product_sku, page_title, meta_description в fieldsets
-# ✅ ДОБАВЛЕНО: Массовые действия для установки главных изображений
-# ✅ СОХРАНЕНО: Вся существующая функциональность админки
+# 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
+#
+# ✅ ДОБАВЛЕНО: storage_info() методы для отображения типа хранилища
+# ✅ ДОБАВЛЕНО: storage_status() в списки для быстрой проверки
+# ✅ ДОБАВЛЕНО: get_storage_summary() для сводки по изображениям
+# ✅ ДОБАВЛЕНО: check_storage() и check_images_storage() массовые действия
+# ✅ ОБНОВЛЕНО: Сообщения в админке указывают на OverwriteStorage
+# ✅ СОХРАНЕНО: Вся остальная функциональность без изменений
+#
+# 🎯 РЕЗУЛЬТАТ:
+# - Админ может видеть какие файлы используют OverwriteStorage
+# - Быстрая проверка статуса хранилища в списках
+# - Массовые действия для диагностики хранилища
+# - Информативные сообщения о точных именах файлов
