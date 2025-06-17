@@ -1,5 +1,5 @@
 <!-- 📁 templates/admin/products/product/change_list.html -->
-<!-- 🎨 Кастомный шаблон списка товаров с ПРАВИЛЬНОЙ кнопкой импорта -->
+<!-- 🎨 Кастомный шаблон списка товаров с кнопками импорта И экспорта -->
 
 {% extends "admin/change_list.html" %}
 {% load static %}
@@ -23,15 +23,175 @@
         color: white;
         text-decoration: none;
     }
+    
+    /* 🆕 СТИЛИ ДЛЯ КНОПКИ ЭКСПОРТА */
+    .export-button {
+        background: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-left: 10px;
+        font-size: 13px;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    .export-button:hover {
+        background: #0056b3;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    /* 🎨 Анимация загрузки для экспорта */
+    .export-button.loading {
+        position: relative;
+        color: transparent !important;
+        pointer-events: none;
+    }
+    
+    .export-button.loading::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        top: 50%;
+        left: 50%;
+        margin-left: -6px;
+        margin-top: -6px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* 📊 Информационный блок */
+    .data-exchange-info {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin: 15px 0;
+        font-size: 13px;
+        color: #495057;
+    }
+    
+    .stats-row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    /* 📱 Адаптивность */
+    @media (max-width: 768px) {
+        .import-button, .export-button {
+            display: block;
+            margin: 5px 0;
+            text-align: center;
+        }
+        
+        .stats-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    }
     </style>
 {% endblock %}
 
 {% block object-tools-items %}
     {{ block.super }}
-    <!-- 🆕 ПРАВИЛЬНАЯ кнопка импорта -->
+    
+    <!-- 🔄 СУЩЕСТВУЮЩАЯ кнопка импорта -->
     <li>
         <a href="/products/import/" class="import-button">
-            📊 Импорт товаров из Excel
+            📥 Импорт товаров из Excel
         </a>
     </li>
+    
+    <!-- 🆕 НОВАЯ кнопка экспорта -->
+    {% if has_export_permission %}
+        {% if export_context.export_available %}
+        <li>
+            <a href="{% url 'export_excel' %}" class="export-button" id="export-btn">
+                📤 Экспорт в Excel
+            </a>
+        </li>
+        {% else %}
+        <li>
+            <span class="export-button" style="background: #6c757d; cursor: not-allowed;" title="Нет данных для экспорта">
+                📤 Экспорт недоступен
+            </span>
+        </li>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <!-- 📊 Информационный блок о данных (опционально) -->
+    {% if has_export_permission and export_context.export_stats %}
+    <div class="data-exchange-info">
+        <strong>📊 Статистика данных:</strong>
+        <div class="stats-row">
+            <div class="stat-item">
+                <span>📂</span>
+                <span>{{ export_context.export_stats.total_categories }} категорий</span>
+            </div>
+            <div class="stat-item">
+                <span>🛍️</span>
+                <span>{{ export_context.export_stats.total_products }} товаров</span>
+            </div>
+            <div class="stat-item">
+                <span>🖼️</span>
+                <span>{{ export_context.export_stats.products_with_images }} с изображениями</span>
+            </div>
+            {% if export_context.export_available %}
+            <div class="stat-item">
+                <span>📄</span>
+                <span>~{{ export_context.export_stats.estimated_rows }} строк в Excel</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {{ block.super }}
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+        // 🎯 JavaScript для кнопки экспорта
+        document.addEventListener('DOMContentLoaded', function() {
+            const exportBtn = document.getElementById('export-btn');
+            
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function(e) {
+                    // 🔄 Показываем индикатор загрузки
+                    this.classList.add('loading');
+                    this.style.pointerEvents = 'none';
+                    
+                    // ⏰ Убираем индикатор через 4 секунды
+                    setTimeout(() => {
+                        this.classList.remove('loading');
+                        this.style.pointerEvents = 'auto';
+                    }, 4000);
+                });
+            }
+        });
+    </script>
 {% endblock %}

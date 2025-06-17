@@ -1,0 +1,142 @@
+<!-- 📁 templates/admin/products/export_info.html -->
+<!-- 📊 Шаблон информации об экспорте товаров -->
+<!-- 🎨 Простая страница со статистикой и кнопкой экспорта -->
+
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:products_product_changelist' %}">Товары</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>📊 {{ title }}</h1>
+
+{% if has_data %}
+    <!-- 📈 Статистика экспорта -->
+    <div class="card mb-4" style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+        <h3 style="color: #28a745; margin-bottom: 15px;">📊 Статистика экспорта</h3>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-box" style="background: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+                    <h4 style="color: #2a41e8; margin: 0;">📂 {{ statistics.total_categories }}</h4>
+                    <small>Активных категорий</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-box" style="background: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+                    <h4 style="color: #2a41e8; margin: 0;">🛍️ {{ statistics.total_products }}</h4>
+                    <small>Товаров в каталоге</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-box" style="background: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+                    <h4 style="color: #28a745; margin: 0;">🖼️ {{ statistics.products_with_images }}</h4>
+                    <small>Товаров с изображениями</small>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-box" style="background: white; padding: 15px; border-radius: 5px; text-align: center; margin-bottom: 10px;">
+                    <h4 style="color: #f39c12; margin: 0;">📊 {{ statistics.estimated_rows }}</h4>
+                    <small>Строк в Excel файле</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚀 Кнопка экспорта -->
+    <div class="export-actions" style="text-align: center; margin: 30px 0;">
+        <a href="{% url 'export_excel' %}" 
+           class="btn btn-success" 
+           style="background-color: #28a745; border-color: #28a745; color: white; 
+                  padding: 12px 30px; font-size: 16px; text-decoration: none; 
+                  border-radius: 6px; display: inline-block; font-weight: bold;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            📊 Скачать Excel файл
+        </a>
+        
+        <br><br>
+        
+        <p style="color: #666; margin: 10px 0;">
+            ✅ Будет создан файл с названием: <code>tovary_export_YYYYMMDD_HHMMSS.xlsx</code><br>
+            🔄 Порядок данных: категория → все её товары → следующая категория<br>
+            🖼️ Изображения: только имена файлов (без путей)<br>
+            ⚡ Время генерации: 2-3 секунды
+        </p>
+    </div>
+
+{% else %}
+    <!-- ⚠️ Нет данных для экспорта -->
+    <div class="alert alert-warning" style="padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px;">
+        <h4 style="color: #856404;">⚠️ Нет данных для экспорта</h4>
+        <p style="margin: 10px 0;">
+            В системе отсутствуют активные категории или товары для экспорта.
+        </p>
+        <p style="margin: 0;">
+            Пожалуйста, добавьте категории и товары, прежде чем выполнять экспорт.
+        </p>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <a href="{% url 'admin:products_category_add' %}" class="btn btn-primary" style="margin-right: 10px;">
+            📂 Добавить категорию
+        </a>
+        <a href="{% url 'admin:products_product_add' %}" class="btn btn-primary">
+            🛍️ Добавить товар
+        </a>
+    </div>
+{% endif %}
+
+<!-- 🔗 Навигация -->
+<div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+    <a href="{% url 'admin:products_product_changelist' %}" class="btn btn-secondary">
+        ← Вернуться к списку товаров
+    </a>
+    
+    <a href="{% url 'import_form' %}" class="btn btn-info" style="margin-left: 10px;">
+        📥 Импорт товаров
+    </a>
+</div>
+
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    /* 🎨 Дополнительные стили для страницы экспорта */
+    .stat-box {
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .row {
+            flex-direction: column;
+        }
+        
+        .col-md-3 {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}

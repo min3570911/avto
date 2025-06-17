@@ -4,14 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Заработал импорт, в том числе картинок.">
-      <change afterPath="$PROJECT_DIR$/products/storage.py" afterDir="false" />
+    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="Заработала кнопка Читать далее.">
+      <change afterPath="$PROJECT_DIR$/products/export_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/products/export_views.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/admin/products/export_info.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin_views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/import_processor.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/import_processor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/products/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/urls.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,8 +25,8 @@
       <list>
         <option value="CSS File" />
         <option value="package.json" />
-        <option value="HTML File" />
         <option value="Python Script" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -154,7 +152,9 @@
       <workItem from="1749187804480" duration="14101000" />
       <workItem from="1749446539651" duration="19056000" />
       <workItem from="1749532631347" duration="42609000" />
-      <workItem from="1749800155578" duration="10814000" />
+      <workItem from="1749800155578" duration="11470000" />
+      <workItem from="1750052139020" duration="2549000" />
+      <workItem from="1750081805358" duration="3745000" />
     </task>
     <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
       <option name="closed" value="true" />
@@ -356,7 +356,23 @@
       <option name="project" value="LOCAL" />
       <updated>1749807520133</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Заработал импорт, в том числе картинок.+замена">
+      <option name="closed" value="true" />
+      <created>1749816903753</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1749816903753</updated>
+    </task>
+    <task id="LOCAL-00027" summary="Заработал импорт, в том числе картинок.+замена в папке">
+      <option name="closed" value="true" />
+      <created>1749816931521</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1749816931521</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -388,7 +404,6 @@
     <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR 5" />
     <MESSAGE value="Начинаю работу с масовым импортом машин" />
     <MESSAGE value="Внедряю SEO - начал" />
-    <MESSAGE value="Заработала кнопка Читать далее." />
     <MESSAGE value="Сделал видео и описание на странице категории." />
     <MESSAGE value="Внедрил импорт. не работает пока." />
     <MESSAGE value="поле превью отображается - исправляю ошибки" />
@@ -397,7 +412,10 @@
     <MESSAGE value="Заработал импорт корректно" />
     <MESSAGE value="Добавил импорт картинок. Только в одну категорию. исправляю проблему." />
     <MESSAGE value="Заработал импорт, в том числе картинок." />
-    <option name="LAST_COMMIT_MESSAGE" value="Заработал импорт, в том числе картинок." />
+    <MESSAGE value="Заработал импорт, в том числе картинок.+замена" />
+    <MESSAGE value="Заработал импорт, в том числе картинок.+замена в папке" />
+    <MESSAGE value="Заработала кнопка Читать далее." />
+    <option name="LAST_COMMIT_MESSAGE" value="Заработала кнопка Читать далее." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
