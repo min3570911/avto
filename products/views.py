@@ -1,5 +1,6 @@
 # 📁 products/views.py — ИСПРАВЛЕННАЯ ВЕРСИЯ без поля parent
 # 🛍️ View-функции интернет-магазина автоковриков
+# 🆕 ДОБАВЛЕНО: поддержка per_page (показывать по...)
 
 import random
 from django.shortcuts import render, redirect, get_object_or_404
@@ -101,13 +102,14 @@ def products_catalog(request):
     return render(request, "products/catalog.html", context)
 
 
-# 📂 ИСПРАВЛЕНО: Товары по категории без фильтра parent и правильный параметр slug
+# 📂 ОБНОВЛЕНО: Товары по категории с поддержкой per_page
 def products_by_category(request, slug):
     """
     📂 Товары по конкретной категории
 
-    Отображает товары выбранной категории с возможностью сортировки.
+    Отображает товары выбранной категории с возможностью сортировки и выбора количества на странице.
     🔧 ИСПРАВЛЕНО: убран фильтр parent=None, изменен параметр category_slug → slug
+    🆕 ДОБАВЛЕНО: поддержка per_page для выбора количества товаров на странице
     """
     # 📂 Категория или 404
     category = get_object_or_404(Category, slug=slug)
@@ -120,6 +122,7 @@ def products_by_category(request, slug):
     # 🔍 Параметры
     sort_by = request.GET.get("sort", "-created_at")
     search_query = request.GET.get("search", "")
+    per_page = request.GET.get("per_page", "12")  # 🆕 Количество товаров на странице
 
     # 📦 ИСПРАВЛЕНО: убран фильтр parent=None
     products = (
@@ -146,8 +149,28 @@ def products_by_category(request, slug):
     }
     products = products.order_by(sort_options.get(sort_by, "-created_at"))
 
+    # 🔢 НОВОЕ: Обработка per_page
+    if per_page == "all":
+        # 📊 Показать все товары (с разумным ограничением для безопасности)
+        total_products = products.count()
+        if total_products > 500:
+            # ⚠️ Если товаров больше 500, ограничиваем для производительности
+            messages.warning(request, f"Показано первые 500 из {total_products} товаров. Используйте фильтры для поиска.")
+            per_page_num = 500
+        else:
+            per_page_num = total_products or 1  # Минимум 1 для избежания ошибок
+    else:
+        # 🔢 Стандартные варианты
+        try:
+            per_page_num = int(per_page)
+            # ✅ Разрешенные значения: 12, 24, 48, 96
+            if per_page_num not in [12, 24, 48, 96]:
+                per_page_num = 12  # По умолчанию
+        except (ValueError, TypeError):
+            per_page_num = 12  # По умолчанию при ошибке
+
     # 📄 Пагинация
-    paginator = Paginator(products, 12)
+    paginator = Paginator(products, per_page_num)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -165,6 +188,7 @@ def products_by_category(request, slug):
         "categories": categories,
         "search_query": search_query,
         "sort_by": sort_by,
+        "per_page": per_page,  # 🆕 Текущее значение per_page
         "total_products": paginator.count,
         # 📊 Мета-информация
         "current_page": page_obj.number,
@@ -562,4 +586,6 @@ def add_to_cart(request, uid):
 # ✅ УБРАН: фильтр parent=None из всех функций
 # ✅ ИЗМЕНЕН: параметр category_slug → slug в products_by_category
 # ✅ ОБНОВЛЕН: популярные товары без фильтра parent
+# ✅ ДОБАВЛЕНО: поддержка per_page в products_by_category
+# ✅ ДОБАВЛЕНО: логика "показать все" товары
 # ✅ СОХРАНЕНА: вся остальная логика работы

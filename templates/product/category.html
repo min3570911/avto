@@ -37,6 +37,101 @@
     margin-bottom: 10px;
   }
 
+  /* 🆕 НОВЫЕ стили для панели управления */
+  .control-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+  }
+
+  .control-group label {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .control-select {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: white;
+    color: #495057;
+    font-size: 14px;
+    min-width: 140px;
+    transition: all 0.3s ease;
+  }
+
+  .control-select:focus {
+    border-color: #2a41e8;
+    box-shadow: 0 0 0 3px rgba(42, 65, 232, 0.1);
+    outline: none;
+  }
+
+  .control-select:hover {
+    border-color: #2a41e8;
+  }
+
+  /* 📊 Статистика товаров */
+  .products-stats {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #6c757d;
+    font-size: 14px;
+  }
+
+  .stats-badge {
+    background: #2a41e8;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  /* 📱 Мобильная адаптация для панели управления */
+  @media (max-width: 768px) {
+    .control-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+    }
+    
+    .control-group {
+      justify-content: space-between;
+      min-width: auto;
+    }
+    
+    .control-select {
+      min-width: 120px;
+    }
+    
+    .products-stats {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
   @keyframes appear {
     from {
       opacity: 0;
@@ -427,31 +522,43 @@
 <div class="container">
   {% include 'base/alert.html' %}
   
-  <!-- 🔍 Фильтры и сортировка -->
-  <div class="filter-section mb-3">
-    <form method="GET" class="row">
-      <div class="form-group col-md-6">
-        <label for="category">Категория:</label>
-        <select id="category" name="category" class="form-control" onchange="changeCategory(this)">
-          <option value="">Все</option>
-          {% for cat in categories %}
-          <option value="{{ cat.slug }}" {% if category.slug == cat.slug %} selected {% endif %}>
-            {{ cat.category_name }}
-          </option>
-          {% endfor %}
+  <!-- 🆕 НОВАЯ панель управления товарами -->
+  <div class="control-panel">
+    <div class="control-row">
+      <!-- 📊 Сортировка -->
+      <div class="control-group">
+        <label for="sort-select">📊 Сортировать:</label>
+        <select id="sort-select" class="control-select" onchange="updateUrl()">
+          <option value="">По умолчанию</option>
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>🆕 Сначала новые</option>
+          <option value="price" {% if sort_by == 'price' %}selected{% endif %}>💰 Дешевые сначала</option>
+          <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>💎 Дорогие сначала</option>
+          <option value="name" {% if sort_by == 'name' %}selected{% endif %}>🔤 По алфавиту</option>
         </select>
       </div>
-      
-      <div class="form-group col-md-6">
-        <label for="sort">Сортировать по:</label>
-        <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
-          <option value="">Выбрать</option>
-          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Сначала новые</option>
-          <option value="priceAsc" {% if sort_by == 'priceAsc' %}selected{% endif %}>Цена: по возрастанию</option>
-          <option value="priceDesc" {% if sort_by == 'priceDesc' %}selected{% endif %}>Цена: по убыванию</option>
+
+      <!-- 🔢 Показывать по -->
+      <div class="control-group">
+        <label for="per-page-select">🔢 Показывать:</label>
+        <select id="per-page-select" class="control-select" onchange="updateUrl()">
+          <option value="12" {% if per_page == '12' %}selected{% endif %}>12 товаров</option>
+          <option value="24" {% if per_page == '24' %}selected{% endif %}>24 товара</option>
+          <option value="48" {% if per_page == '48' %}selected{% endif %}>48 товаров</option>
+          <option value="all" {% if per_page == 'all' %}selected{% endif %}>🔍 Все товары</option>
         </select>
       </div>
-    </form>
+
+      <!-- 📈 Статистика -->
+      <div class="products-stats">
+        {% if per_page == 'all' %}
+          <span>Показаны все товары:</span>
+          <span class="stats-badge">{{ total_products }}</span>
+        {% else %}
+          <span>Страница {{ current_page }} из {{ total_pages }}</span>
+          <span class="stats-badge">{{ page_obj.start_index }}-{{ page_obj.end_index }} из {{ total_products }}</span>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <!-- 🛍️ Сетка товаров -->
@@ -480,13 +587,13 @@
     {% endfor %}
   </div>
 
-  <!-- 📄 Пагинация -->
-  {% if products.paginator.num_pages > 1 %}
+  <!-- 📄 ИСПРАВЛЕННАЯ Пагинация (только если НЕ "показать все") -->
+  {% if per_page != 'all' and page_obj.paginator.num_pages > 1 %}
   <nav aria-label="Page navigation example">
     <ul class="pagination justify-content-center mb-4">
-      {% if products.has_previous %}
+      {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ products.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}" aria-label="Previous">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" aria-label="Previous">
           <span aria-hidden="true">&laquo; Предыдущая</span>
         </a>
       </li>
@@ -496,15 +603,15 @@
       </li>
       {% endif %}
 
-      {% for num in products.paginator.page_range %}
-      <li class="page-item {% if products.number == num %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
+      {% for num in page_obj.paginator.page_range %}
+      <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+        <a class="page-link" href="?page={{ num }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}">{{ num }}</a>
       </li>
       {% endfor %}
 
-      {% if products.has_next %}
+      {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ products.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}" aria-label="Next">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" aria-label="Next">
           <span aria-hidden="true">Следующая &raquo;</span>
         </a>
       </li>
@@ -580,13 +687,28 @@
 </div>
 
 <script>
-  function changeCategory(selectElement) {
-    const categorySlug = selectElement.value;
-    if (categorySlug) {
-      window.location.href = `/products/category/${categorySlug}/`;
-    } else {
-      window.location.href = `/products/`;
+  // 🆕 НОВАЯ функция для обновления URL с параметрами
+  function updateUrl() {
+    const sortSelect = document.getElementById('sort-select');
+    const perPageSelect = document.getElementById('per-page-select');
+    
+    const sortValue = sortSelect.value;
+    const perPageValue = perPageSelect.value;
+    
+    // 🔗 Построение URL с параметрами
+    const urlParams = new URLSearchParams();
+    
+    if (sortValue) {
+      urlParams.set('sort', sortValue);
     }
+    
+    if (perPageValue && perPageValue !== '12') {
+      urlParams.set('per_page', perPageValue);
+    }
+    
+    // 🚀 Переход на обновленный URL
+    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+    window.location.href = newUrl;
   }
 
   // ✨ УЛУЧШЕННЫЙ JavaScript для toggle
@@ -636,12 +758,10 @@
 {% endblock %}
 
 <!-- 🔧 ОБЪЕДИНЕННЫЕ ВОЗМОЖНОСТИ:
-✅ СОХРАНЕН: рабочий вывод YouTube через {{ category.additional_content|safe }}
-✅ ДОБАВЛЕНЫ: SEO мета-теги в head
-✅ ДОБАВЛЕН: современный градиентный дизайн
-✅ ДОБАВЛЕНЫ: responsive стили для YouTube
-✅ ДОБАВЛЕН: элегантный toggle функционал  
-✅ ДОБАВЛЕНЫ: информационные badges
-✅ ДОБАВЛЕНА: поддержка template filters (если подключены)
-✅ СОХРАНЕНА: вся рабочая логика вывода товаров и пагинации
-✅ УЛУЧШЕН: общий UX и визуальная привлекательность -->
+✅ ЗАМЕНЕНА: панель фильтров на современную панель управления
+✅ ДОБАВЛЕНА: функция "Показывать по..." (12, 24, 48, Все)
+✅ ДОБАВЛЕНА: красивая статистика товаров
+✅ ИСПРАВЛЕНА: пагинация скрывается при "показать все"
+✅ ДОБАВЛЕНО: сохранение параметров в URL
+✅ УЛУЧШЕН: адаптивный дизайн для мобильных
+✅ СОХРАНЕНЫ: все существующие функции и стили -->
