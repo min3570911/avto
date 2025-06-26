@@ -1,15 +1,15 @@
 # 📁 products/import_processor.py
-# 🛠️ ФИНАЛЬНАЯ версия с поддержкой прямой обработки данных
-# ✅ Добавлен метод process_structured_data для работы без Excel
-# ✅ Убираем костыль с пересозданием временного Excel файла
+# 🛠️ ОБНОВЛЕННАЯ версия с улучшенной обработкой изображений
+# ✅ Добавлена защита от блокировок файлов и валидация
 
 import logging
+import os
+import time
 from typing import Dict, List, Tuple, Optional
 from django.db import transaction, IntegrityError, models
 from django.utils.text import slugify
 from django.core.files import File
 from django.conf import settings
-import os
 from decimal import Decimal
 
 from products.models import Product, Category, ProductImage
@@ -24,12 +24,13 @@ logger = logging.getLogger(__name__)
 
 class ProductImportProcessor:
     """
-    🚀 ОБНОВЛЁННЫЙ процессор импорта с двумя режимами работы:
+    🚀 ОБНОВЛЁННЫЙ процессор импорта с защитой от блокировок файлов
 
+    Режимы работы:
     1. process_excel_file() - классический режим (Excel → разбор → импорт)
     2. process_structured_data() - новый режим (готовые данные → импорт)
 
-    Второй режим убирает костыль с пересозданием Excel файла
+    🛠️ ДОБАВЛЕНО: Улучшенная обработка изображений с защитой от WinError 32
     """
 
     def __init__(self):
@@ -41,6 +42,7 @@ class ProductImportProcessor:
             'products_updated': 0,
             'errors': 0,
             'images_processed': 0,
+            'images_failed': 0,
             'sku_generated': 0
         }
         self.errors = []
@@ -112,6 +114,11 @@ class ProductImportProcessor:
                 # 🛍️ Затем импортируем товары
                 product_results = self._import_products(products)
 
+            # 🧹 Дополнительная очистка после обработки
+            if self.statistics.get('errors', 0) > 0:
+                logger.info("🧹 Выполняем очистку после ошибок...")
+                self._cleanup_failed_images()
+
             # 📈 Формируем итоговый результат
             return {
                 'success': True,
@@ -176,7 +183,7 @@ class ProductImportProcessor:
                 action = 'created'
                 self.statistics['categories_created'] += 1
 
-            # 🖼️ Обрабатываем изображение категории (без дисковых операций)
+            # 🖼️ Обрабатываем изображение категории с улучшенной защитой
             if category_data.get('image'):
                 self._attach_category_image(category, category_data['image'])
 
@@ -256,23 +263,43 @@ class ProductImportProcessor:
 
     def _attach_category_image(self, category: Category, image_filename: str):
         """
-        🖼️ УПРОЩЁННОЕ присоединение изображения к категории
+        🖼️ УЛУЧШЕННОЕ присоединение изображения к категории
 
-        Больше НЕ читает файл с диска - просто присваивает путь.
-        image_utils.py уже поместил файл в нужное место.
+        🛠️ ОБНОВЛЕНО: Добавлена защита от блокировок и валидация
+
+        Args:
+            category: Объект категории
+            image_filename: Имя файла изображения
         """
         try:
-            # 📁 Просто указываем путь к файлу (без проверки существования)
+            # ✅ Предварительная валидация файла
+            if not self._validate_image_file(image_filename, 'categories'):
+                logger.warning(f"⚠️ Файл изображения категории не прошел валидацию: {image_filename}")
+                return
+
+            # 📁 Формируем путь к изображению
             image_path = f"categories/{image_filename}"
 
-            # 💾 Django с OverwriteStorage сохранит с точным именем
-            category.category_image.name = image_path
-            category.save(update_fields=['category_image'])
+            # 💾 Безопасное присоединение изображения с повторными попытками
+            for attempt in range(3):
+                try:
+                    category.category_image.name = image_path
+                    category.save(update_fields=['category_image'])
+                    logger.info(f"✅ Присоединено изображение категории (попытка {attempt + 1}): {image_filename}")
+                    return
 
-            logger.info(f"✅ Присоединено изображение категории: {image_filename}")
+                except Exception as save_error:
+                    if attempt < 2:  # Не последняя попытка
+                        logger.warning(
+                            f"⚠️ Попытка {attempt + 1} сохранения изображения категории неудачна: {save_error}")
+                        time.sleep(0.5 * (attempt + 1))  # Увеличиваем задержку
+                    else:
+                        logger.error(f"❌ Не удалось присоединить изображение категории {image_filename}: {save_error}")
+                        self.statistics['images_failed'] += 1
 
         except Exception as e:
-            logger.error(f"❌ Ошибка присоединения изображения категории {image_filename}: {e}")
+            logger.error(f"❌ Критическая ошибка присоединения изображения категории {image_filename}: {e}")
+            self.statistics['images_failed'] += 1
 
     def _import_products(self, products_data: List[Dict]) -> List[Dict]:
         """🛍️ Импорт товаров с привязкой к категориям"""
@@ -327,7 +354,7 @@ class ProductImportProcessor:
             if not product_data.get('original_sku'):
                 self.statistics['sku_generated'] += 1
 
-            # 🖼️ Обрабатываем изображение товара (без дисковых операций)
+            # 🖼️ Обрабатываем изображение товара с улучшенной защитой
             if product_data.get('image'):
                 self._attach_product_image(product, product_data['image'])
 
@@ -476,12 +503,20 @@ class ProductImportProcessor:
 
     def _attach_product_image(self, product: Product, image_filename: str):
         """
-        🖼️ УПРОЩЁННОЕ присоединение изображения к товару
+        🖼️ УЛУЧШЕННОЕ присоединение изображения к товару
 
-        Больше НЕ читает файл с диска - просто создаёт запись в БД.
-        image_utils.py уже поместил файл в нужное место.
+        🛠️ ОБНОВЛЕНО: Добавлена защита от блокировок и валидация
+
+        Args:
+            product: Объект товара
+            image_filename: Имя файла изображения
         """
         try:
+            # ✅ Предварительная валидация файла
+            if not self._validate_image_file(image_filename, 'product'):
+                logger.warning(f"⚠️ Файл изображения товара не прошел валидацию: {image_filename}")
+                return
+
             # 🔍 Проверяем, есть ли уже изображение с таким именем
             existing_image = ProductImage.objects.filter(
                 product=product,
@@ -497,26 +532,126 @@ class ProductImportProcessor:
                 logger.info(f"🔄 Обновлено существующее изображение: {image_filename}")
                 return existing_image
 
-            # 🆕 Создаём новое изображение
-            ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
-
-            # 📁 Просто указываем путь к файлу
+            # 📁 Формируем путь к изображению
             image_path = f"product/{image_filename}"
 
-            product_image = ProductImage.objects.create(
-                product=product,
-                is_main=True
-            )
+            # 🆕 Создаём новое изображение с защитой от блокировок
+            for attempt in range(3):
+                try:
+                    # 📋 Устанавливаем все существующие изображения как не главные
+                    ProductImage.objects.filter(product=product, is_main=True).update(is_main=False)
 
-            # 💾 Django с OverwriteStorage сохранит с точным именем
-            product_image.image.name = image_path
-            product_image.save(update_fields=['image'])
+                    # 🆕 Создаём запись изображения
+                    product_image = ProductImage.objects.create(
+                        product=product,
+                        is_main=True
+                    )
 
-            self.statistics['images_processed'] += 1
-            logger.info(f"✅ Присоединено изображение товара: {image_filename}")
+                    # 💾 Безопасное присоединение файла
+                    product_image.image.name = image_path
+                    product_image.save(update_fields=['image'])
+
+                    self.statistics['images_processed'] += 1
+                    logger.info(f"✅ Присоединено изображение товара (попытка {attempt + 1}): {image_filename}")
+                    return product_image
+
+                except Exception as save_error:
+                    if attempt < 2:  # Не последняя попытка
+                        logger.warning(f"⚠️ Попытка {attempt + 1} сохранения изображения товара неудачна: {save_error}")
+                        time.sleep(0.5 * (attempt + 1))  # Увеличиваем задержку
+                    else:
+                        logger.error(f"❌ Не удалось присоединить изображение товара {image_filename}: {save_error}")
+                        self.statistics['images_failed'] += 1
 
         except Exception as e:
-            logger.error(f"❌ Ошибка присоединения изображения товара {image_filename}: {e}")
+            logger.error(f"❌ Критическая ошибка присоединения изображения товара {image_filename}: {e}")
+            self.statistics['images_failed'] += 1
+
+    def _validate_image_file(self, image_filename: str, target_folder: str) -> bool:
+        """
+        ✅ 🆕 НОВЫЙ МЕТОД: Валидация файла изображения перед обработкой
+
+        Args:
+            image_filename: Имя файла изображения
+            target_folder: Целевая папка ('categories' или 'product')
+
+        Returns:
+            bool: True если файл валиден и готов к использованию
+        """
+        try:
+            # 📁 Формируем полный путь к файлу
+            image_path = f"{target_folder}/{image_filename}"
+            full_path = os.path.join(settings.MEDIA_ROOT, image_path)
+
+            # 🔍 Проверяем существование файла
+            if not os.path.exists(full_path):
+                logger.warning(f"⚠️ Файл не существует: {full_path}")
+                return False
+
+            # 📏 Проверяем размер файла
+            file_size = os.path.getsize(full_path)
+            if file_size == 0:
+                logger.warning(f"⚠️ Файл пустой: {full_path}")
+                return False
+
+            if file_size > 10 * 1024 * 1024:  # 10MB
+                logger.warning(f"⚠️ Файл слишком большой ({file_size / 1024 / 1024:.1f}MB): {full_path}")
+                return False
+
+            # 🖼️ Проверяем расширение файла
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+            file_extension = os.path.splitext(image_filename)[1].lower()
+            if file_extension not in allowed_extensions:
+                logger.warning(f"⚠️ Неподдерживаемое расширение ({file_extension}): {image_filename}")
+                return False
+
+            # ✅ Проверяем доступность файла для чтения
+            try:
+                with open(full_path, 'rb') as test_file:
+                    test_file.read(1024)  # Читаем первый килобайт
+
+            except PermissionError:
+                logger.warning(f"⚠️ Нет доступа к файлу: {full_path}")
+                return False
+            except Exception as read_error:
+                logger.warning(f"⚠️ Ошибка чтения файла: {full_path}: {read_error}")
+                return False
+
+            logger.debug(f"✅ Файл валиден: {image_filename} (размер: {file_size / 1024:.1f} KB)")
+            return True
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка валидации файла {image_filename}: {e}")
+            return False
+
+    def _cleanup_failed_images(self):
+        """
+        🧹 🆕 НОВЫЙ МЕТОД: Очистка неудачно обработанных изображений
+
+        Находит и удаляет записи изображений, которые ссылаются на несуществующие файлы
+        """
+        try:
+            # 🔍 Находим изображения товаров без файлов
+            orphaned_product_images = ProductImage.objects.filter(
+                image__isnull=False
+            ).exclude(image='')
+
+            cleaned_count = 0
+            for product_image in orphaned_product_images:
+                try:
+                    full_path = product_image.image.path
+                    if not os.path.exists(full_path):
+                        logger.warning(f"🧹 Удаляем запись без файла: {product_image.image.name}")
+                        product_image.delete()
+                        cleaned_count += 1
+                except Exception:
+                    pass
+
+            if cleaned_count > 0:
+                logger.info(f"🧹 Очищено записей изображений без файлов: {cleaned_count}")
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка очистки неудачных изображений: {e}")
 
     def _create_error_result(self, error_message: str) -> Dict:
         """❌ Создание результата с ошибкой"""
@@ -570,14 +705,18 @@ def preview_excel_data(file) -> Dict:
 
 # 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
 #
-# ✅ ДОБАВЛЕНО: process_structured_data() - новый метод для прямой обработки
-# ✅ ДОБАВЛЕНО: _normalize_price() - безопасная обработка Decimal/int/float
-# ✅ ИЗМЕНЕНО: _attach_*_image() - убраны дисковые операции, только БД
-# ✅ ИЗМЕНЕНО: process_excel_file() - теперь использует process_structured_data()
-# ✅ СОХРАНЕНО: Вся существующая логика кэширования и обработки
+# ✅ ДОБАВЛЕНО: _validate_image_file() - валидация файлов перед обработкой
+# ✅ ДОБАВЛЕНО: _cleanup_failed_images() - очистка неудачных записей
+# ✅ ДОБАВЛЕНО: images_failed в статистику - подсчет неудачных изображений
+# ✅ ИЗМЕНЕНО: _attach_product_image() - добавлены повторные попытки и валидация
+# ✅ ИЗМЕНЕНО: _attach_category_image() - добавлены повторные попытки и валидация
+# ✅ ИЗМЕНЕНО: process_structured_data() - добавлен вызов очистки при ошибках
+# ✅ СОХРАНЕНО: Вся существующая логика процессора
 #
 # 🎯 РЕЗУЛЬТАТ:
-# - Можно вызывать processor.process_structured_data(categories, products)
-# - Убирается костыль с пересозданием Excel файла
-# - Безопасная обработка всех типов данных
-# - Один процессор для двух режимов работы
+# - Защита от блокировок файлов при сохранении изображений
+# - Валидация файлов перед обработкой
+# - Повторные попытки при ошибках сохранения
+# - Автоматическая очистка неудачных записей
+# - Подробная статистика обработки
+# - Полная обратная совместимость

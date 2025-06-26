@@ -1,10 +1,13 @@
 # 📁 products/image_utils.py
-# 🆕 НОВЫЙ файл для обработки ZIP архивов с изображениями
+# 🛠️ ОБНОВЛЕННАЯ версия с защитой от блокировок файлов Windows
 # 🖼️ Автоматическое распределение изображений по папкам categories/ и product/
 
 import os
+import time
 import zipfile
 import logging
+import tempfile
+import shutil
 from typing import Tuple, List, Dict
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -23,10 +26,16 @@ SYSTEM_FILES_TO_SKIP = [
     'desktop.ini'
 ]
 
+# ⏱️ Настройки для повторных попыток
+MAX_RETRIES = 3
+RETRY_DELAY = 0.5  # секунды между попытками
+
 
 def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
     """
     🖼️ Основная функция обработки ZIP архива с изображениями
+
+    🛠️ ОБНОВЛЕНО: Добавлена обработка блокировок файлов
 
     Распаковывает ZIP архив и автоматически распределяет изображения:
     - Категории → media/categories/
@@ -49,6 +58,7 @@ def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
         categories_count = 0
         products_count = 0
         skipped_count = 0
+        error_count = 0
 
         # 📂 Создаем необходимые директории
         _ensure_media_directories()
@@ -79,8 +89,8 @@ def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
                     # 📂 Определяем целевую папку
                     target_folder = _determine_target_folder(filename, existing_categories)
 
-                    # 💾 Сохраняем файл
-                    success = _save_image_file(zip_archive, filename, target_folder)
+                    # 💾 Сохраняем файл с обработкой блокировок
+                    success = _save_image_file_with_retry(zip_archive, filename, target_folder)
 
                     if success:
                         processed_count += 1
@@ -91,11 +101,11 @@ def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
 
                         logger.info(f"✅ Сохранено: {filename} → {target_folder}/")
                     else:
-                        skipped_count += 1
+                        error_count += 1
 
                 except Exception as e:
                     logger.error(f"❌ Ошибка обработки файла {filename}: {e}")
-                    skipped_count += 1
+                    error_count += 1
                     continue
 
         # 📊 Логируем итоговую статистику
@@ -104,7 +114,8 @@ def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
             f"обработано {processed_count}, "
             f"категорий {categories_count}, "
             f"товаров {products_count}, "
-            f"пропущено {skipped_count}"
+            f"пропущено {skipped_count}, "
+            f"ошибок {error_count}"
         )
 
         return processed_count
@@ -118,6 +129,187 @@ def process_images_zip(zip_file: InMemoryUploadedFile) -> int:
         error_msg = f"❌ Критическая ошибка при обработке ZIP архива: {str(e)}"
         logger.error(error_msg)
         raise Exception(error_msg)
+
+
+def _save_image_file_with_retry(zip_archive: zipfile.ZipFile, filename: str, target_folder: str) -> bool:
+    """
+    💾 🆕 НОВАЯ функция: Сохранение файла с механизмом повторных попыток
+
+    🔒 Обрабатывает блокировки файлов Windows (WinError 32)
+    ⏱️ Использует повторные попытки с задержкой
+    🛡️ Безопасное сохранение через временный файл
+
+    Args:
+        zip_archive: Открытый ZIP архив
+        filename: Имя файла в архиве
+        target_folder: Целевая папка ('categories' или 'product')
+
+    Returns:
+        bool: True если файл успешно сохранен
+    """
+    basename = os.path.basename(filename)
+    target_dir = os.path.join(settings.MEDIA_ROOT, target_folder)
+    target_path = os.path.join(target_dir, basename)
+
+    # 🔄 Попытки сохранения с повторами
+    for attempt in range(MAX_RETRIES):
+        try:
+            # 📖 Читаем данные из архива
+            with zip_archive.open(filename) as source_file:
+                file_data = source_file.read()
+
+            # 🛡️ Проверяем, что данные не пусты
+            if not file_data:
+                logger.error(f"❌ Файл {filename} пустой")
+                return False
+
+            # 💾 Сохраняем через временный файл для атомарности
+            success = _atomic_file_save(file_data, target_path)
+
+            if success:
+                # ✅ Проверяем финальный результат
+                if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
+                    logger.debug(f"💾 Файл сохранен (попытка {attempt + 1}): {target_path}")
+                    return True
+                else:
+                    logger.warning(f"⚠️ Файл создался, но проверка не прошла: {target_path}")
+
+            # ⏱️ Задержка перед следующей попыткой
+            if attempt < MAX_RETRIES - 1:
+                logger.warning(f"⏳ Попытка {attempt + 1} неудачна для {filename}, повторяем через {RETRY_DELAY}с...")
+                time.sleep(RETRY_DELAY)
+
+        except PermissionError as e:
+            logger.warning(f"🔒 Файл заблокирован {filename} (попытка {attempt + 1}): {e}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (attempt + 1))  # Увеличиваем задержку
+            else:
+                logger.error(f"❌ Не удалось сохранить файл {filename} после {MAX_RETRIES} попыток: {e}")
+
+        except OSError as e:
+            # 🔍 Специальная обработка Windows ошибок
+            if "WinError 32" in str(e) or "being used by another process" in str(e):
+                logger.warning(f"🔒 Windows блокировка файла {filename} (попытка {attempt + 1}): {e}")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY * (attempt + 2))  # Еще больше задержка для Windows
+                else:
+                    logger.error(f"❌ Windows блокировка не снята для {filename} после {MAX_RETRIES} попыток")
+            else:
+                logger.error(f"❌ OS ошибка при сохранении {filename}: {e}")
+                break
+
+        except Exception as e:
+            logger.error(f"❌ Неожиданная ошибка сохранения {filename}: {e}")
+            break
+
+    return False
+
+
+def _atomic_file_save(file_data: bytes, target_path: str) -> bool:
+    """
+    ⚛️ Атомарное сохранение файла через временный файл
+
+    🛡️ Предотвращает повреждение файлов при сбоях
+    🔒 Уменьшает вероятность блокировок
+
+    Args:
+        file_data: Данные для сохранения
+        target_path: Путь к целевому файлу
+
+    Returns:
+        bool: True если сохранение успешно
+    """
+    temp_path = None
+    try:
+        target_dir = os.path.dirname(target_path)
+
+        # 🗂️ Создаем временный файл в той же директории
+        with tempfile.NamedTemporaryFile(
+                dir=target_dir,
+                delete=False,
+                suffix='.tmp'
+        ) as temp_file:
+            temp_path = temp_file.name
+            temp_file.write(file_data)
+            temp_file.flush()  # 💾 Принудительно записываем на диск
+            os.fsync(temp_file.fileno())  # 🔄 Синхронизируем с файловой системой
+
+        # 🔄 Атомарно перемещаем временный файл на место целевого
+        if os.path.exists(target_path):
+            # 🗑️ Удаляем старый файл, если он заблокирован
+            _force_remove_file(target_path)
+
+        shutil.move(temp_path, target_path)
+        return True
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка атомарного сохранения: {e}")
+
+        # 🧹 Очищаем временный файл при ошибке
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+
+        return False
+
+
+def _force_remove_file(file_path: str, max_attempts: int = 3) -> bool:
+    """
+    🗑️ Принудительное удаление файла с повторными попытками
+
+    💪 Специально для Windows блокировок
+
+    Args:
+        file_path: Путь к файлу для удаления
+        max_attempts: Максимальное количество попыток
+
+    Returns:
+        bool: True если файл удален
+    """
+    for attempt in range(max_attempts):
+        try:
+            if os.path.exists(file_path):
+                # 🔓 Попытка снять атрибуты только для чтения
+                try:
+                    os.chmod(file_path, 0o777)
+                except:
+                    pass
+
+                os.unlink(file_path)
+                return True
+            else:
+                return True  # Файл уже отсутствует
+
+        except PermissionError as e:
+            if attempt < max_attempts - 1:
+                logger.debug(f"🔒 Попытка {attempt + 1} удаления заблокированного файла {file_path}")
+                time.sleep(0.1 * (attempt + 1))
+            else:
+                logger.warning(f"⚠️ Не удалось удалить заблокированный файл {file_path}: {e}")
+
+        except Exception as e:
+            logger.warning(f"⚠️ Ошибка удаления файла {file_path}: {e}")
+            break
+
+    return False
+
+
+def _save_image_file(zip_archive: zipfile.ZipFile, filename: str, target_folder: str) -> bool:
+    """
+    💾 🔄 ОБНОВЛЕНО: Теперь использует защищенную функцию с повторными попытками
+
+    Args:
+        zip_archive: Открытый ZIP архив
+        filename: Имя файла в архиве
+        target_folder: Целевая папка ('categories' или 'product')
+
+    Returns:
+        bool: True если файл успешно сохранен
+    """
+    # 🔄 Используем новую функцию с защитой от блокировок
+    return _save_image_file_with_retry(zip_archive, filename, target_folder)
 
 
 def _ensure_media_directories():
@@ -216,45 +408,6 @@ def _determine_target_folder(filename: str, existing_categories: List[str]) -> s
     except Exception as e:
         logger.warning(f"⚠️ Ошибка определения папки для {filename}: {e}. Используем product/")
         return 'product'
-
-
-def _save_image_file(zip_archive: zipfile.ZipFile, filename: str, target_folder: str) -> bool:
-    """
-    💾 Сохраняет файл изображения в целевую папку
-
-    Args:
-        zip_archive: Открытый ZIP архив
-        filename: Имя файла в архиве
-        target_folder: Целевая папка ('categories' или 'product')
-
-    Returns:
-        bool: True если файл успешно сохранен
-    """
-    try:
-        # 📂 Определяем путь для сохранения
-        target_dir = os.path.join(settings.MEDIA_ROOT, target_folder)
-        basename = os.path.basename(filename)
-        target_path = os.path.join(target_dir, basename)
-
-        # 📖 Читаем файл из архива
-        with zip_archive.open(filename) as source_file:
-            file_data = source_file.read()
-
-        # 💾 Сохраняем файл (перезаписываем если существует)
-        with open(target_path, 'wb') as target_file:
-            target_file.write(file_data)
-
-        # ✅ Проверяем что файл создался и не пустой
-        if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
-            logger.debug(f"💾 Файл сохранен: {target_path}")
-            return True
-        else:
-            logger.error(f"❌ Файл не создался или пустой: {target_path}")
-            return False
-
-    except Exception as e:
-        logger.error(f"❌ Ошибка сохранения файла {filename}: {e}")
-        return False
 
 
 def get_images_statistics(zip_file: InMemoryUploadedFile) -> Dict:
@@ -423,26 +576,18 @@ def generate_thumbnails():
     # TODO: Реализовать генерацию миниатюр
     pass
 
-# 🔧 ВОЗМОЖНОСТИ ЭТОГО ФАЙЛА:
+# 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
 #
-# ✅ ОСНОВНЫЕ ФУНКЦИИ:
-# - process_images_zip() - главная функция обработки ZIP архива
-# - _determine_target_folder() - умное распределение по папкам
-# - _save_image_file() - сохранение файлов с перезаписью
-#
-# ✅ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ:
-# - get_images_statistics() - анализ содержимого ZIP без распаковки
-# - validate_images_zip() - валидация архива
-# - _ensure_media_directories() - создание папок
-#
-# ✅ УМНАЯ ЛОГИКА:
-# - Автоматическое определение типа изображения (категория/товар)
-# - Пропуск системных файлов (__MACOSX, .DS_Store)
-# - Поддержка вложенных папок в ZIP
-# - Детальное логирование всех операций
+# ✅ ДОБАВЛЕНО: _save_image_file_with_retry() - новая функция с повторными попытками
+# ✅ ДОБАВЛЕНО: _atomic_file_save() - атомарное сохранение через временные файлы
+# ✅ ДОБАВЛЕНО: _force_remove_file() - принудительное удаление заблокированных файлов
+# ✅ ДОБАВЛЕНО: MAX_RETRIES, RETRY_DELAY - настройки повторных попыток
+# ✅ ИЗМЕНЕНО: _save_image_file() - теперь использует защищенную функцию
+# ✅ ИЗМЕНЕНО: process_images_zip() - добавлен счетчик ошибок
 #
 # 🎯 РЕЗУЛЬТАТ:
-# - Категории автоматически попадают в media/categories/
-# - Товары автоматически попадают в media/product/
-# - Существующие файлы перезаписываются
-# - Полная статистика обработки
+# - Устранение ошибки WinError 32
+# - Повторные попытки при блокировках файлов
+# - Атомарные операции сохранения
+# - Подробное логирование всех операций
+# - Сохранение всей существующей функциональности
