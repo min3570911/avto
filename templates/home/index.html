@@ -1,251 +1,753 @@
-{% extends "base/base.html"%} {% block start %}
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}EVA коврики в Минске | Главная{% endblock %}
+
+{% block start %}
+
 <style>
-  .filter-section {
-      margin-bottom: 20px;
-  }
-
-  .form-group {
-      margin-bottom: 10px;
-  }
-
-  @keyframes appear {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .card {
-    animation: appear 0.5s ease-out;
-  }
-
-  /* Стили для круглых иконок категорий */
-  .category-section {
-    margin-bottom: 40px;
-  }
-
-  .category-title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 30px;
+  /* 🎬 Hero Section Styles - КОМПАКТНАЯ ВЕРСИЯ */
+  .hero-section {
     position: relative;
-    display: inline-block;
-  }
-
-  .category-title:after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background-color: #2a41e8;
-  }
-
-  .category-item {
-    text-align: center;
-    margin-bottom: 25px;
-    padding: 10px;
-    transition: all 0.3s ease;
-  }
-
-  .category-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background-color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 70vh;  /* 🔧 Уменьшена высота */
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 10px;
     overflow: hidden;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2;
+  }
+
+  .hero-content {
     position: relative;
+    z-index: 3;
+    color: white;
+    text-align: center;
+    padding: 50px 0;  /* 🔧 Уменьшен padding */
   }
 
-  .category-item:hover .category-icon {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transform: translateY(-2px);
+  .hero-title {
+    font-size: 3rem;  /* 🔧 Уменьшен размер */
+    font-weight: 700;
+    margin-bottom: 15px;  /* 🔧 Уменьшен отступ */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   }
 
-  .category-icon img {
-    width: 65px;
-    height: 65px;
-    object-fit: contain;
-    transition: transform 0.3s ease;
+  .hero-subtitle {
+    font-size: 1.3rem;  /* 🔧 Уменьшен размер */
+    margin-bottom: 35px;  /* 🔧 Уменьшен отступ */
+    opacity: 0.9;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
   }
 
-  .category-item:hover .category-icon img {
-    transform: scale(1.05);
+  /* 🆕 НОВЫЕ стили для 4 преимуществ в ряд */
+  .hero-advantages {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);  /* 🎯 4 колонки в ряд */
+    gap: 20px;  /* 🔧 Уменьшен gap */
+    margin: 35px 0;  /* 🔧 Уменьшены отступы */
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .category-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #666;
-    margin-top: 8px;
-    text-decoration: none;
-    transition: color 0.3s ease;
+  .advantage-item {
+    /* 🔧 УБРАНА окантовка и фон */
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 20px 15px;  
+    transition: all 0.3s ease;
+    text-align: center;
   }
 
-  .category-item:hover .category-name {
-    color: #333;
+  .advantage-item:hover {
+    transform: translateY(-5px);  
+    background: transparent;  /* 🔧 Убран фон при hover */
   }
 
-  .category-item a {
-    text-decoration: none;
-    color: inherit;
+  /* 🆕 ВРЕМЕННОЕ решение: эмодзи иконки если SVG не работают */
+  .advantage-icon-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
     display: block;
   }
 
-  .category-item a:hover {
+  /* 🆕 ОБНОВЛЕННЫЕ стили для SVG иконок без окантовки */
+  .advantage-icon-svg {
+    width: 60px;  /* 🔧 Увеличен размер без окантовки */
+    height: 60px;
+    margin: 0 auto 15px;  /* 🔧 Больше отступ снизу */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .advantage-icon-svg img {
+    width: 100%;
+    height: 100%;
+    filter: brightness(0) invert(1);  /* 🎨 Белые иконки */
+    transition: filter 0.3s ease;
+  }
+
+  .advantage-item:hover .advantage-icon-svg img {
+    filter: brightness(0) saturate(100%) invert(59%) sepia(100%) saturate(1000%) hue-rotate(15deg);  /* 🎨 Оранжевые при hover */
+  }
+
+  .advantage-title {
+    font-size: 1rem;  /* 🔧 Уменьшен размер */
+    font-weight: 600;
+    margin-bottom: 6px;  /* 🔧 Уменьшен отступ */
+    line-height: 1.2;
+  }
+
+  .advantage-desc {
+    font-size: 0.85rem;  /* 🔧 Уменьшен размер */
+    opacity: 0.9;
+    line-height: 1.3;
+  }
+
+  .hero-cta {
+    margin-top: 30px;  /* 🔧 Уменьшен отступ */
+  }
+
+  .cta-button {
+    display: inline-block;
+    background: #ff6600;
+    color: white;
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.3);
+  }
+
+  .cta-button:hover {
+    background: #e55a00;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 102, 0, 0.4);
+    color: white;
     text-decoration: none;
   }
 
-  /* Адаптивные размеры для мобильных */
+  /* 📂 Compact Categories Section */
+  .catalog-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 50px;
+    position: relative;
+  }
+
+  .section-title:after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: #ff6600;
+  }
+
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .category-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .category-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .category-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .category-icon img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+  }
+
+  .category-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* 🎨 EVA Benefits Section */
+  .eva-benefits {
+    padding: 80px 0;
+    background: white;
+  }
+
+  .benefits-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+
+  .benefits-content h2 {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 30px;
+  }
+
+  .benefits-highlight {
+    color: #ff6600;
+  }
+
+  .benefits-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+  }
+
+  .benefit-point {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+  }
+
+  .benefit-number {
+    background: #ff6600;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+
+  .benefits-image {
+    text-align: center;
+    position: relative;
+  }
+
+  .benefits-image img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* 📋 5 Steps Section */
+  .steps-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+  }
+
+  .steps-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 30px;
+    margin-top: 50px;
+  }
+
+  .step-item {
+    text-align: center;
+    position: relative;
+  }
+
+  .step-number {
+    width: 60px;
+    height: 60px;
+    background: #ff6600;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 20px;
+  }
+
+  .step-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .step-desc {
+    color: #666;
+    line-height: 1.5;
+  }
+
+  /* ❓ FAQ Section */
+  .faq-section {
+    padding: 80px 0;
+    background: white;
+  }
+
+  .faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .faq-accordion {
+    margin-top: 40px;
+  }
+
+  .faq-item {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+
+  .faq-question {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 600;
+    color: #333;
+    border: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+  }
+
+  .faq-question:hover {
+    background: #e9ecef;
+  }
+
+  .faq-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+  }
+
+  .faq-answer {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .faq-answer.active {
+    max-height: 200px;
+    padding: 20px;
+  }
+
+  .faq-item.active .faq-icon {
+    transform: rotate(180deg);
+  }
+
+  /* 📱 Mobile Responsive - ОБНОВЛЕНО для компактной версии */
   @media (max-width: 768px) {
-    .category-icon {
-      width: 80px;
-      height: 80px;
+    .hero-title {
+      font-size: 2.2rem;  /* 🔧 Адаптировано под компактную версию */
     }
 
-    .category-icon img {
-      width: 55px;
-      height: 55px;
+    .hero-subtitle {
+      font-size: 1.1rem;
     }
 
-    .category-name {
-      font-size: 13px;
+    .hero-content {
+      padding: 30px 0;  /* 🔧 Уменьшен padding для мобильных */
     }
 
-    .category-item {
-      margin-bottom: 20px;
+    /* 🎯 Преимущества: 2x2 сетка на планшетах */
+    .hero-advantages {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 25px 0;
+    }
+
+    .advantage-item {
+      padding: 15px 10px;  /* 🔧 Еще более компактный padding без окантовки */
+    }
+
+    .advantage-icon-svg {
+      width: 50px;  /* 🔧 Размер иконки на мобильных */
+      height: 50px;
+      margin-bottom: 12px;
+    }
+
+    .advantage-title {
+      font-size: 0.9rem;
+    }
+
+    .advantage-desc {
+      font-size: 0.8rem;
+    }
+
+    .benefits-container {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .benefits-list {
+      grid-template-columns: 1fr;
+    }
+
+    .steps-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .section-title {
+      font-size: 2rem;
     }
   }
 
   @media (max-width: 576px) {
-    .category-icon {
-      width: 70px;
-      height: 70px;
+    /* 🎯 Преимущества: колонка на телефонах */
+    .hero-advantages {
+      grid-template-columns: 1fr;
+      gap: 12px;
     }
 
-    .category-icon img {
-      width: 45px;
-      height: 45px;
+    .categories-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-content {
+      padding: 25px 0;  /* 🔧 Минимальный padding */
+    }
+
+    .hero-title {
+      font-size: 1.8rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1rem;
     }
   }
 </style>
 
-<div class="container mt-3 pt-3">
-  {% include 'base/alert.html' %}
-
-  <!-- Секция категорий - НОВЫЙ БЛОК -->
-  <div class="category-section">
-    <h2 class="category-title">Категории ковриков</h2>
-    <div class="row">
-      {% for category in categories %}
-      <div class="col-lg-2 col-md-3 col-sm-4 col-6">
-        <div class="category-item">
-         <a href="{% url 'products_by_category' category.slug %}">
-            <div class="category-icon">
-              <img src="/media/{{category.category_image}}" alt="{{category.category_name}}">
+<!-- 🎬 Hero Section -->
+<section class="hero-section">
+  {% if hero_section and hero_section.video %}
+    <video class="hero-video" autoplay muted loop playsinline>
+      <source src="{{ hero_section.video.url }}" type="video/mp4">
+      {% if hero_section.fallback_image %}
+        <img src="{{ hero_section.fallback_image.url }}" alt="EVA коврики" class="hero-video">
+      {% endif %}
+    </video>
+  {% endif %}
+  
+  <div class="hero-overlay"></div>
+  
+  <div class="container hero-content">
+    <h1 class="hero-title">
+      {% if hero_section %}{{ hero_section.title }}{% else %}EVA коврики в Минске{% endif %}
+    </h1>
+    
+    <p class="hero-subtitle">
+      {% if hero_section %}{{ hero_section.subtitle }}{% else %}уют, комфорт, чистота в вашем автомобиле{% endif %}
+    </p>
+    
+    <!-- 🎯 Hero Advantages -->
+    <div class="hero-advantages">
+      {% if hero_section.advantages.all %}
+        {% for advantage in hero_section.advantages.all %}
+          <div class="advantage-item">
+            <div class="advantage-icon-svg">
+              <img src="/media/images/icons/header_icon_{{ forloop.counter }}.svg" alt="{{ advantage.title }}" onerror="this.style.display='none'">
             </div>
-            <div class="category-name">{{category.category_name}}</div>
-          </a>
+            <div class="advantage-title">{{ advantage.title }}</div>
+            <div class="advantage-desc">{{ advantage.description }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <!-- 🔧 Дефолтные преимущества с SVG иконками -->
+        <div class="advantage-item">
+          <div class="advantage-icon-svg">
+            <img src="/media/images/icons/header_icon_1.svg" alt="Доставка" onerror="this.style.display='none'">
+          </div>
+          <div class="advantage-title">Доставка по Беларуси</div>
+          <div class="advantage-desc">Почтой по всей стране</div>
         </div>
-      </div>
+        <div class="advantage-item">
+          <div class="advantage-icon-svg">
+            <img src="/media/images/icons/header_icon_2.svg" alt="Материалы" onerror="this.style.display='none'">
+          </div>
+          <div class="advantage-title">Материалы высокого качества</div>
+          <div class="advantage-desc">Долговечные и безопасные</div>
+        </div>
+        <div class="advantage-item">
+          <div class="advantage-icon-svg">
+            <img src="/media/images/icons/header_icon_3.svg" alt="Совместимость" onerror="this.style.display='none'">
+          </div>
+          <div class="advantage-title">Гарантия совместимости</div>
+          <div class="advantage-desc">Точно по размерам вашего авто</div>
+        </div>
+        <div class="advantage-item">
+          <div class="advantage-icon-svg">
+            <img src="/media/images/icons/header_icon_4.svg" alt="Чистота" onerror="this.style.display='none'">
+          </div>
+          <div class="advantage-title">Максимальная чистота</div>
+          <div class="advantage-desc">В салоне вашего автомобиля</div>
+        </div>
+      {% endif %}
+    </div>
+    
+    <!-- 🎯 CTA Button -->
+    <div class="hero-cta">
+      <a href="{% if hero_section.button_link %}{{ hero_section.button_link }}{% else %}#catalog-section{% endif %}" 
+         class="cta-button smooth-scroll">
+        {% if hero_section.button_text %}{{ hero_section.button_text }}{% else %}ЗАКАЗАТЬ{% endif %}
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 📂 Compact Categories Catalog -->
+<section class="catalog-section" id="catalog-section">
+  <div class="container">
+    <h2 class="section-title">Категории ковриков</h2>
+    
+    <div class="categories-grid">
+      {% for category in categories %}
+        <a href="{% url 'products_by_category' category.slug %}" class="category-card">
+          <div class="category-icon">
+            {% if category.category_image %}
+              <img src="/media/{{ category.category_image }}" alt="{{ category.category_name }}">
+            {% else %}
+              <img src="{% static 'images/placeholder-category.png' %}" alt="{{ category.category_name }}">
+            {% endif %}
+          </div>
+          <div class="category-name">{{ category.category_name }}</div>
+        </a>
+      {% empty %}
+        <div class="text-center col-12">
+          <p>Категории временно недоступны</p>
+        </div>
       {% endfor %}
     </div>
   </div>
-  <!-- Конец секции категорий -->
-  
-  <!-- Filter Section -->
-  <div class="filter-section mb-3">
-    <form method="GET" class="row">
-      <div class="form-group col-md-6">
-        <label for="category">Категория:</label>
-        <select id="category" name="category" class="form-control" onchange="this.form.submit()">
-          <option value="">Все</option>
-          {% for category in categories %}
-          <option value="{{ category.category_name }}" {% if selected_category == category.category_name %} selected {% endif %}>
-            {{ category.category_name }}
-          </option>
-          {% endfor %}
-        </select>
+</section>
+
+<!-- 🎨 EVA - это не просто автоковрики -->
+<section class="eva-benefits">
+  <div class="container">
+    <div class="benefits-container">
+      <div class="benefits-content">
+        <h2><span class="benefits-highlight">EVA</span> - это не просто автоковрики.</h2>
+        <p>Это <span class="benefits-highlight">уют, комфорт, чистота</span> в вашем автомобиле</p>
+        
+        <div class="benefits-list">
+          <div class="benefit-point">
+            <div class="benefit-number">1</div>
+            <div>Форма четко по контуру машины, без зазоров</div>
+          </div>
+          <div class="benefit-point">
+            <div class="benefit-number">2</div>
+            <div>Срок службы 5 лет</div>
+          </div>
+          <div class="benefit-point">
+            <div class="benefit-number">3</div>
+            <div>Штатные крепежи и липучки</div>
+          </div>
+          <div class="benefit-point">
+            <div class="benefit-number">4</div>
+            <div>3D подножка или лепесток на выбор</div>
+          </div>
+          <div class="benefit-point">
+            <div class="benefit-number">5</div>
+            <div>Подпятники и шильдики</div>
+          </div>
+          <div class="benefit-point">
+            <div class="benefit-number">6</div>
+            <div>Белорусский качественный EVA материал</div>
+          </div>
+        </div>
       </div>
       
-      <!-- Sort Section -->
-      <div class="form-group col-md-6">
-        <label for="sort">Сортировать по:</label>
-        <select id="sort" name="sort" class="form-control" onchange="this.form.submit()">
-          <option value="">Выбрать</option>
-          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Сначала новые</option>
-          <option value="priceAsc" {% if selected_sort == 'priceAsc' %}selected{% endif %}>Цена: по возрастанию</option>
-          <option value="priceDesc" {% if selected_sort == 'priceDesc' %}selected{% endif %}>Цена: по убыванию</option>
-        </select>
+      <div class="benefits-image">
+        <img src="{% static 'images/eva-benefits.png' %}" alt="EVA коврики преимущества">
       </div>
-    </form>
-  </div>
-
-  <!-- Product List -->
-  <div class="row">
-    {% for product in products %}
-    <div class="col-md-3">
-      <figure class="card card-product-grid">
-        <div class="img-wrap">
-          <img src="/media/{{product.product_images.first.image}}" />
-        </div>
-        <figcaption class="info-wrap border-top">
-          <a href="{% url 'get_product' product.slug %}" class="title">
-            <b>{{ product.product_name }}</b></a>
-          <div class="price mt-2">{{ product.get_salon_price }} руб.</div>
-        </figcaption>
-      </figure>
     </div>
-    {% endfor %}
   </div>
+</section>
 
-  <!-- Pagination Section -->
-  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center mb-4">
-      {% if products.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
-          <span aria-hidden="true">&laquo; Предыдущая</span>
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <a class="page-link">Предыдущая</a>
-      </li>
-      {% endif %}
+<!-- 📋 5 шагов до чистого салона -->
+<section class="steps-section">
+  <div class="container">
+    <div class="steps-container">
+      <h2 class="section-title">5 шагов до чистого салона</h2>
+      
+      <div class="steps-grid">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-title">Оформи заказ на сайте</div>
+          <div class="step-desc">Выбери свой автомобиль, материал, цвет и нужные коврики.</div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-title">Менеджер позвонит, уточнит детали</div>
+          <div class="step-desc">Можно задать все вопросы и внести изменения.</div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-title">Оплати заказ</div>
+          <div class="step-desc">Мы вышлем смс со ссылкой на оплату. Оплата на сайте Сбербанка, без комиссии. Это интернет-магазин, а не перевод на карту.</div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-title">Отправляем ковры</div>
+          <div class="step-desc">Курьерская служба СДЭК. Изготовление и отправка займет от 1 до 4 дней.</div>
+        </div>
+        
+        <div class="step-item">
+          <div class="step-number">5</div>
+          <div class="step-title">Получи коврики в пункте выдачи</div>
+          <div class="step-desc">Ура! В машине чище и уютней!!!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-      {% for num in products.paginator.page_range %}
-      <li class="page-item {% if products.number == num %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-      </li>
-      {% endfor %}
+<!-- ❓ FAQ Section -->
+{% if faqs %}
+<section class="faq-section">
+  <div class="container">
+    <div class="faq-container">
+      <h2 class="section-title">Часто задаваемые вопросы</h2>
+      
+      <div class="faq-accordion">
+        {% for faq in faqs %}
+          <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+              {{ faq.question }}
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <p>{{ faq.answer|linebreaks }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
 
-      {% if products.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
-          <span aria-hidden="true">Следующая &raquo;</span>
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <a class="page-link">Следующая</a>
-      </li>
-      {% endif %}
-    </ul>
-  </nav>
+<!-- 🚀 JavaScript -->
+<script>
+// 📄 Smooth scrolling для кнопки CTA
+document.addEventListener('DOMContentLoaded', function() {
+  const smoothScrollLinks = document.querySelectorAll('.smooth-scroll');
   
-</div>
+  smoothScrollLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }
+    });
+  });
+});
+
+// ❓ FAQ Accordion functionality
+function toggleFAQ(button) {
+  const faqItem = button.parentElement;
+  const answer = faqItem.querySelector('.faq-answer');
+  const isActive = faqItem.classList.contains('active');
+  
+  // 🔄 Закрываем все остальные FAQ
+  document.querySelectorAll('.faq-item.active').forEach(item => {
+    if (item !== faqItem) {
+      item.classList.remove('active');
+      item.querySelector('.faq-answer').classList.remove('active');
+    }
+  });
+  
+  // 🎯 Переключаем текущий FAQ
+  if (isActive) {
+    faqItem.classList.remove('active');
+    answer.classList.remove('active');
+  } else {
+    faqItem.classList.add('active');
+    answer.classList.add('active');
+  }
+}
+</script>
 
 {% endblock %}
