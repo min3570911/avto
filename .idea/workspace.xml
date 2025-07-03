@@ -4,11 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="добавлены картинки продуктов и категорий">
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/home/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/home/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/home/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/collect_code_and_tree.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/collect_tree.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/copy_4_path.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/create_test_products.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrate_data.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/home/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -16,39 +22,25 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
-    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="CSS File" />
-        <option value="package.json" />
-        <option value="Python Script" />
-        <option value="HTML File" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="RESET_MODE" value="HARD" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;min3570911&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "min3570911"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/min3570911/avto.git&quot;,
-    &quot;accountId&quot;: &quot;502038a7-7703-43ac-96d8-e8cbd4a75480&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/min3570911/avto.git",
+    "accountId": "43c3ffbf-a0f5-4c48-89e2-bbd8bc1ff001"
   }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 7
-}</component>
-  <component name="ProjectId" id="2xdqXpJRaVyj9RsNdp1L0eYpqSY" />
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="2zLjOLhXyPXn6F418Ao6pHyx8iN" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
   </component>
@@ -56,36 +48,80 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;Django Server.avtokovriki.executor&quot;: &quot;Run&quot;,
-    &quot;Python.migrate_data.executor&quot;: &quot;Run&quot;,
-    &quot;Python.setup.by.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
-    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/YandexDisk/avtokovriki&quot;,
-    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
-  },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;sqlite&quot;
-    ]
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JavaScript Debug.index.html.executor": "Run",
+    "Python.manage.executor": "Run",
+    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
-    <configuration name="avtokovriki" type="Python.DjangoServer" factoryName="Django server">
+    <configuration default="true" type="DjangoTestsConfigurationType">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="TARGET" value="" />
+      <option name="SETTINGS_FILE" value="" />
+      <option name="CUSTOM_SETTINGS" value="false" />
+      <option name="USE_OPTIONS" value="false" />
+      <option name="OPTIONS" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="PyBehaveRunConfigurationType" factoryName="Behave">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="ADDITIONAL_ARGS" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unnamed" type="Python.DjangoServer" factoryName="Django server" nameIsGenerated="true">
       <module name="avtokovriki" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -95,7 +131,8 @@
         <env name="DJANGO_SETTINGS_MODULE" value="ecomm.settings" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="D:\YandexDisk\avtokovriki" />
+      <option name="SDK_NAME" value="Python 3.12 (avtokovriki)" />
+      <option name="WORKING_DIRECTORY" value="" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
@@ -120,285 +157,85 @@
       <option name="customRunCommand" value="" />
       <method v="2" />
     </configuration>
+    <configuration default="true" type="Python.FlaskServer">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="docs" factoryName="Docutils task">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="docutils_input_file" value="" />
+      <option name="docutils_output_file" value="" />
+      <option name="docutils_params" value="" />
+      <option name="docutils_task" value="" />
+      <option name="docutils_open_in_browser" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="docs" factoryName="Sphinx task">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="docutils_input_file" value="" />
+      <option name="docutils_output_file" value="" />
+      <option name="docutils_params" value="" />
+      <option name="docutils_task" value="" />
+      <option name="docutils_open_in_browser" value="false" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.23339.19" />
-        <option value="bundled-python-sdk-0029f7779945-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.23339.19" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-PY-242.24807.21" />
+        <option value="bundled-python-sdk-00717045f1d3-399fe30bd8c1-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-242.24807.21" />
       </set>
     </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="0e5d93b8-6790-4fde-b6f1-2b6ee27492a0" name="Changes" comment="" />
-      <created>1748278340808</created>
+      <changelist id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="" />
+      <created>1751517215467</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1748278340808</updated>
-      <workItem from="1748278346125" duration="8059000" />
-      <workItem from="1748320148887" duration="8442000" />
-      <workItem from="1748363935808" duration="7535000" />
-      <workItem from="1748451317486" duration="4801000" />
-      <workItem from="1748456954061" duration="265000" />
-      <workItem from="1748457240375" duration="5152000" />
-      <workItem from="1748674940084" duration="1204000" />
-      <workItem from="1748756530841" duration="4295000" />
-      <workItem from="1748841340106" duration="4182000" />
-      <workItem from="1748877944273" duration="2367000" />
-      <workItem from="1748927362537" duration="5787000" />
-      <workItem from="1749187804480" duration="14101000" />
-      <workItem from="1749446539651" duration="19056000" />
-      <workItem from="1749532631347" duration="42609000" />
-      <workItem from="1749800155578" duration="11470000" />
-      <workItem from="1750052139020" duration="2549000" />
-      <workItem from="1750081805358" duration="9511000" />
-      <workItem from="1750445729002" duration="1919000" />
-      <workItem from="1750483857217" duration="10030000" />
-      <workItem from="1750659123690" duration="7981000" />
+      <updated>1751517215467</updated>
+      <workItem from="1751517217557" duration="406000" />
     </task>
-    <task id="LOCAL-00001" summary="Сломано. после очистки цветов.">
-      <option name="closed" value="true" />
-      <created>1748281112348</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1748281112348</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Не отправляется корзина - не передает атрибут.">
-      <option name="closed" value="true" />
-      <created>1748282428186</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1748282428186</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Починил корзину. Приступаю к реализации импорта.">
-      <option name="closed" value="true" />
-      <created>1748283536825</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1748283536825</updated>
-    </task>
-    <task id="LOCAL-00004" summary="не работает удаление отзыва. Решил попробовать сделать модуль статьи вместо импорта.">
-      <option name="closed" value="true" />
-      <created>1748285272689</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1748285272689</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Внедряю блог. Не работает пока.">
-      <option name="closed" value="true" />
-      <created>1748324578046</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1748324578046</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Внедряю блог. Джанго саммерноте.">
-      <option name="closed" value="true" />
-      <created>1748326879312</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1748326879312</updated>
-    </task>
-    <task id="LOCAL-00007" summary="Внедряю блог. Джанго саммерноте начал.">
-      <option name="closed" value="true" />
-      <created>1748365518194</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1748365518194</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Внедрен блог вместе с редактором">
-      <option name="closed" value="true" />
-      <created>1748463764594</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1748463764594</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Блог заработал.">
-      <option name="closed" value="true" />
-      <created>1748507392603</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1748507392603</updated>
-    </task>
-    <task id="LOCAL-00010" summary="Блог заработал. Чиню отзыв">
-      <option name="closed" value="true" />
-      <created>1748508096411</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1748508096411</updated>
-    </task>
-    <task id="LOCAL-00011" summary="Внедрен блог вместе с редактором CKEDITOR">
-      <option name="closed" value="true" />
-      <created>1748760672806</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1748760672806</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Внедрен блог вместе с редактором CKEDITOR 5">
-      <option name="closed" value="true" />
-      <created>1748879434128</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1748879434128</updated>
-    </task>
-    <task id="LOCAL-00013" summary="Внедрен блог вместе с редактором CKEDITOR 5">
-      <option name="closed" value="true" />
-      <created>1748879950297</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1748879950297</updated>
-    </task>
-    <task id="LOCAL-00014" summary="Начинаю работу с масовым импортом машин">
-      <option name="closed" value="true" />
-      <created>1748880266209</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1748880266209</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Внедряю SEO - начал">
-      <option name="closed" value="true" />
-      <created>1748941831158</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1748941831158</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Внедряю SEO - начал">
-      <option name="closed" value="true" />
-      <created>1749189303115</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1749189303115</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Заработала кнопка Читать далее.">
-      <option name="closed" value="true" />
-      <created>1749215092478</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1749215092484</updated>
-    </task>
-    <task id="LOCAL-00018" summary="Сделал видео и описание на странице категории.">
-      <option name="closed" value="true" />
-      <created>1749461791711</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1749461791711</updated>
-    </task>
-    <task id="LOCAL-00019" summary="Внедрил импорт. не работает пока.">
-      <option name="closed" value="true" />
-      <created>1749533636718</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1749533636718</updated>
-    </task>
-    <task id="LOCAL-00020" summary="поле превью отображается - исправляю ошибки">
-      <option name="closed" value="true" />
-      <created>1749548064882</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1749548064882</updated>
-    </task>
-    <task id="LOCAL-00021" summary="Успешное сообщение- но нет импорта">
-      <option name="closed" value="true" />
-      <created>1749560289355</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1749560289355</updated>
-    </task>
-    <task id="LOCAL-00022" summary="Заработал импорт. допиливаю">
-      <option name="closed" value="true" />
-      <created>1749726980220</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1749726980220</updated>
-    </task>
-    <task id="LOCAL-00023" summary="Заработал импорт корректно">
-      <option name="closed" value="true" />
-      <created>1749734778436</created>
-      <option name="number" value="00023" />
-      <option name="presentableId" value="LOCAL-00023" />
-      <option name="project" value="LOCAL" />
-      <updated>1749734778436</updated>
-    </task>
-    <task id="LOCAL-00024" summary="Добавил импорт картинок. Только в одну категорию. исправляю проблему.">
-      <option name="closed" value="true" />
-      <created>1749793483691</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1749793483691</updated>
-    </task>
-    <task id="LOCAL-00025" summary="Заработал импорт, в том числе картинок.">
-      <option name="closed" value="true" />
-      <created>1749807520133</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1749807520133</updated>
-    </task>
-    <task id="LOCAL-00026" summary="Заработал импорт, в том числе картинок.+замена">
-      <option name="closed" value="true" />
-      <created>1749816903753</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1749816903753</updated>
-    </task>
-    <task id="LOCAL-00027" summary="Заработал импорт, в том числе картинок.+замена в папке">
-      <option name="closed" value="true" />
-      <created>1749816931521</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1749816931521</updated>
-    </task>
-    <task id="LOCAL-00028" summary="Реализовал экспорт">
-      <option name="closed" value="true" />
-      <created>1750146376297</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1750146376297</updated>
-    </task>
-    <task id="LOCAL-00029" summary="добавил пажинацию на страницу категории.">
-      <option name="closed" value="true" />
-      <created>1750275665804</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1750275665804</updated>
-    </task>
-    <task id="LOCAL-00030" summary="добавлены картинки продуктов и категорий">
-      <option name="closed" value="true" />
-      <created>1750915238272</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1750915238272</updated>
-    </task>
-    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -415,36 +252,7 @@
       </map>
     </option>
   </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="не работает удаление отзыва. Решил попробовать сделать модуль статьи вместо импорта." />
-    <MESSAGE value="Внедряю блог. Не работает пока." />
-    <MESSAGE value="Внедряю блог. Джанго саммерноте." />
-    <MESSAGE value="Внедряю блог. Джанго саммерноте начал." />
-    <MESSAGE value="Внедрен блог вместе с редактором" />
-    <MESSAGE value="Блог заработал." />
-    <MESSAGE value="Блог заработал. Чиню отзыв" />
-    <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR" />
-    <MESSAGE value="Внедрен блог вместе с редактором CKEDITOR 5" />
-    <MESSAGE value="Начинаю работу с масовым импортом машин" />
-    <MESSAGE value="Внедряю SEO - начал" />
-    <MESSAGE value="Сделал видео и описание на странице категории." />
-    <MESSAGE value="Внедрил импорт. не работает пока." />
-    <MESSAGE value="поле превью отображается - исправляю ошибки" />
-    <MESSAGE value="Успешное сообщение- но нет импорта" />
-    <MESSAGE value="Заработал импорт. допиливаю" />
-    <MESSAGE value="Заработал импорт корректно" />
-    <MESSAGE value="Добавил импорт картинок. Только в одну категорию. исправляю проблему." />
-    <MESSAGE value="Заработал импорт, в том числе картинок." />
-    <MESSAGE value="Заработал импорт, в том числе картинок.+замена" />
-    <MESSAGE value="Заработал импорт, в том числе картинок.+замена в папке" />
-    <MESSAGE value="Заработала кнопка Читать далее." />
-    <MESSAGE value="Реализовал экспорт" />
-    <MESSAGE value="добавил пажинацию на страницу категории." />
-    <MESSAGE value="добавлены картинки продуктов и категорий" />
-    <option name="LAST_COMMIT_MESSAGE" value="добавлены картинки продуктов и категорий" />
-  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/avtokovriki$setup_by.coverage" NAME="setup.by Coverage Results" MODIFIED="1748458179077" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/avtokovriki$migrate_data.coverage" NAME="migrate_data Coverage Results" MODIFIED="1748879303623" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

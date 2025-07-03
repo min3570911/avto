@@ -9,7 +9,7 @@
   /* 🎬 Hero Section Styles - КОМПАКТНАЯ ВЕРСИЯ */
   .hero-section {
     position: relative;
-    min-height: 70vh;  /* 🔧 Уменьшена высота */
+    min-height: 70vh;
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -41,61 +41,53 @@
     z-index: 3;
     color: white;
     text-align: center;
-    padding: 50px 0;  /* 🔧 Уменьшен padding */
+    padding: 50px 0;
   }
 
   .hero-title {
-    font-size: 3rem;  /* 🔧 Уменьшен размер */
+    font-size: 3rem;
     font-weight: 700;
-    margin-bottom: 15px;  /* 🔧 Уменьшен отступ */
+    margin-bottom: 15px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
   }
 
   .hero-subtitle {
-    font-size: 1.3rem;  /* 🔧 Уменьшен размер */
-    margin-bottom: 35px;  /* 🔧 Уменьшен отступ */
+    font-size: 1.3rem;
+    margin-bottom: 35px;
     opacity: 0.9;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
   }
 
-  /* 🆕 НОВЫЕ стили для 4 преимуществ в ряд */
+  /* 🆕 ОБНОВЛЕННЫЕ стили для 4 преимуществ в ряд - УВЕЛИЧЕНЫ В 2 РАЗА */
   .hero-advantages {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);  /* 🎯 4 колонки в ряд */
-    gap: 20px;  /* 🔧 Уменьшен gap */
-    margin: 35px 0;  /* 🔧 Уменьшены отступы */
-    max-width: 1000px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin: 35px 0;
+    max-width: 1200px; /* 🔧 Увеличен контейнер для больших иконок */
     margin-left: auto;
     margin-right: auto;
   }
 
   .advantage-item {
-    /* 🔧 УБРАНА окантовка и фон */
     background: transparent;
     border: none;
     border-radius: 0;
-    padding: 20px 15px;  
+    padding: 20px 15px;
     transition: all 0.3s ease;
     text-align: center;
   }
 
   .advantage-item:hover {
-    transform: translateY(-5px);  
-    background: transparent;  /* 🔧 Убран фон при hover */
+    transform: translateY(-5px);
+    background: transparent;
   }
 
-  /* 🆕 ВРЕМЕННОЕ решение: эмодзи иконки если SVG не работают */
-  .advantage-icon-emoji {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
-    display: block;
-  }
-
-  /* 🆕 ОБНОВЛЕННЫЕ стили для SVG иконок без окантовки */
+  /* 🆕 УВЕЛИЧЕННЫЕ стили для SVG иконок - В 2 РАЗА БОЛЬШЕ */
   .advantage-icon-svg {
-    width: 60px;  /* 🔧 Увеличен размер без окантовки */
-    height: 60px;
-    margin: 0 auto 15px;  /* 🔧 Больше отступ снизу */
+    width: 120px;  /* 🔧 УВЕЛИЧЕНО с 60px до 120px */
+    height: 120px; /* 🔧 УВЕЛИЧЕНО с 60px до 120px */
+    margin: 0 auto 20px;  /* 🔧 Увеличен отступ снизу */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -104,29 +96,29 @@
   .advantage-icon-svg img {
     width: 100%;
     height: 100%;
-    filter: brightness(0) invert(1);  /* 🎨 Белые иконки */
+    filter: brightness(0) invert(1);
     transition: filter 0.3s ease;
   }
 
   .advantage-item:hover .advantage-icon-svg img {
-    filter: brightness(0) saturate(100%) invert(59%) sepia(100%) saturate(1000%) hue-rotate(15deg);  /* 🎨 Оранжевые при hover */
+    filter: brightness(0) saturate(100%) invert(59%) sepia(100%) saturate(1000%) hue-rotate(15deg);
   }
 
   .advantage-title {
-    font-size: 1rem;  /* 🔧 Уменьшен размер */
+    font-size: 2rem;  /* 🔧 УВЕЛИЧЕНО с 1rem до 2rem */
     font-weight: 600;
-    margin-bottom: 6px;  /* 🔧 Уменьшен отступ */
+    margin-bottom: 10px;  /* 🔧 Увеличен отступ */
     line-height: 1.2;
   }
 
   .advantage-desc {
-    font-size: 0.85rem;  /* 🔧 Уменьшен размер */
+    font-size: 1.7rem;  /* 🔧 УВЕЛИЧЕНО с 0.85rem до 1.7rem */
     opacity: 0.9;
     line-height: 1.3;
   }
 
   .hero-cta {
-    margin-top: 30px;  /* 🔧 Уменьшен отступ */
+    margin-top: 30px;
   }
 
   .cta-button {
@@ -150,7 +142,7 @@
     text-decoration: none;
   }
 
-  /* 📂 Compact Categories Section */
+  /* 📂 Compact Categories Section - ОБНОВЛЕНО С ОГРАНИЧЕНИЕМ */
   .catalog-section {
     padding: 80px 0;
     background: #f8f9fa;
@@ -175,12 +167,65 @@
     background: #ff6600;
   }
 
+  /* 🆕 НОВЫЙ контейнер для категорий с кнопкой */
+  .categories-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
   .categories-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 30px;
-    max-width: 1000px;
-    margin: 0 auto;
+    margin-bottom: 30px;
+  }
+
+  /* 🆕 АДАПТИВНАЯ сетка с ограничением количества */
+  @media (min-width: 1200px) {
+    .categories-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .category-card:nth-child(n+9) {
+      display: none;
+    }
+    .categories-grid.expanded .category-card {
+      display: block !important;
+    }
+  }
+
+  @media (min-width: 992px) and (max-width: 1199px) {
+    .categories-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .category-card:nth-child(n+7) {
+      display: none;
+    }
+    .categories-grid.expanded .category-card {
+      display: block !important;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 991px) {
+    .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .category-card:nth-child(n+5) {
+      display: none;
+    }
+    .categories-grid.expanded .category-card {
+      display: block !important;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .category-card:nth-child(n+5) {
+      display: none;
+    }
+    .categories-grid.expanded .category-card {
+      display: block !important;
+    }
   }
 
   .category-card {
@@ -223,6 +268,41 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: #333;
+  }
+
+  /* 🆕 КНОПКА "Смотреть все марки" */
+  .show-all-button {
+    display: block;
+    margin: 0 auto;
+    background: #ff6600;
+    color: white;
+    padding: 12px 35px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+  }
+
+  .show-all-button:hover {
+    background: #e55a00;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
+  }
+
+  .show-all-button.active {
+    background: #666;
+  }
+
+  .show-all-button i {
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+  }
+
+  .show-all-button.active i {
+    transform: rotate(180deg);
   }
 
   /* 🎨 EVA Benefits Section */
@@ -401,10 +481,10 @@
     transform: rotate(180deg);
   }
 
-  /* 📱 Mobile Responsive - ОБНОВЛЕНО для компактной версии */
+  /* 📱 Mobile Responsive - ОБНОВЛЕНО для увеличенных элементов */
   @media (max-width: 768px) {
     .hero-title {
-      font-size: 2.2rem;  /* 🔧 Адаптировано под компактную версию */
+      font-size: 2.2rem;
     }
 
     .hero-subtitle {
@@ -412,7 +492,7 @@
     }
 
     .hero-content {
-      padding: 30px 0;  /* 🔧 Уменьшен padding для мобильных */
+      padding: 30px 0;
     }
 
     /* 🎯 Преимущества: 2x2 сетка на планшетах */
@@ -423,21 +503,21 @@
     }
 
     .advantage-item {
-      padding: 15px 10px;  /* 🔧 Еще более компактный padding без окантовки */
+      padding: 15px 10px;
     }
 
     .advantage-icon-svg {
-      width: 50px;  /* 🔧 Размер иконки на мобильных */
-      height: 50px;
-      margin-bottom: 12px;
+      width: 80px;  /* 🔧 Уменьшены для мобильных, но всё ещё больше оригинала */
+      height: 80px;
+      margin-bottom: 15px;
     }
 
     .advantage-title {
-      font-size: 0.9rem;
+      font-size: 1.3rem; /* 🔧 Адаптировано для мобильных */
     }
 
     .advantage-desc {
-      font-size: 0.8rem;
+      font-size: 1.1rem; /* 🔧 Адаптировано для мобильных */
     }
 
     .benefits-container {
@@ -453,11 +533,6 @@
       grid-template-columns: 1fr;
     }
 
-    .categories-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
-
     .section-title {
       font-size: 2rem;
     }
@@ -470,12 +545,8 @@
       gap: 12px;
     }
 
-    .categories-grid {
-      grid-template-columns: 1fr;
-    }
-
     .hero-content {
-      padding: 25px 0;  /* 🔧 Минимальный padding */
+      padding: 25px 0;
     }
 
     .hero-title {
@@ -484,6 +555,19 @@
 
     .hero-subtitle {
       font-size: 1rem;
+    }
+
+    .advantage-icon-svg {
+      width: 60px;  /* 🔧 Минимальный размер на телефонах */
+      height: 60px;
+    }
+
+    .advantage-title {
+      font-size: 1rem;
+    }
+
+    .advantage-desc {
+      font-size: 0.85rem;
     }
   }
 </style>
@@ -498,18 +582,18 @@
       {% endif %}
     </video>
   {% endif %}
-  
+
   <div class="hero-overlay"></div>
-  
+
   <div class="container hero-content">
     <h1 class="hero-title">
       {% if hero_section %}{{ hero_section.title }}{% else %}EVA коврики в Минске{% endif %}
     </h1>
-    
+
     <p class="hero-subtitle">
       {% if hero_section %}{{ hero_section.subtitle }}{% else %}уют, комфорт, чистота в вашем автомобиле{% endif %}
     </p>
-    
+
     <!-- 🎯 Hero Advantages -->
     <div class="hero-advantages">
       {% if hero_section.advantages.all %}
@@ -554,10 +638,10 @@
         </div>
       {% endif %}
     </div>
-    
+
     <!-- 🎯 CTA Button -->
     <div class="hero-cta">
-      <a href="{% if hero_section.button_link %}{{ hero_section.button_link }}{% else %}#catalog-section{% endif %}" 
+      <a href="{% if hero_section.button_link %}{{ hero_section.button_link }}{% else %}#catalog-section{% endif %}"
          class="cta-button smooth-scroll">
         {% if hero_section.button_text %}{{ hero_section.button_text }}{% else %}ЗАКАЗАТЬ{% endif %}
       </a>
@@ -565,28 +649,38 @@
   </div>
 </section>
 
-<!-- 📂 Compact Categories Catalog -->
+<!-- 📂 Compact Categories Catalog - ОБНОВЛЕНО С ОГРАНИЧЕНИЕМ -->
 <section class="catalog-section" id="catalog-section">
   <div class="container">
     <h2 class="section-title">Категории ковриков</h2>
-    
-    <div class="categories-grid">
-      {% for category in categories %}
-        <a href="{% url 'products_by_category' category.slug %}" class="category-card">
-          <div class="category-icon">
-            {% if category.category_image %}
-              <img src="/media/{{ category.category_image }}" alt="{{ category.category_name }}">
-            {% else %}
-              <img src="{% static 'images/placeholder-category.png' %}" alt="{{ category.category_name }}">
-            {% endif %}
+
+    <div class="categories-container">
+      <div class="categories-grid" id="categoriesGrid">
+        {% for category in categories %}
+          <a href="{% url 'products_by_category' category.slug %}" class="category-card">
+            <div class="category-icon">
+              {% if category.category_image %}
+                <img src="/media/{{ category.category_image }}" alt="{{ category.category_name }}">
+              {% else %}
+                <img src="{% static 'images/placeholder-category.png' %}" alt="{{ category.category_name }}">
+              {% endif %}
+            </div>
+            <div class="category-name">{{ category.category_name }}</div>
+          </a>
+        {% empty %}
+          <div class="text-center col-12">
+            <p>Категории временно недоступны</p>
           </div>
-          <div class="category-name">{{ category.category_name }}</div>
-        </a>
-      {% empty %}
-        <div class="text-center col-12">
-          <p>Категории временно недоступны</p>
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
+
+      <!-- 🆕 Кнопка "Смотреть все марки" -->
+      {% if categories.count > 8 %}
+      <button class="show-all-button" id="showAllCategories" onclick="toggleCategories()">
+        <span>Смотреть все марки автомобилей</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -598,7 +692,7 @@
       <div class="benefits-content">
         <h2><span class="benefits-highlight">EVA</span> - это не просто автоковрики.</h2>
         <p>Это <span class="benefits-highlight">уют, комфорт, чистота</span> в вашем автомобиле</p>
-        
+
         <div class="benefits-list">
           <div class="benefit-point">
             <div class="benefit-number">1</div>
@@ -626,7 +720,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="benefits-image">
         <img src="{% static 'images/eva-benefits.png' %}" alt="EVA коврики преимущества">
       </div>
@@ -639,32 +733,32 @@
   <div class="container">
     <div class="steps-container">
       <h2 class="section-title">5 шагов до чистого салона</h2>
-      
+
       <div class="steps-grid">
         <div class="step-item">
           <div class="step-number">1</div>
           <div class="step-title">Оформи заказ на сайте</div>
           <div class="step-desc">Выбери свой автомобиль, материал, цвет и нужные коврики.</div>
         </div>
-        
+
         <div class="step-item">
           <div class="step-number">2</div>
           <div class="step-title">Менеджер позвонит, уточнит детали</div>
           <div class="step-desc">Можно задать все вопросы и внести изменения.</div>
         </div>
-        
+
         <div class="step-item">
           <div class="step-number">3</div>
           <div class="step-title">Оплати заказ</div>
           <div class="step-desc">Мы вышлем смс со ссылкой на оплату. Оплата на сайте Сбербанка, без комиссии. Это интернет-магазин, а не перевод на карту.</div>
         </div>
-        
+
         <div class="step-item">
           <div class="step-number">4</div>
           <div class="step-title">Отправляем ковры</div>
           <div class="step-desc">Курьерская служба СДЭК. Изготовление и отправка займет от 1 до 4 дней.</div>
         </div>
-        
+
         <div class="step-item">
           <div class="step-number">5</div>
           <div class="step-title">Получи коврики в пункте выдачи</div>
@@ -681,7 +775,7 @@
   <div class="container">
     <div class="faq-container">
       <h2 class="section-title">Часто задаваемые вопросы</h2>
-      
+
       <div class="faq-accordion">
         {% for faq in faqs %}
           <div class="faq-item">
@@ -705,15 +799,15 @@
 // 📄 Smooth scrolling для кнопки CTA
 document.addEventListener('DOMContentLoaded', function() {
   const smoothScrollLinks = document.querySelectorAll('.smooth-scroll');
-  
+
   smoothScrollLinks.forEach(link => {
     link.addEventListener('click', function(e) {
       const href = this.getAttribute('href');
-      
+
       if (href.startsWith('#')) {
         e.preventDefault();
         const target = document.querySelector(href);
-        
+
         if (target) {
           target.scrollIntoView({
             behavior: 'smooth',
@@ -723,6 +817,72 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // 🆕 Проверяем количество скрытых категорий при загрузке
+  checkHiddenCategories();
+});
+
+// 🆕 Функция переключения категорий
+function toggleCategories() {
+  const grid = document.getElementById('categoriesGrid');
+  const button = document.getElementById('showAllCategories');
+  const buttonText = button.querySelector('span');
+  const buttonIcon = button.querySelector('i');
+
+  if (grid.classList.contains('expanded')) {
+    // Сворачиваем
+    grid.classList.remove('expanded');
+    button.classList.remove('active');
+    buttonText.textContent = 'Смотреть все марки автомобилей';
+
+    // Плавная прокрутка к началу секции
+    document.getElementById('catalog-section').scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  } else {
+    // Разворачиваем
+    grid.classList.add('expanded');
+    button.classList.add('active');
+    buttonText.textContent = 'Скрыть';
+  }
+}
+
+// 🆕 Проверяем количество скрытых категорий
+function checkHiddenCategories() {
+  const grid = document.getElementById('categoriesGrid');
+  const categories = grid.querySelectorAll('.category-card');
+  const button = document.getElementById('showAllCategories');
+
+  if (!button) return;
+
+  let hiddenCount = 0;
+  const width = window.innerWidth;
+
+  // Подсчитываем скрытые элементы в зависимости от ширины экрана
+  if (width >= 1200) {
+    hiddenCount = categories.length - 8;
+  } else if (width >= 992) {
+    hiddenCount = categories.length - 6;
+  } else {
+    hiddenCount = categories.length - 4;
+  }
+
+  // Обновляем текст кнопки с количеством скрытых
+  if (hiddenCount > 0) {
+    button.style.display = 'block';
+    const buttonText = button.querySelector('span');
+    buttonText.textContent = `Смотреть все марки автомобилей (еще ${hiddenCount})`;
+  } else {
+    button.style.display = 'none';
+  }
+}
+
+// 🆕 Обновляем при изменении размера окна
+window.addEventListener('resize', function() {
+  if (!document.getElementById('categoriesGrid').classList.contains('expanded')) {
+    checkHiddenCategories();
+  }
 });
 
 // ❓ FAQ Accordion functionality
