@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="Заменил логотипы">
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="главная страница отработал изображение.">
+      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/home/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/home/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/home/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -233,7 +236,8 @@
       <updated>1751517215467</updated>
       <workItem from="1751517217557" duration="12237000" />
       <workItem from="1751895885409" duration="2046000" />
-      <workItem from="1752223937368" duration="3569000" />
+      <workItem from="1752223937368" duration="4008000" />
+      <workItem from="1752313629774" duration="8281000" />
     </task>
     <task id="LOCAL-00001" summary="Заработало сворачивание категорий на главной">
       <option name="closed" value="true" />
@@ -259,7 +263,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751537754770</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="главная страница отработал изображение.">
+      <option name="closed" value="true" />
+      <created>1752260640139</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1752260640139</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -280,7 +292,8 @@
     <MESSAGE value="Заработало сворачивание категорий на главной" />
     <MESSAGE value="Заработало сворачивание категорий на главной и hero секция." />
     <MESSAGE value="Заменил логотипы" />
-    <option name="LAST_COMMIT_MESSAGE" value="Заменил логотипы" />
+    <MESSAGE value="главная страница отработал изображение." />
+    <option name="LAST_COMMIT_MESSAGE" value="главная страница отработал изображение." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
