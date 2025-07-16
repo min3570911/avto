@@ -6,6 +6,8 @@
 {% block start %}
 
 <style>
+  /* ПОЛНЫЕ ФИНАЛЬНЫЕ CSS СТИЛИ С ОПИСАНИЕМ КОМПАНИИ */
+
   /* Стили для размещения корзины в одном ряду с логотипом */
   @media (max-width: 991px) {
     /* Корректируем контейнер row, чтобы элементы в нем можно было перегруппировать */
@@ -187,6 +189,99 @@
     box-shadow: 0 8px 25px rgba(255, 102, 0, 0.4);
     color: white;
     text-decoration: none;
+  }
+
+  /* 📝 НОВЫЕ СТИЛИ ДЛЯ ОПИСАНИЯ КОМПАНИИ - ФИНАЛЬНАЯ ВЕРСИЯ */
+  .company-description-section {
+    padding: 70px 0;
+    background: #f8f9fa;  /* 🔧 Простой серый фон */
+  }
+
+  .company-description-section .container {
+    max-width: 1000px;
+    background: white;  /* 🔧 БЕЛАЯ ПОДЛОЖКА */
+    border-radius: 15px;
+    padding: 50px 60px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);  /* 🎨 Тень для подложки */
+  }
+
+  .company-description-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 40px;
+    position: relative;
+    font-weight: 600;
+  }
+
+  .company-description-title::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: #ff6600;
+    border-radius: 2px;
+  }
+
+  .company-description-content {
+    text-align: left;  /* 🔧 ИСПРАВЛЕНО: выравнивание по левому краю */
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #555;
+    max-width: none;  /* 🔧 Убираем ограничение ширины */
+  }
+
+  /* 🎨 Стили для содержимого CKEditor в описании компании */
+  .company-description-content p {
+    margin-bottom: 1.2rem;
+    text-align: left;  /* 🔧 Принудительно по левому краю */
+  }
+
+  .company-description-content strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  .company-description-content em {
+    color: #ff6600;
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .company-description-content a {
+    color: #ff6600;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .company-description-content a:hover {
+    border-bottom-color: #ff6600;
+    text-decoration: none;
+  }
+
+  .company-description-content ul,
+  .company-description-content ol {
+    text-align: left;  /* 🔧 Списки тоже по левому краю */
+    padding-left: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .company-description-content li {
+    margin-bottom: 0.5rem;
+    text-align: left;  /* 🔧 Элементы списка по левому краю */
+  }
+
+  .company-description-content h2,
+  .company-description-content h3,
+  .company-description-content h4 {
+    text-align: left;  /* 🔧 Заголовки в тексте по левому краю */
+    color: #333;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   /* 📂 Compact Categories Section - ОБНОВЛЕНО С ОГРАНИЧЕНИЕМ */
@@ -635,58 +730,115 @@
   }
 
   /* 📋 5 Steps Section */
-  .steps-section {
+
+  .carpet-steps {
     padding: 80px 0;
-    background: white;
+    background: #f8f9fa;
   }
 
-  .steps-container {
-    max-width: 1200px;
+  .carpet-steps__title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 50px;
+    position: relative;
+    font-weight: 600;
+  }
+
+  .carpet-steps__title:after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: #ff6600;
+  }
+
+  /* 🔗 ГОРИЗОНТАЛЬНЫЙ контейнер - БЕЗ ПЕРЕНОСОВ */
+  .carpet-steps__block {
+    max-width: 1400px;
     margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 20px;
+    gap: 15px; /* 🔧 Минимальный отступ между элементами */
   }
 
-  .steps-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 30px;
-    margin-top: 50px;
+  /* 🔗 ПУНКТИРНАЯ линия между шагами */
+  .carpet-steps__block::before {
+    content: '';
+    position: absolute;
+    top: 30px; /* Центр кружочков */
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    background: repeating-linear-gradient(
+      to right,
+      #ff6600 0,
+      #ff6600 8px,
+      transparent 8px,
+      transparent 16px
+    );
+    z-index: 1;
   }
 
-  .step-item {
+  .carpet-steps__item {
     text-align: center;
     position: relative;
+    flex: 1;
+    max-width: 240px; /* 🔧 Ограничиваем ширину для лучшего размещения */
+    min-width: 200px; /* 🔧 Минимальная ширина */
+    z-index: 2;
   }
 
-  /* 🔧 ИСПРАВЛЕННЫЕ стили для больших кружков шагов */
-  .step-number {
+  /* 🎯 Круглые номера шагов */
+  .carpet-steps__item-pic {
     width: 60px;
     height: 60px;
-    min-width: 60px;
-    min-height: 60px;
     background: #ff6600;
-    color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 700;
     margin: 0 auto 20px;
-    flex-shrink: 0;
-    white-space: nowrap;
-    box-sizing: border-box;
+    position: relative;
+    z-index: 3;
+    box-shadow: 0 3px 10px rgba(255, 102, 0, 0.3);
+    transition: all 0.3s ease;
+    /* 🔧 Белый фон для четкой видимости на пунктирной линии */
+    border: 3px solid #f8f9fa;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
   }
 
-  .step-title {
-    font-size: 1.2rem;
+  /* 🎯 Модификатор для первого элемента */
+  .carpet-steps__item-pic.m--first {
+    background: linear-gradient(135deg, #ff6600 0%, #e55a00 100%);
+    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+  }
+
+  .carpet-steps__item:hover .carpet-steps__item-pic {
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(255, 102, 0, 0.5);
+  }
+
+  .carpet-steps__item-title {
+    font-size: 1.1rem;
     font-weight: 600;
     color: #333;
     margin-bottom: 10px;
+    line-height: 1.3;
   }
 
-  .step-desc {
+  .carpet-steps__item-info {
     color: #666;
-    line-height: 1.5;
+    line-height: 1.4;
+    font-size: 0.9rem;
   }
 
   /* ❓ FAQ Section */
@@ -901,6 +1053,23 @@
     .benefits-header p {
       font-size: 1.1rem;
     }
+
+    /* 📝 Описание компании на планшетах */
+    .company-description-section .container {
+      padding: 40px 40px;
+    }
+
+    .company-description-title {
+      font-size: 2rem;
+    }
+
+    .company-description-content {
+      font-size: 1.05rem;
+    }
+
+    .company-description-section {
+      padding: 50px 0;
+    }
   }
 
   @media (max-width: 576px) {
@@ -969,6 +1138,154 @@
 
     .gallery-section {
       padding: 60px 0;
+    }
+
+    /* 📝 Описание компании на мобильных */
+    .company-description-section .container {
+      padding: 30px 20px;
+      margin: 0 15px;
+    }
+
+    .company-description-title {
+      font-size: 1.7rem;
+      margin-bottom: 30px;
+    }
+
+    .company-description-content {
+      font-size: 1rem;
+    }
+
+    .company-description-section {
+      padding: 40px 0;
+    }
+  }
+
+  /* 📱 АДАПТИВНОСТЬ ДЛЯ ШАГОВ - сохраняем горизонтальную раскладку как можно дольше */
+
+  /* 🖥️ Широкие экраны - увеличиваем размеры */
+  @media (min-width: 1400px) {
+    .carpet-steps__item {
+      max-width: 260px;
+    }
+
+    .carpet-steps__item-title {
+      font-size: 1.2rem;
+    }
+
+    .carpet-steps__item-info {
+      font-size: 0.95rem;
+    }
+  }
+
+  /* 💻 Планшеты большие - чуть уменьшаем */
+  @media (max-width: 1199px) and (min-width: 992px) {
+    .carpet-steps__item {
+      max-width: 200px;
+      min-width: 180px;
+    }
+
+    .carpet-steps__item-title {
+      font-size: 1rem;
+    }
+
+    .carpet-steps__item-info {
+      font-size: 0.85rem;
+    }
+
+    .carpet-steps__item-pic {
+      width: 55px;
+      height: 55px;
+      font-size: 1.3rem;
+    }
+  }
+
+  /* 📱 Планшеты - еще горизонтально, но компактнее */
+  @media (max-width: 991px) and (min-width: 768px) {
+    .carpet-steps__block {
+      gap: 10px;
+      padding: 0 10px;
+    }
+
+    .carpet-steps__item {
+      max-width: 160px;
+      min-width: 140px;
+    }
+
+    .carpet-steps__item-title {
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .carpet-steps__item-info {
+      font-size: 0.8rem;
+    }
+
+    .carpet-steps__item-pic {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .carpet-steps__block::before {
+      top: 25px;
+    }
+  }
+
+  /* 📱 Мобильные - ВЕРТИКАЛЬНАЯ раскладка */
+  @media (max-width: 767px) {
+    .carpet-steps__title {
+      font-size: 2rem;
+    }
+
+    .carpet-steps__block {
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .carpet-steps__block::before {
+      display: none; /* Убираем горизонтальную линию */
+    }
+
+    .carpet-steps__item {
+      max-width: 300px;
+    }
+
+    .carpet-steps__item-pic {
+      width: 50px;
+      height: 50px;
+      font-size: 1.3rem;
+    }
+
+    .carpet-steps__item-title {
+      font-size: 1.1rem;
+    }
+
+    .carpet-steps__item-info {
+      font-size: 0.9rem;
+    }
+  }
+
+  /* 📱 Совсем маленькие экраны */
+  @media (max-width: 576px) {
+    .carpet-steps__item {
+      max-width: 250px;
+      padding: 0 10px;
+    }
+
+    .carpet-steps__item-pic {
+      width: 45px;
+      height: 45px;
+      font-size: 1.2rem;
+    }
+
+    .carpet-steps__item-title {
+      font-size: 1rem;
+    }
+
+    .carpet-steps__item-info {
+      font-size: 0.85rem;
     }
   }
 </style>
@@ -1138,44 +1455,45 @@
 </section>
 
 <!-- 📋 5 шагов до чистого салона -->
-<section class="steps-section">
+
+<div class="carpet-steps">
   <div class="container">
-    <div class="steps-container">
-      <h2 class="section-title">5 шагов до чистого салона</h2>
+    <div class="h2 carpet-steps__title">5 шагов до чистого салона</div>
+    <div class="carpet-steps__block">
 
-      <div class="steps-grid">
-        <div class="step-item">
-          <div class="step-number">1</div>
-          <div class="step-title">Оформи заказ на сайте</div>
-          <div class="step-desc">Выбери свой автомобиль, материал, цвет и нужные коврики.</div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">2</div>
-          <div class="step-title">Менеджер позвонит, уточнит детали</div>
-          <div class="step-desc">Можно задать все вопросы и внести изменения.</div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">3</div>
-          <div class="step-title">Оплати заказ</div>
-          <div class="step-desc">Мы вышлем смс со ссылкой на оплату. Оплата на сайте Сбербанка, без комиссии. Это интернет-магазин, а не перевод на карту.</div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div class="step-title">Отправляем ковры</div>
-          <div class="step-desc">Курьерская служба СДЭК. Изготовление и отправка займет от 1 до 4 дней.</div>
-        </div>
-
-        <div class="step-item">
-          <div class="step-number">5</div>
-          <div class="step-title">Получи коврики в пункте выдачи</div>
-          <div class="step-desc">Ура! В машине чище и уютней!!!</div>
-        </div>
+      <div class="carpet-steps__item">
+        <div class="carpet-steps__item-pic m--first">1</div>
+        <div class="carpet-steps__item-title">Оформи заказ на сайте</div>
+        <div class="carpet-steps__item-info">Выбери свой автомобиль, материал, цвет и нужные ковры.</div>
       </div>
+
+      <div class="carpet-steps__item">
+        <div class="carpet-steps__item-pic">2</div>
+        <div class="carpet-steps__item-title">Менеджер позвонит, уточнит детали</div>
+        <div class="carpet-steps__item-info">Можно задать все вопросы и внести изменения.</div>
+      </div>
+
+      <div class="carpet-steps__item">
+        <div class="carpet-steps__item-pic">3</div>
+        <div class="carpet-steps__item-title">Приезжай на примерку</div>
+        <div class="carpet-steps__item-info">Вы приезжаете и мы снимаем мерки с Вашего автомобиля.</div>
+      </div>
+
+      <div class="carpet-steps__item">
+        <div class="carpet-steps__item-pic">4</div>
+        <div class="carpet-steps__item-title">Изготавливаем ковры</div>
+        <div class="carpet-steps__item-info">Изготовление займёт от 1 до 4 дней.</div>
+      </div>
+
+      <div class="carpet-steps__item">
+        <div class="carpet-steps__item-pic">5</div>
+        <div class="carpet-steps__item-title">Получи ковры в пункте выдачи</div>
+        <div class="carpet-steps__item-info">Получи у нас или на почте, если предусмотрена доставка.</div>
+      </div>
+
     </div>
   </div>
+</div>
 </section>
 
 <!-- 🆕 НОВАЯ СЕКЦИЯ: Примеры наших работ -->
