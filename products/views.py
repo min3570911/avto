@@ -1,6 +1,6 @@
-# 📁 products/views.py — ИСПРАВЛЕННАЯ ВЕРСИЯ без поля parent
+# 📁 products/views.py — ИСПРАВЛЕННАЯ ВЕРСИЯ с окантовкой для лодок
 # 🛍️ View-функции интернет-магазина автоковриков
-# 🆕 ДОБАВЛЕНО: поддержка per_page (показывать по...)
+# 🛥️ ИСПРАВЛЕНО: border_colors для лодок + убрана привязка к комплектациям
 
 import random
 from django.shortcuts import render, redirect, get_object_or_404
@@ -30,33 +30,28 @@ def products_catalog(request):
 
     Отображает все товары с возможностью поиска и фильтрации.
     Поддерживает пагинацию и сортировку.
-    🔧 ИСПРАВЛЕНО: убран фильтр parent=None
     """
     # 🔍 Параметры поиска и фильтрации
     search_query = request.GET.get("search", "")
-    sort_by = request.GET.get("sort", "-created_at")  # По умолчанию новые первыми
+    sort_by = request.GET.get("sort", "-created_at")
     category_filter = request.GET.get("category", "")
+    per_page = request.GET.get("per_page", "12")  # 🆕 Количество товаров на странице
 
-    # 📦 ИСПРАВЛЕНО: убран фильтр parent=None
-    products = (
-        Product.objects.all()
-        .select_related("category")
-        .prefetch_related("product_images")
-    )
+    # 📦 Базовый queryset всех товаров
+    products = Product.objects.all().select_related("category").prefetch_related("product_images")
 
-    # 🔍 Поиск
+    # 🔍 Поиск по названию товара и описанию
     if search_query:
         products = products.filter(
             Q(product_name__icontains=search_query)
             | Q(product_desription__icontains=search_query)
-            | Q(category__category_name__icontains=search_query)
         )
 
     # 📂 Фильтрация по категории
     if category_filter:
         products = products.filter(category__slug=category_filter)
 
-    # 📊 Сортировка
+    # 📊 Сортировка товаров
     sort_options = {
         "name": "product_name",
         "-name": "-product_name",
@@ -67,47 +62,60 @@ def products_catalog(request):
     }
     products = products.order_by(sort_options.get(sort_by, "-created_at"))
 
+    # 🔢 НОВОЕ: Обработка per_page
+    if per_page == "all":
+        # 📊 Показать все товары (с разумным ограничением для безопасности)
+        total_products = products.count()
+        if total_products > 500:
+            # ⚠️ Если товаров больше 500, ограничиваем для производительности
+            messages.warning(request,
+                             f"Показано первые 500 из {total_products} товаров. Используйте фильтры для поиска.")
+            per_page_num = 500
+        else:
+            per_page_num = total_products or 1  # Минимум 1 для избежания ошибок
+    else:
+        # 🔢 Стандартные варианты
+        try:
+            per_page_num = int(per_page)
+            # ✅ Разрешенные значения: 12, 24, 48, 96
+            if per_page_num not in [12, 24, 48, 96]:
+                per_page_num = 12  # По умолчанию
+        except (ValueError, TypeError):
+            per_page_num = 12  # По умолчанию при ошибке
+
     # 📄 Пагинация
-    paginator = Paginator(products, 12)  # 12 товаров на страницу
+    paginator = Paginator(products, per_page_num)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # 📂 ТОЛЬКО АКТИВНЫЕ категории для фильтра
+    # 📂 Навигация по активным категориям
     categories = (
         Category.objects.filter(is_active=True)
         .order_by("display_order", "category_name")
     )
 
-    # 🎯 Популярные товары (для сайдбара)
-    popular_products = (
-        Product.objects.filter(newest_product=True)
-        .order_by("-created_at")[:4]
-    )
-
+    # 📊 Контекст для шаблона
     context = {
         "page_obj": page_obj,
         "products": page_obj.object_list,
         "categories": categories,
-        "popular_products": popular_products,
         "search_query": search_query,
         "sort_by": sort_by,
         "category_filter": category_filter,
+        "per_page": per_page,  # 🆕 Текущее значение per_page
         "total_products": paginator.count,
-        # 📊 Статистика
-        "products_count": paginator.count,
+        # 📊 Мета-информация
         "current_page": page_obj.number,
         "total_pages": paginator.num_pages,
     }
 
-    return render(request, "products/catalog.html", context)
+    return render(request, "product/catalog.html", context)
 
 
-# 📂 ОБНОВЛЕНО: Товары по категории с поддержкой per_page
 def products_by_category(request, slug):
     """
-    📂 Товары по конкретной категории
+    📂 Каталог товаров в выбранной категории
 
-    Отображает товары выбранной категории с возможностью сортировки и выбора количества на странице.
     🔧 ИСПРАВЛЕНО: убран фильтр parent=None, изменен параметр category_slug → slug
     🆕 ДОБАВЛЕНО: поддержка per_page для выбора количества товаров на странице
     """
@@ -155,7 +163,8 @@ def products_by_category(request, slug):
         total_products = products.count()
         if total_products > 500:
             # ⚠️ Если товаров больше 500, ограничиваем для производительности
-            messages.warning(request, f"Показано первые 500 из {total_products} товаров. Используйте фильтры для поиска.")
+            messages.warning(request,
+                             f"Показано первые 500 из {total_products} товаров. Используйте фильтры для поиска.")
             per_page_num = 500
         else:
             per_page_num = total_products or 1  # Минимум 1 для избежания ошибок
@@ -207,45 +216,105 @@ def products_by_category(request, slug):
 
 def get_product(request, slug):
     """
-    🛍️ Отображение страницы товара с возможностью выбора цветов, комплектации и опций
+    🛍️ Отображение страницы товара с поддержкой лодок и автомобилей
 
-    Получает товар по слагу и подготавливает все необходимые данные:
-    - варианты комплектации, цветов, опций
-    - цены и описания
-    - системы отзывов
-    - связанные товары
-
-    🔍 Разделяет цвета на типы (для коврика и окантовки)
+    🛥️ ИСПРАВЛЕНО: Для лодок ВКЛЮЧЕНА окантовка
+    🚗 Для автомобилей: все как было
     """
     product = get_object_or_404(Product, slug=slug)
 
-    # варианты комплектов
-    sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
-    additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
+    # 🛥️ НОВАЯ ЛОГИКА: Проверяем тип товара
+    if product.is_boat_product():
+        # ================== ЛОГИКА ДЛЯ ЛОДОК ==================
 
-    # 💰 ИСПРАВЛЕНО: Получаем цену подпятника из справочника KitVariant
-    podpyatnik_option = KitVariant.objects.filter(code='podpyatnik', is_option=True).first()
-    if not podpyatnik_option:
-        # 🚨 Если записи нет в БД, создаем логирование/предупреждение
-        print("⚠️ ВНИМАНИЕ: Опция 'подпятник' не найдена в справочнике KitVariant!")
-        # Можно создать запись автоматически или использовать дефолтную цену
-        podpyatnik_option = type('obj', (object,), {
-            'name': 'Подпятник',
-            'price_modifier': 15.00,  # Дефолтная цена
-            'code': 'podpyatnik'
-        })
+        # 🎨 ИСПРАВЛЕНО: Цвета ковриков И окантовки для лодок!
+        carpet_colors = Color.objects.filter(
+            color_type='carpet',
+            is_available=True
+        ).order_by('display_order')
 
-    # 🎨 разделяем цвета на типы для коврика и окантовки
-    carpet_colors = Color.objects.filter(color_type='carpet').order_by('display_order')
-    border_colors = Color.objects.filter(color_type='border').order_by('display_order')
+        # ✅ ДОБАВЛЕНО: Окантовка для лодок
+        border_colors = Color.objects.filter(
+            color_type='border',
+            is_available=True
+        ).order_by('display_order')
 
-    # Определяем первый доступный цвет для каждого типа (для начального выбора)
-    initial_carpet_color = carpet_colors.filter(is_available=True).first() or carpet_colors.first()
-    initial_border_color = border_colors.filter(is_available=True).first() or border_colors.first()
+        # 🎨 Начальные цвета
+        initial_carpet_color = carpet_colors.first()
+        initial_border_color = border_colors.first()
 
-    # рейтинг / отзыв текущего пользователя
-    review = ProductReview.objects.filter(product=product,
-                                          user=request.user).first() if request.user.is_authenticated else None
+        # 📦 Без комплектаций для лодок
+        sorted_kit_variants = []
+        additional_options = []
+        podpyatnik_option = None
+
+        # 💰 Цена напрямую из поля Product.price
+        selected_kit = None
+        updated_price = product.price or 0
+
+        # 🛒 Проверяем наличие в корзине (упрощенная логика)
+        in_cart = False
+        if request.user.is_authenticated:
+            cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+            if cart:
+                # Для лодок ищем без kit_variant, has_podpyatnik
+                in_cart = CartItem.objects.filter(
+                    cart=cart,
+                    product=product,
+                    kit_variant__isnull=True,
+                    has_podpyatnik=False
+                ).exists()
+
+    else:
+        # ================== ЛОГИКА ДЛЯ АВТОМОБИЛЕЙ (БЕЗ ИЗМЕНЕНИЙ) ==================
+
+        # 📦 Варианты комплектов (как было)
+        sorted_kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
+        additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
+
+        # 💰 ИСПРАВЛЕНО: Получаем цену подпятника из справочника KitVariant
+        podpyatnik_option = KitVariant.objects.filter(code='podpyatnik', is_option=True).first()
+        if not podpyatnik_option:
+            # 🚨 Если записи нет в БД, создаем дефолтную
+            print("⚠️ ВНИМАНИЕ: Опция 'подпятник' не найдена в справочнике KitVariant!")
+            podpyatnik_option = type('obj', (object,), {
+                'name': 'Подпятник',
+                'price_modifier': 15.00,  # Дефолтная цена
+                'code': 'podpyatnik'
+            })
+
+        # 🎨 Разделяем цвета на типы для коврика и окантовки (как было)
+        carpet_colors = Color.objects.filter(color_type='carpet').order_by('display_order')
+        border_colors = Color.objects.filter(color_type='border').order_by('display_order')
+
+        # 🎨 Определяем первый доступный цвет для каждого типа (как было)
+        initial_carpet_color = carpet_colors.filter(is_available=True).first() or carpet_colors.first()
+        initial_border_color = border_colors.filter(is_available=True).first() or border_colors.first()
+
+        # 🛒 Проверяем наличие в корзине (как было)
+        in_cart = False
+        if request.user.is_authenticated:
+            cart = Cart.objects.filter(user=request.user, is_paid=False).first()
+            if cart:
+                in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
+
+        # 💰 Цена и комплект по умолчанию (как было)
+        selected_kit, updated_price = None, product.price
+        default_kit = sorted_kit_variants.filter(code='salon').first()
+        kit_code = request.GET.get('kit') or (default_kit.code if default_kit else None)
+
+        if kit_code:
+            selected_kit = kit_code
+            updated_price = product.get_product_price_by_kit(kit_code)
+
+    # ================== ОБЩАЯ ЛОГИКА ДЛЯ ВСЕХ ТОВАРОВ ==================
+
+    # 📝 Рейтинг и отзывы (одинаково для всех)
+    review = ProductReview.objects.filter(
+        product=product,
+        user=request.user
+    ).first() if request.user.is_authenticated else None
+
     rating_percentage = (product.get_rating() / 5) * 100 if product.reviews.exists() else 0
     review_form = ReviewForm(request.POST or None, instance=review)
 
@@ -256,41 +325,43 @@ def get_product(request, slug):
         messages.success(request, 'Отзыв сохранён')
         return redirect('get_product', slug=slug)
 
-    # ----------  определяем, лежит ли товар уже в корзине пользователя  ----------
-    in_cart = False
-    if request.user.is_authenticated:
-        cart = Cart.objects.filter(user=request.user, is_paid=False).first()
-        if cart:
-            in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
-
-    # ----------  цена и комплект по умолчанию  ----------
-    selected_kit, updated_price = None, product.price
-    default_kit = sorted_kit_variants.filter(code='salon').first()
-    kit_code = request.GET.get('kit') or (default_kit.code if default_kit else None)
-
-    if kit_code:
-        selected_kit = kit_code
-        updated_price = product.get_product_price_by_kit(kit_code)
-
+    # 📊 Контекст для шаблона
     context = {
         'product': product,
+
+        # 🛥️ НОВЫЕ ПОЛЯ для определения типа товара
+        'is_boat_product': product.is_boat_product(),
+        'is_car_product': product.is_car_product(),
+
+        # 📦 Комплектации (для автомобилей или пустые для лодок)
         'sorted_kit_variants': sorted_kit_variants,
         'additional_options': additional_options,
-        'podpyatnik_option': podpyatnik_option,  # 💰 ДОБАВЛЕНО: передаем опцию подпятника в контекст
-        'review_form': review_form,
-        'rating_percentage': rating_percentage,
-        'in_wishlist': Wishlist.objects.filter(user=request.user,
-                                               product=product).exists() if request.user.is_authenticated else False,
-        'carpet_colors': carpet_colors,  # 🎨 Добавляем цвета ковриков
-        'border_colors': border_colors,  # 🎨 Добавляем цвета окантовки
-        'initial_carpet_color': initial_carpet_color,  # 🎨 Начальный цвет коврика
-        'initial_border_color': initial_border_color,  # 🎨 Начальный цвет окантовки
-        'in_cart': in_cart,
+        'podpyatnik_option': podpyatnik_option,
+
+        # 🎨 ИСПРАВЛЕНО: Цвета для лодок - коврик И окантовка!
+        'carpet_colors': carpet_colors,
+        'border_colors': border_colors,
+        'initial_carpet_color': initial_carpet_color,
+        'initial_border_color': initial_border_color,
+
+        # 💰 Цены
         'selected_kit': selected_kit,
         'updated_price': updated_price,
+
+        # 🛒 Корзина и избранное
+        'in_cart': in_cart,
+        'in_wishlist': Wishlist.objects.filter(
+            user=request.user,
+            product=product
+        ).exists() if request.user.is_authenticated else False,
+
+        # 📝 Отзывы
+        'review_form': review_form,
+        'rating_percentage': rating_percentage,
     }
 
     return render(request, 'product/product.html', context)
+
 
 # Product Review view
 @login_required
@@ -384,15 +455,22 @@ def add_to_wishlist(request, uid):
     if not has_podp:
         has_podp = request.GET.get('podp') == '1'
 
-    if not kit_code:
+    # 🛥️ НОВАЯ ЛОГИКА: Для лодок не требуем комплектацию
+    product = get_object_or_404(Product, uid=uid)
+
+    if not product.is_boat_product() and not kit_code:
         messages.warning(request, 'Пожалуйста, выберите комплектацию перед добавлением в избранное!')
         return redirect(request.META.get('HTTP_REFERER'))
 
-    # Получаем объекты из БД
-    product = get_object_or_404(Product, uid=uid)
-    kit_variant = get_object_or_404(KitVariant, code=kit_code)
+    # 🛥️ Для лодок устанавливаем значения по умолчанию
+    if product.is_boat_product():
+        kit_variant = None
+        has_podp = False
+    else:
+        # 🚗 Для автомобилей - как было
+        kit_variant = get_object_or_404(KitVariant, code=kit_code)
 
-    # Получаем цвета из базы данных, если они выбраны
+    # Получаем цвета коврика и окантовки
     carpet_color = None
     border_color = None
     if carpet_color_id:
@@ -538,7 +616,23 @@ def add_to_cart(request, uid):
         quantity = int(request.POST.get('quantity') or 1)
 
         product = get_object_or_404(Product, uid=uid)
-        kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
+
+        # 🛥️ НОВАЯ ЛОГИКА: Для лодок упрощенная обработка
+        if product.is_boat_product():
+            kit_variant = None
+            border_color = None
+            has_podp = False
+        else:
+            # 🚗 Для автомобилей - как было
+            kit_variant = get_object_or_404(KitVariant, code=kit_code or 'salon')
+
+            border_color = None
+            if border_color_id:
+                border_color = get_object_or_404(Color, uid=border_color_id)
+                if not border_color.is_available:
+                    messages.warning(request,
+                                     f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
+                    return redirect(request.META.get('HTTP_REFERER'))
 
         # Получаем объекты цвета и проверяем их доступность
         carpet_color = None
@@ -547,14 +641,6 @@ def add_to_cart(request, uid):
             if not carpet_color.is_available:
                 messages.warning(request,
                                  f'Цвет коврика "{carpet_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
-                return redirect(request.META.get('HTTP_REFERER'))
-
-        border_color = None
-        if border_color_id:
-            border_color = get_object_or_404(Color, uid=border_color_id)
-            if not border_color.is_available:
-                messages.warning(request,
-                                 f'Цвет окантовки "{border_color.name}" временно недоступен. Пожалуйста, выберите другой цвет.')
                 return redirect(request.META.get('HTTP_REFERER'))
 
         # Получаем корзину для текущего пользователя/сессии
@@ -589,3 +675,5 @@ def add_to_cart(request, uid):
 # ✅ ДОБАВЛЕНО: поддержка per_page в products_by_category
 # ✅ ДОБАВЛЕНО: логика "показать все" товары
 # ✅ СОХРАНЕНА: вся остальная логика работы
+# 🛥️ ИСПРАВЛЕНО: border_colors для лодок в get_product
+# 🛥️ ДОБАВЛЕНА: поддержка лодок в add_to_wishlist, add_to_cart
