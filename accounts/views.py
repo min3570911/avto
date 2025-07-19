@@ -378,7 +378,7 @@ def place_order(request):
             shipping_address=shipping_address,
             order_notes=order_notes,
             order_id=order_id,
-            payment_status="Новый",
+            payment_status="pending",
             order_total_price=order_total,
             coupon=cart.coupon,
             grand_total=grand_total

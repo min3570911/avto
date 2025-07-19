@@ -132,35 +132,38 @@
                                     {% endif %}
                                 </div>
                                 <figcaption class="info">
-                                    <a href="{% url 'get_product' cart_item.product.slug %}"
-                                        class="title text-dark">
-                                        {{ cart_item.product.product_name }}
-                                    </a>
+    <a href="{% url 'get_product' cart_item.product.slug %}" class="title text-dark">
+        {{ cart_item.product.product_name }}
+    </a>
+    <p class="text-muted small mb-0">
+        <!-- 🛥️ НОВОЕ: Размеры для лодок -->
+        {% if cart_item.get_product_dimensions %}
+        <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 11px; display: inline-block; margin-bottom: 2px;">
+            📏 Размер: {{ cart_item.get_product_dimensions }}
+        </span><br />
+        {% endif %}
 
-                                    <p class="text-muted small mb-0">
-                                        {% if cart_item.kit_variant %}
-                                        Комплектация: {{ cart_item.kit_variant.name }}<br />
-                                        {% endif %}
+        {% if cart_item.kit_variant %}
+        Комплектация: {{ cart_item.kit_variant.name }}<br />
+        {% endif %}
 
-                                        {% if cart_item.carpet_color %}
-                                        Цвет коврика:
-                                        <span
-                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
-                                        {{ cart_item.carpet_color.name }}<br />
-                                        {% endif %}
+        {% if cart_item.carpet_color %}
+        Цвет коврика:
+        <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+        {{ cart_item.carpet_color.name }}<br />
+        {% endif %}
 
-                                        {% if cart_item.border_color %}
-                                        Цвет окантовки:
-                                        <span
-                                            style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
-                                        {{ cart_item.border_color.name }}<br />
-                                        {% endif %}
+        {% if cart_item.border_color %}
+        Цвет окантовки:
+        <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ cart_item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+        {{ cart_item.border_color.name }}<br />
+        {% endif %}
 
-                                        {% if cart_item.has_podpyatnik %}
-                                        С подпятником<br />
-                                        {% endif %}
-                                    </p>
-                                </figcaption>
+        {% if cart_item.has_podpyatnik %}
+        🦶 С подпятником<br />
+        {% endif %}
+    </p>
+</figcaption>
                             </figure>
                         </td>
                         <td>

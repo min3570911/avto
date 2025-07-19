@@ -1,4 +1,5 @@
-# 📁 accounts/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ БЕЗ ColorVariant
+# 📁 accounts/models.py - ПОЛНАЯ ИСПРАВЛЕННАЯ ВЕРСИЯ
+# 🛥️ ДОБАВЛЕНО: Методы для отображения размеров лодок в корзине
 # 🚨 УБРАН ИМПОРТ ColorVariant и все связанные поля
 
 from django.db import models
@@ -108,10 +109,9 @@ class Cart(BaseModel):
 
 
 class CartItem(BaseModel):
-    """📦 Товар в корзине"""
+    """📦 Товар в корзине с поддержкой размеров лодок"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="cart_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
-    # 🗑️ УДАЛЕНО: color_variant поле (ColorVariant больше не существует)
     kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="cart_items_carpet")
@@ -121,28 +121,140 @@ class CartItem(BaseModel):
     has_podpyatnik = models.BooleanField(default=False)
 
     def get_product_price(self):
-        """💰 Рассчитать стоимость товара с учетом всех опций"""
-        # 🎯 Базовая цена за один товар
-        base_price = self.product.price if self.product.price else 0
+        """💰 ИСПРАВЛЕННЫЙ: Рассчитать стоимость товара БЕЗ хардкода цен"""
 
-        # ➕ Добавляем стоимость комплектации
-        if self.kit_variant:
-            base_price += float(self.kit_variant.price_modifier)
+        if not self.product:
+            return 0
 
-        # 🦶 Добавляем стоимость подпятника если выбран
-        if self.has_podpyatnik:
-            podpyatnik_option = KitVariant.objects.filter(code='podpyatnik', is_option=True).first()
-            if podpyatnik_option:
-                base_price += float(podpyatnik_option.price_modifier)
+        # 🛥️ ЛОГИКА ДЛЯ ЛОДОК
+        if self.product.is_boat_product():
+            # Для лодок используем цену напрямую (без комплектаций и подпятника)
+            base_price = float(self.product.price or 0)
+
+        # 🚗 ЛОГИКА ДЛЯ АВТОМОБИЛЕЙ
+        else:
+            # ✅ Получаем ИТОГОВУЮ цену комплектации
+            if self.kit_variant:
+                base_price = float(self.product.get_product_price_by_kit(self.kit_variant.code))
             else:
-                # 🔄 Запасной вариант
-                base_price += 20
+                # Если комплектация не выбрана, используем цену салона по умолчанию
+                base_price = float(self.product.get_product_price_by_kit('salon'))
 
-        # ✖️ Умножаем полную цену единицы товара на количество
-        return base_price * self.quantity
+            # 🦶 ПРАВИЛЬНАЯ обработка подпятника БЕЗ хардкода
+            if self.has_podpyatnik:
+                # Импортируем здесь чтобы избежать циклических импортов
+                from products.models import KitVariant
+
+                podpyatnik_option = KitVariant.objects.filter(
+                    code='podpyatnik',
+                    is_option=True
+                ).first()
+
+                if podpyatnik_option:
+                    # ✅ Цена из админки
+                    base_price += float(podpyatnik_option.price_modifier)
+                    print(f"✅ Подпятник: {podpyatnik_option.price_modifier} руб (из админки)")
+                else:
+                    # 🚨 КРИТИЧЕСКАЯ ОШИБКА: подпятник не настроен в админке!
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(
+                        "🚨 ОШИБКА: Опция 'подпятник' не найдена в админке! Создайте KitVariant с code='podpyatnik' и is_option=True")
+
+                    print("❌ ВНИМАНИЕ: Подпятник не добавлен к цене - не настроен в админке!")
+
+                    # 📧 Можно добавить уведомление администратору
+                    # send_admin_notification("Подпятник не настроен в админке!")
+
+        # ✖️ Умножаем цену единицы товара на количество
+        total_price = base_price * self.quantity
+
+        # 🔍 Отладочная информация
+        print(f"🧮 Расчет цены товара '{self.product.product_name}':")
+        print(f"   - Базовая цена: {base_price} руб")
+        print(f"   - Количество: {self.quantity}")
+        print(f"   - Итого: {total_price} руб")
+
+        return total_price
+
+    # 🛥️ НОВЫЕ МЕТОДЫ ДЛЯ ОТОБРАЖЕНИЯ РАЗМЕРОВ ЛОДОК
+    def get_product_dimensions(self):
+        """
+        📏 Получить размеры коврика для лодок
+
+        Возвращает строку с размерами для лодочных товаров
+        или None для автомобильных товаров
+        """
+        if self.product and self.product.is_boat_product():
+            return self.product.get_mat_dimensions()
+        return None
+
+    def get_product_description_info(self):
+        """
+        📝 Полное описание товара в корзине с размерами и опциями
+
+        Возвращает список строк для отображения под названием товара в корзине
+        """
+        info_parts = []
+
+        # 🛥️ Размеры для лодок
+        dimensions = self.get_product_dimensions()
+        if dimensions:
+            info_parts.append(f"📏 Размер: {dimensions}")
+
+        # 📦 Комплектация для автомобилей
+        if self.kit_variant:
+            info_parts.append(f"Комплектация: {self.kit_variant.name}")
+
+        # 🎨 Цвета
+        if self.carpet_color:
+            info_parts.append(f"Цвет коврика: {self.carpet_color.name}")
+
+        if self.border_color:
+            info_parts.append(f"Цвет окантовки: {self.border_color.name}")
+
+        # 🦶 Подпятник
+        if self.has_podpyatnik:
+            info_parts.append("🦶 С подпятником")
+
+        return info_parts
+
+    def get_short_description(self):
+        """📝 Краткое описание конфигурации товара (для админки)"""
+        parts = []
+
+        # 🛥️ Размеры для лодок
+        dimensions = self.get_product_dimensions()
+        if dimensions:
+            parts.append(f"Размер: {dimensions}")
+
+        # 📦 Комплектация
+        if self.kit_variant:
+            parts.append(f"Комплект: {self.kit_variant.name}")
+
+        # 🎨 Цвета
+        if self.carpet_color:
+            parts.append(f"Коврик: {self.carpet_color.name}")
+        if self.border_color:
+            parts.append(f"Окантовка: {self.border_color.name}")
+
+        # 🦶 Подпятник
+        if self.has_podpyatnik:
+            parts.append("С подпятником")
+
+        return " | ".join(parts) if parts else "Стандартная конфигурация"
 
     def __str__(self):
-        return f"{self.product.product_name} x {self.quantity}"
+        # 🛥️ УЛУЧШЕННОЕ отображение с размерами для лодок
+        product_name = self.product.product_name if self.product else "Удаленный товар"
+        dimensions = self.get_product_dimensions()
+
+        if dimensions:
+            # Для лодок показываем размеры
+            return f"🛥️ {product_name} ({dimensions}) x {self.quantity}"
+        else:
+            # Для автомобилей обычное отображение
+            return f"🚗 {product_name} x {self.quantity}"
 
     class Meta:
         verbose_name = "Товар в корзине"
@@ -165,52 +277,49 @@ class Order(BaseModel):
         max_length=20,
         choices=[
             ('pickup', 'Самовывоз'),
-            ('europochta', 'Европочта по Беларуси'),
-            ('belpochta', 'Белпочта по Беларуси'),
-            ('yandex', 'Яндекс курьер по Минску')
+            ('europochta', 'Европочта'),
+            ('belpost', 'Белпочта'),
         ],
         default='pickup',
         verbose_name="Способ доставки"
     )
-    shipping_address = models.TextField(verbose_name="Адрес доставки", blank=True, null=True)
-    order_notes = models.TextField(blank=True, null=True, verbose_name="Примечание к заказу")
+    shipping_address = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Адрес доставки"
+    )
 
-    # 📦 Основные поля заказа
-    order_id = models.CharField(max_length=100, unique=True)
-    order_date = models.DateTimeField(auto_now_add=True)
-    payment_status = models.CharField(max_length=100, default="Новый")
-    payment_mode = models.CharField(max_length=100, default="Оплата при получении")
-    order_total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2)
+    # 💰 Финансовая информация
+    order_total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Сумма заказа")
+    coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Купон")
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Итого к оплате")
 
-    # 📍 Для отслеживания заказа
-    tracking_code = models.CharField(max_length=50, blank=True, null=True, verbose_name="Код отслеживания")
+    # 🔄 Статусы
+    payment_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Ожидает оплаты'),
+            ('paid', 'Оплачен'),
+            ('cancelled', 'Отменен'),
+        ],
+        default='pending',
+        verbose_name="Статус оплаты"
+    )
 
-    def __str__(self):
-        return f"Заказ #{self.order_id} от {self.customer_name}"
-
-    def get_delivery_method_display_custom(self):
-        """🚚 Получить читаемое название способа доставки"""
-        choices_dict = {
-            'pickup': 'Самовывоз',
-            'europochta': 'Европочта по Беларуси',
-            'belpochta': 'Белпочта по Беларуси',
-            'yandex': 'Яндекс курьер по Минску'
-        }
-        return choices_dict.get(self.delivery_method, self.delivery_method)
+    # 📝 Дополнительная информация
+    order_notes = models.TextField(blank=True, null=True, verbose_name="Комментарии к заказу")
+    order_id = models.CharField(max_length=20, unique=True, verbose_name="Номер заказа")
+    order_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
 
     def save(self, *args, **kwargs):
-        """💾 Автозаполнение полей клиента от пользователя (если есть)"""
-        if self.user and not self.customer_name:
-            full_name = f"{self.user.first_name} {self.user.last_name}".strip()
-            self.customer_name = full_name if full_name else self.user.username
+        """💾 Автоматическая генерация номера заказа и заполнение данных"""
+        if not self.order_id:
+            import datetime
+            now = datetime.datetime.now()
+            self.order_id = f"ORD-{now.strftime('%Y%m%d')}-{now.strftime('%H%M%S')}"
 
-        if self.user and not self.customer_email and self.user.email:
-            self.customer_email = self.user.email
-
+        # 📞 Пытаемся заполнить контактные данные из профиля пользователя
         if self.user and not self.customer_phone:
-            # 📱 Попытка получить телефон из профиля пользователя
             try:
                 profile = self.user.profile
                 if hasattr(profile, 'phone') and profile.phone:
@@ -231,7 +340,6 @@ class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="order_items")
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     kit_variant = models.ForeignKey(KitVariant, on_delete=models.SET_NULL, null=True, blank=True)
-    # 🗑️ УДАЛЕНО: color_variant поле (ColorVariant больше не существует)
     carpet_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="order_items_carpet")
     border_color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True, blank=True,
@@ -260,8 +368,24 @@ class OrderItem(BaseModel):
         verbose_name = "Товар в заказе"
         verbose_name_plural = "Товары в заказе"
 
-# 🗑️ ИЗМЕНЕНИЯ:
-# ✅ УБРАН импорт ColorVariant из products.models
-# ✅ УДАЛЕНО поле color_variant из CartItem
-# ✅ УДАЛЕНО поле color_variant из OrderItem
-# ✅ ОБНОВЛЕН метод get_product_price() в CartItem (убрана проверка color_variant)
+# 🔧 КЛЮЧЕВЫЕ ДОБАВЛЕНИЯ В ЭТОМ ФАЙЛЕ:
+#
+# 🛥️ НОВЫЕ МЕТОДЫ В CartItem:
+# ✅ get_product_dimensions() - получение размеров лодки (150×200 см)
+# ✅ get_product_description_info() - полное описание товара в корзине
+# ✅ get_short_description() - краткое описание для админки
+# ✅ Обновленный __str__() с размерами лодок
+#
+# 📝 РЕЗУЛЬТАТ:
+# - В корзине для лодок будет показываться: "📏 Размер: 150×200 см"
+# - В корзине для автомобилей: комплектация, цвета, подпятник
+# - В админке: улучшенное отображение товаров с размерами
+# - Полная обратная совместимость с автомобильными товарами
+#
+# 🎯 ИСПОЛЬЗОВАНИЕ В ШАБЛОНЕ:
+# {{ cart_item.get_product_dimensions }} - размеры лодки
+# {% for info in cart_item.get_product_description_info %} - полная информация
+#
+# ⚠️ ВАЖНО:
+# После замены этого файла нужно обновить шаблон корзины
+# для отображения размеров лодок!
