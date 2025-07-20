@@ -1,6 +1,7 @@
 # 📁 ecomm/settings.py
-# 🔧 Полная конфигурация Django проекта с CKEditor 5
+# 🔧 Полная конфигурация Django проекта с CKEditor 5 и Jazzmin
 # ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
+# ✅ ДОБАВЛЕНО: Интеграция с django-jazzmin для улучшенной админки
 
 import os
 import sys
@@ -29,6 +30,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,192.168.1.1
 # ================================
 
 DJANGO_APPS = [
+    # Jazzmin должен быть первым для корректной работы интерфейса админки
+    'jazzmin',  # 🆕 Улучшенный интерфейс админки
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -53,6 +56,211 @@ LOCAL_APPS = [
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# ================================
+# 🎨 НАСТРОЙКИ JAZZMIN (обновлено)
+# ================================
+
+JAZZMIN_SETTINGS = {
+    # Общие настройки
+    "site_title": "Автоковрики",
+    "site_header": "🛒 Автоковрики и лодочные коврики",
+    "site_brand": "🛒 Автоковрики",
+    "site_logo": None,
+    "login_logo": None,
+    "welcome_sign": "Администрирование интернет-магазина",
+    "copyright": "Автоковрики © 2023",
+
+    # Настройки верхнего меню
+    "topmenu_links": [
+        {"name": "Сайт", "url": "/", "new_window": True},
+    ],
+
+    # Настройка UI
+    "show_ui_builder": True,
+    "changeform_format": "horizontal_tabs",
+
+    # Боковое меню
+    "navigation_expanded": True,
+
+    # Определение групп меню с правильными именами proxy-моделей
+    "menu": [
+        # 1. ТОВАРЫ И КАТАЛОГ
+        {
+            "name": "📦 ТОВАРЫ И КАТАЛОГ",
+            "children": [
+                # ЛОДКИ
+                {
+                    "name": "🛥️ ЛОДКИ",
+                    "children": [
+                        {"model": "products.categoryboats"},
+                        {"model": "products.productboats"},
+                    ],
+                },
+                # АВТОМОБИЛИ
+                {
+                    "name": "🚗 АВТОМОБИЛИ",
+                    "children": [
+                        {"model": "products.categorycars"},
+                        {"model": "products.productcars"},
+                    ],
+                },
+                # ОБЩИЕ СПРАВОЧНИКИ
+                {
+                    "name": "📋 ОБЩИЕ СПРАВОЧНИКИ",
+                    "children": [
+                        {"model": "products.kitvariant"},
+                        {"model": "products.color"},
+                    ],
+                },
+            ],
+        },
+
+        # 2. ПРОДАЖИ И ЗАКАЗЫ
+        {
+            "name": "💼 ПРОДАЖИ И ЗАКАЗЫ",
+            "children": [
+                {"model": "accounts.salescart"},
+                {"model": "accounts.salesorder"},
+                {"model": "accounts.salesprofile"},
+            ],
+        },
+
+        # 3. КОНТЕНТ САЙТА
+        {
+            "name": "🌐 КОНТЕНТ САЙТА",
+            "children": [
+                # ГЛАВНАЯ СТРАНИЦА
+                {
+                    "name": "🏠 ГЛАВНАЯ СТРАНИЦА",
+                    "children": [
+                        {"model": "home.contentcontactinfo"},
+                        {"model": "home.contentfaq"},
+                        {"model": "home.contentbanner"},
+                        {"model": "home.contenttestimonial"},
+                        {"model": "home.contentherosection"},
+                        {"model": "home.contentcompanydescription"},
+                    ],
+                },
+                # БЛОГ
+                {
+                    "name": "📝 БЛОГ",
+                    "children": [
+                        {"model": "blog.contentblogcategory"},
+                        {"model": "blog.contentblogarticle"},
+                    ],
+                },
+            ],
+        },
+
+        # 4. ПОЛЬЗОВАТЕЛИ И ГРУППЫ
+        {
+            "name": "👥 ПОЛЬЗОВАТЕЛИ И ГРУППЫ",
+            "children": [
+                {"model": "auth.group"},
+                {"model": "auth.user"},
+            ],
+        },
+    ],
+
+    # Скрытие оригинальных моделей для избежания дубликатов
+    "hide_models": [
+        "products.category",
+        "products.product",
+        "accounts.cart",
+        "accounts.order",
+        "accounts.profile",
+        "home.contactinfo",
+        "home.faq",
+        "home.banner",
+        "home.testimonial",
+        "home.herosection",
+        "home.companydescription",
+        "blog.category",
+        "blog.article",
+    ],
+
+    # Иконки для моделей (названия должны быть в нижнем регистре для proxy-моделей)
+    "icons": {
+        "auth.group": "fas fa-users",
+        "auth.user": "fas fa-user",
+
+        "products.category": "fas fa-folder",
+        "products.categoryboats": "fas fa-ship",
+        "products.categorycars": "fas fa-car",
+
+        "products.product": "fas fa-box",
+        "products.productboats": "fas fa-anchor",
+        "products.productcars": "fas fa-car-side",
+
+        "products.kitvariant": "fas fa-puzzle-piece",
+        "products.color": "fas fa-palette",
+
+        "accounts.cart": "fas fa-shopping-cart",
+        "accounts.order": "fas fa-file-invoice",
+        "accounts.profile": "fas fa-user-circle",
+        "accounts.salescart": "fas fa-shopping-cart",
+        "accounts.salesorder": "fas fa-file-invoice",
+        "accounts.salesprofile": "fas fa-user-circle",
+
+        "home.contactinfo": "fas fa-phone",
+        "home.contentcontactinfo": "fas fa-phone",
+
+        "home.faq": "fas fa-question-circle",
+        "home.contentfaq": "fas fa-question-circle",
+
+        "home.banner": "fas fa-image",
+        "home.contentbanner": "fas fa-image",
+
+        "home.testimonial": "fas fa-comment",
+        "home.contenttestimonial": "fas fa-comment",
+
+        "home.herosection": "fas fa-star",
+        "home.contentherosection": "fas fa-star",
+
+        "home.companydescription": "fas fa-building",
+        "home.contentcompanydescription": "fas fa-building",
+
+        "blog.category": "fas fa-folder-open",
+        "blog.contentblogcategory": "fas fa-folder-open",
+
+        "blog.article": "fas fa-newspaper",
+        "blog.contentblogarticle": "fas fa-newspaper",
+    },
+}
+
+# Цвета по умолчанию для Jazzmin - СВЕТЛАЯ ТЕМА
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-primary navbar-light",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-light-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",  # Светлая тема
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
+}
 
 # ================================
 # 🔗 MIDDLEWARE

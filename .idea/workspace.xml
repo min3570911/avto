@@ -4,12 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="работают лодки в заказаз">
-      <change afterPath="$PROJECT_DIR$/products/admin_setup.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/proxy_admin.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/products/proxy_models.py" afterDir="false" />
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="Пробую разделить в админке по категориям.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ecomm/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/admin_setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin_setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/proxy_admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/proxy_admin.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -332,7 +332,15 @@
       <option name="project" value="LOCAL" />
       <updated>1752994893105</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Пробую разделить в админке по категориям.">
+      <option name="closed" value="true" />
+      <created>1752997747431</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1752997747431</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -360,7 +368,8 @@
     <MESSAGE value="решаю вопрос с корзиной лодки" />
     <MESSAGE value="Появились в корзине цвета и размеры." />
     <MESSAGE value="работают лодки в заказаз" />
-    <option name="LAST_COMMIT_MESSAGE" value="работают лодки в заказаз" />
+    <MESSAGE value="Пробую разделить в админке по категориям." />
+    <option name="LAST_COMMIT_MESSAGE" value="Пробую разделить в админке по категориям." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

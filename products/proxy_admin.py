@@ -4,6 +4,7 @@
 
 from django.contrib import admin
 from django.db.models import Q
+from django.utils.html import format_html
 
 # 🔗 Импорт Proxy моделей
 from .proxy_models import (
@@ -50,6 +51,19 @@ class CategoryBoatsAdmin(CategoryAdmin):
             'subtitle': 'Управление категориями лодочных ковриков'
         })
         return super().changelist_view(request, extra_context)
+
+    # 🛠️ ИСПРАВЛЕНИЕ ОШИБКИ storage_info
+    def storage_info(self, obj):
+        """💾 Информация о хранилище файла категории"""
+        if obj.category_image:
+            storage_type = obj.category_image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return format_html('<span style="color: green;">✅ OverwriteStorage</span>')
+            else:
+                return format_html('<span style="color: orange;">⚠️ DefaultStorage</span>')
+        return "💾 Файл не загружен"
+
+    storage_info.short_description = "Хранилище"
 
 
 @admin.register(ProductBoats)
@@ -109,6 +123,19 @@ class CategoryCarsAdmin(CategoryAdmin):
             'subtitle': 'Управление категориями автомобильных ковриков'
         })
         return super().changelist_view(request, extra_context)
+
+    # 🛠️ ИСПРАВЛЕНИЕ ОШИБКИ storage_info
+    def storage_info(self, obj):
+        """💾 Информация о хранилище файла категории"""
+        if obj.category_image:
+            storage_type = obj.category_image.storage.__class__.__name__
+            if storage_type == 'OverwriteStorage':
+                return format_html('<span style="color: green;">✅ OverwriteStorage</span>')
+            else:
+                return format_html('<span style="color: orange;">⚠️ DefaultStorage</span>')
+        return "💾 Файл не загружен"
+
+    storage_info.short_description = "Хранилище"
 
 
 @admin.register(ProductCars)
@@ -344,3 +371,7 @@ class ContentBlogArticleAdmin(BlogArticleAdmin):
 # - Не ломает существующий код
 # - Использует стандартные Django подходы
 # - Легко откатить при необходимости
+#
+# 🛠️ ИСПРАВЛЕНО:
+# - Добавлены методы storage_info для CategoryBoatsAdmin и CategoryCarsAdmin
+# - Исправлены ошибки admin.E035
