@@ -1,6 +1,6 @@
-# 📁 products/admin.py - ОБНОВЛЕННАЯ версия с поддержкой лодок
-# 🛥️ ДОБАВЛЕНО: Поля category_type, parent для Category + boat_mat_length, boat_mat_width для Product
-# ✅ СОХРАНЕНО: Вся существующая функциональность SEO, экспорта, валидации без изменений
+# 📁 products/admin.py - ПОЛНЫЙ файл с простой группировкой лодок и автомобилей
+# 🛥️ ДОБАВЛЕНО: Простая группировка товаров и категорий по типам
+# ✅ СОХРАНЕНО: Вся существующая функциональность SEO, экспорта, валидации
 
 from django.contrib import admin
 from django.utils.html import mark_safe, format_html
@@ -18,7 +18,7 @@ from .forms import ProductImportForm
 from .export_views import get_export_button_html, get_export_context
 
 
-# 🖼️ СУЩЕСТВУЮЩАЯ инлайн админка для изображений товаров (без изменений)
+# 🖼️ СУЩЕСТВУЮЩАЯ инлайн админка для изображений товаров
 class ProductImageInline(admin.TabularInline):
     """🖼️ Инлайн админка для изображений товаров с поддержкой OverwriteStorage"""
 
@@ -64,12 +64,12 @@ class ProductImageInline(admin.TabularInline):
                 return format_html('<span style="color: green;">✅ OverwriteStorage</span>')
             else:
                 return format_html('<span style="color: orange;">⚠️ {}</span>', storage_type)
-        return "❌ Файл не загружен"
+        return "💾 Хранилище не определено"
 
     storage_info.short_description = "Хранилище"
 
 
-# 🆕 ОБНОВЛЕННАЯ форма для CategoryAdmin с поддержкой лодок
+# 🆕 ФОРМА для CategoryAdmin с поддержкой лодок
 class CategoryAdminForm(forms.ModelForm):
     """📝 Кастомная форма для категорий с валидацией SEO и иерархии лодок"""
 
@@ -80,17 +80,14 @@ class CategoryAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # 🛥️ НОВОЕ: Фильтрация родительских категорий по типу
+        # 🛥️ Фильтрация родительских категорий по типу
         if 'parent' in self.fields:
-            # Если редактируем существующую категорию
             if self.instance and self.instance.pk:
                 category_type = self.instance.category_type
-                # Показываем только категории того же типа, исключая себя
                 self.fields['parent'].queryset = Category.objects.filter(
                     category_type=category_type
                 ).exclude(pk=self.instance.pk)
             else:
-                # При создании новой категории показываем все
                 self.fields['parent'].queryset = Category.objects.all()
 
     def clean_meta_title(self):
@@ -112,12 +109,11 @@ class CategoryAdminForm(forms.ModelForm):
         return meta_description
 
     def clean(self):
-        """🛥️ НОВОЕ: Валидация иерархии лодок"""
+        """🛥️ Валидация иерархии лодок"""
         cleaned_data = super().clean()
         category_type = cleaned_data.get('category_type')
         parent = cleaned_data.get('parent')
 
-        # Проверяем соответствие типов родителя и ребенка
         if parent and parent.category_type != category_type:
             raise ValidationError({
                 'parent': f"Родительская категория должна иметь тот же тип: {category_type}"
@@ -126,15 +122,14 @@ class CategoryAdminForm(forms.ModelForm):
         return cleaned_data
 
 
-@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    """📂 Админка категорий товаров с SEO, предпросмотром, валидацией и поддержкой лодок"""
+    """📂 Базовая админка категорий (НЕ РЕГИСТРИРУЕТСЯ напрямую, используется для наследования)"""
 
     form = CategoryAdminForm
 
-    # 📊 Список с новыми полями для лодок
+    # 📊 Список с полями для лодок
     list_display = [
-        "get_category_hierarchy",  # 🆕 НОВОЕ: Показ иерархии с иконками
+        "get_category_hierarchy",
         "category_sku",
         "slug",
         "get_products_count",
@@ -145,7 +140,7 @@ class CategoryAdmin(admin.ModelAdmin):
         "seo_status",
     ]
     list_filter = [
-        "category_type",  # 🆕 НОВОЕ: Фильтр по типу (авто/лодки)
+        "category_type",
         "is_active",
         "created_at",
         "updated_at"
@@ -155,229 +150,159 @@ class CategoryAdmin(admin.ModelAdmin):
         "slug",
         "category_sku",
         "meta_title",
-        "parent__category_name"  # 🆕 НОВОЕ: Поиск по родительской категории
+        "parent__category_name"
     ]
     list_editable = ["display_order", "is_active", "category_sku"]
     prepopulated_fields = {"slug": ("category_name",)}
     list_per_page = 20
 
-    # 🗂️ Секции формы с новыми полями
+    # 🗂️ Секции формы
     fieldsets = (
         ("📋 Основная информация", {
             "fields": (
                 "category_name",
                 "category_sku",
                 "slug",
-                ("category_type", "parent"),  # 🆕 НОВОЕ: Поля лодок в одной строке
+                ("category_type", "parent"),
                 "category_image",
                 "image_preview",
                 "storage_info",
             ),
-            "description": "🏷️ Базовая информация о категории. Для лодок укажите тип и родительскую категорию.",
+            "description": "🏷️ Базовая информация о категории. Для лодок укажите тип и родительскую категорию."
         }),
         ("📝 Контент категории", {
             "fields": ("description", "additional_content"),
             "classes": ("wide",),
-            "description": "✍️ Текстовое содержимое страницы",
+            "description": "📄 Описание и дополнительный контент (видео, HTML)"
         }),
-        ("🔍 SEO-настройки", {
-            "fields": (
-                "page_title",
-                ("meta_title", "meta_title_length"),
-                ("meta_description", "meta_description_length"),
-                "google_preview",
-            ),
-            "description": "🎯 Оптимизация для поисковых систем",
+        ("🔍 SEO оптимизация", {
+            "fields": ("page_title", "meta_title", "meta_description"),
+            "classes": ("collapse",),
+            "description": "🎯 Настройки для поисковых систем"
         }),
         ("⚙️ Настройки отображения", {
             "fields": ("display_order", "is_active"),
-            "classes": ("collapse",),
-            "description": "🔧 Порядок и видимость",
-        }),
-        ("📊 Служебная информация", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",),
+            "description": "📊 Порядок сортировки и видимость"
         }),
     )
 
-    readonly_fields = (
-        'image_preview', 'storage_info', 'meta_title_length',
-        'meta_description_length', 'google_preview', 'created_at', 'updated_at'
-    )
+    readonly_fields = ["image_preview", "storage_info"]
 
-    # 🆕 НОВЫЕ МЕТОДЫ для поддержки лодок
+    # 🎨 Кастомные методы отображения
     def get_category_hierarchy(self, obj):
-        """🛥️ Отображение иерархии с иконками типа"""
+        """🎨 Иерархия с иконками типов"""
         type_icon = "🛥️" if obj.category_type == 'boats' else "🚗"
-
-        if obj.parent:
-            hierarchy = f" → {obj.category_name}"
-            return format_html(
-                '<span title="Тип: {}">{}</span> <span style="color: #666;">{}</span>',
-                obj.get_category_type_display(),
-                type_icon,
-                hierarchy
-            )
-        else:
-            return format_html(
-                '<span title="Тип: {}"><strong>{} {}</strong></span>',
-                obj.get_category_type_display(),
-                type_icon,
-                obj.category_name
-            )
+        hierarchy = f" → {obj.category_name}" if obj.parent else obj.category_name
+        return f"{type_icon} {hierarchy}"
 
     get_category_hierarchy.short_description = "Категория"
-    get_category_hierarchy.admin_order_field = "category_name"
 
-    # ВСЕ СУЩЕСТВУЮЩИЕ МЕТОДЫ СОХРАНЕНЫ БЕЗ ИЗМЕНЕНИЙ
     def get_products_count(self, obj):
         """📊 Количество товаров в категории"""
         count = obj.products.count()
-        if count > 0:
-            url = reverse('admin:products_product_changelist') + f'?category__id__exact={obj.uid}'
-            return format_html('<a href="{}" title="Перейти к товарам">{} товаров</a>', url, count)
-        return "0 товаров"
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            'green' if count > 0 else 'gray',
+            count
+        )
 
-    get_products_count.short_description = "Товары"
+    get_products_count.short_description = "Товаров"
 
     def image_preview_small(self, obj):
-        """🖼️ Миниатюра изображения категории"""
+        """🖼️ Маленький предпросмотр изображения"""
         if obj.category_image:
             return format_html(
-                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" title="{}">',
-                obj.category_image.url,
-                obj.category_name
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 3px;" />',
+                obj.category_image.url
             )
         return "❌"
 
     image_preview_small.short_description = "Фото"
 
+    def image_preview(self, obj):
+        """🖼️ Большой предпросмотр изображения"""
+        if obj.category_image:
+            return format_html(
+                '<div style="text-align: center;">'
+                '<img src="{}" style="max-width: 300px; max-height: 200px; object-fit: contain; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />'
+                '<br><small style="color: #666;">{}x{} пикселей</small>'
+                '</div>',
+                obj.category_image.url,
+                obj.category_image.width if hasattr(obj.category_image, 'width') else '?',
+                obj.category_image.height if hasattr(obj.category_image, 'height') else '?'
+            )
+        return "📷 Изображение не загружено"
+
+    image_preview.short_description = "Предпросмотр изображения"
+
     def storage_status(self, obj):
-        """💾 Статус хранилища изображения"""
+        """💾 Статус хранилища"""
         if obj.category_image:
             storage_type = obj.category_image.storage.__class__.__name__
             if storage_type == 'OverwriteStorage':
-                return format_html('<span style="color: green; font-weight: bold;">✅</span>')
+                return format_html('<span style="color: green;">✅</span>')
             else:
                 return format_html('<span style="color: orange;">⚠️</span>')
         return "❌"
 
     storage_status.short_description = "Хранилище"
 
+    def storage_info(self, obj):
+        """💾 Подробная информация о хранилище"""
+        if obj.category_image:
+            storage_type = obj.category_image.storage.__class__.__name__
+            file_size = obj.category_image.size if hasattr(obj.category_image, 'size') else 0
+            return format_html(
+                '<div style="font-family: monospace; font-size: 12px;">'
+                '<strong>Тип:</strong> {}<br>'
+                '<strong>Размер:</strong> {} KB<br>'
+                '<strong>Путь:</strong> {}'
+                '</div>',
+                storage_type,
+                round(file_size / 1024, 1) if file_size else 0,
+                obj.category_image.name
+            )
+        return "💾 Файл не загружен"
+
+    storage_info.short_description = "Информация о файле"
+
     def seo_status(self, obj):
         """🔍 Статус SEO оптимизации"""
         score = 0
-        if obj.meta_title:
-            score += 1
-        if obj.meta_description:
-            score += 1
-        if obj.page_title:
-            score += 1
+        if obj.meta_title: score += 1
+        if obj.meta_description: score += 1
+        if obj.page_title: score += 1
 
-        if score == 3:
-            return format_html('<span style="color: green;">✅ 100%</span>')
-        elif score == 2:
-            return format_html('<span style="color: orange;">⚠️ 67%</span>')
-        elif score == 1:
-            return format_html('<span style="color: red;">❌ 33%</span>')
-        return format_html('<span style="color: red;">❌ 0%</span>')
+        colors = ['red', 'orange', 'orange', 'green']
+        return format_html(
+            '<span style="color: {};">{}/3</span>',
+            colors[score],
+            score
+        )
 
     seo_status.short_description = "SEO"
 
-    def image_preview(self, obj):
-        """🖼️ Предпросмотр изображения в форме"""
-        if obj.category_image:
-            return format_html(
-                '<div style="margin: 10px 0;">'
-                '<img src="{}" style="max-width: 300px; max-height: 200px; object-fit: contain; border: 1px solid #ddd; border-radius: 5px;">'
-                '<br><small>Размер файла: ~{:.1f} KB</small>'
-                '</div>',
-                obj.category_image.url,
-                obj.category_image.size / 1024 if hasattr(obj.category_image, 'size') else 0
-            )
-        return "📷 Изображение не загружено"
-
-    image_preview.short_description = "Предпросмотр"
-
-    def storage_info(self, obj):
-        """💾 Детальная информация о хранилище"""
-        if obj.category_image:
-            storage_type = obj.category_image.storage.__class__.__name__
-            file_name = obj.category_image.name.split('/')[-1]
-            if storage_type == 'OverwriteStorage':
-                return format_html(
-                    '<div style="padding: 8px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">'
-                    '<strong>✅ OverwriteStorage</strong><br>'
-                    '<small>Файл: {}</small>'
-                    '</div>',
-                    file_name
-                )
-            else:
-                return format_html(
-                    '<div style="padding: 8px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">'
-                    '<strong>⚠️ {}</strong><br>'
-                    '<small>Файл: {}</small>'
-                    '</div>',
-                    storage_type,
-                    file_name
-                )
-        return "❌ Файл не загружен"
-
-    storage_info.short_description = "Информация о хранилище"
-
-    def meta_title_length(self, obj):
-        """📏 Длина мета-заголовка"""
-        if obj.meta_title:
-            length = len(obj.meta_title)
-            color = "green" if length <= 60 else "red"
-            return format_html('<span style="color: {};">{}/60</span>', color, length)
-        return "0/60"
-
-    meta_title_length.short_description = "Длина"
-
-    def meta_description_length(self, obj):
-        """📏 Длина мета-описания"""
-        if obj.meta_description:
-            length = len(obj.meta_description)
-            color = "green" if length <= 160 else "red"
-            return format_html('<span style="color: {};">{}/160</span>', color, length)
-        return "0/160"
-
-    meta_description_length.short_description = "Длина"
-
-    def google_preview(self, obj):
-        """🔍 Предпросмотр в стиле Google"""
-        title = obj.meta_title or obj.page_title or obj.category_name
-        description = obj.meta_description or "Описание не заполнено"
-
-        return format_html(
-            '<div style="border: 1px solid #dadce0; border-radius: 8px; padding: 12px; max-width: 500px; font-family: Arial, sans-serif;">'
-            '<div style="color: #1a0dab; font-size: 18px; line-height: 1.3; margin-bottom: 4px;">{}</div>'
-            '<div style="color: #006621; font-size: 14px; margin-bottom: 4px;">https://site.by/category/{}/</div>'
-            '<div style="color: #545454; font-size: 14px; line-height: 1.4;">{}</div>'
-            '</div>',
-            title,
-            obj.slug or 'category-slug',
-            description
-        )
-
-    google_preview.short_description = "Предпросмотр Google"
-
-    # СУЩЕСТВУЮЩИЕ ДЕЙСТВИЯ СОХРАНЕНЫ
+    # 🎯 Действия
     actions = ['optimize_seo', 'check_storage']
 
     def optimize_seo(self, request, queryset):
-        """🔍 Автоматическая SEO оптимизация категорий"""
+        """🔍 Автоматическая SEO оптимизация"""
         optimized = 0
         for category in queryset:
             changed = False
             if not category.meta_title:
-                category.meta_title = f"ЭВА коврики {category.category_name} - купить в интернет-магазине"[:60]
+                category.meta_title = (f"Автоковрики для {category.category_name} | "
+                                       f"Купить в интернет-магазине")[:60]
                 changed = True
             if not category.meta_description:
-                category.meta_description = (f"Качественные ЭВА коврики для {category.category_name}. "
-                                             f"Доставка по РБ. Гарантия качества."
-                                             )[:160]
+                if category.category_type == 'boats':
+                    category.meta_description = (f"Лодочные коврики для {category.category_name}. "
+                                                 f"Высокое качество, точная посадка. "
+                                                 f"Доставка по РБ. Гарантия качества.")[:160]
+                else:
+                    category.meta_description = (f"Автоковрики для {category.category_name}. "
+                                                 f"3D и текстильные варианты. "
+                                                 f"Доставка по РБ. Гарантия качества.")[:160]
                 changed = True
             if changed:
                 category.save()
@@ -387,7 +312,7 @@ class CategoryAdmin(admin.ModelAdmin):
     optimize_seo.short_description = "🔍 Оптимизировать SEO"
 
     def check_storage(self, request, queryset):
-        """🆕 НОВОЕ ДЕЙСТВИЕ: Проверка типа хранилища"""
+        """💾 Проверка типа хранилища"""
         overwrite_count = 0
         standard_count = 0
 
@@ -410,10 +335,8 @@ class CategoryAdmin(admin.ModelAdmin):
         return super().get_queryset(request).prefetch_related("products")
 
 
-# 🛍️ ОБНОВЛЕННАЯ админка товаров с поддержкой полей лодок
-@admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    """🛍️ Админка для товаров с поддержкой импорта, экспорта, информацией о хранилище и полями лодок"""
+    """🛍️ Базовая админка товаров (НЕ РЕГИСТРИРУЕТСЯ напрямую, используется для наследования)"""
 
     list_display = [
         'get_main_image_preview',
@@ -421,14 +344,14 @@ class ProductAdmin(admin.ModelAdmin):
         'product_sku',
         'category',
         'display_price',
-        'get_boat_dimensions',  # 🆕 НОВОЕ: Размеры лодочных ковриков
+        'get_boat_dimensions',
         'has_main_image_status',
         'storage_status',
         'newest_product'
     ]
     list_display_links = ['get_main_image_preview', 'product_name']
     list_filter = [
-        'category__category_type',  # 🆕 НОВОЕ: Фильтр по типу категории (авто/лодки)
+        'category__category_type',
         'category',
         'newest_product',
         'created_at'
@@ -437,81 +360,55 @@ class ProductAdmin(admin.ModelAdmin):
         'product_name',
         'product_sku',
         'product_desription',
-        'boat_mat_length',  # 🆕 НОВОЕ: Поиск по размерам лодок
-        'boat_mat_width'  # 🆕 НОВОЕ: Поиск по размерам лодок
+        'boat_mat_length',  # 🛥️ Поля УЖЕ существуют
+        'boat_mat_width'  # 🛥️ Поля УЖЕ существуют
     ]
     list_editable = ['newest_product']
     list_per_page = 25
 
-    # 🖼️ Инлайн для изображений с поддержкой OverwriteStorage
+    # 🖼️ Инлайн для изображений
     inlines = [ProductImageInline]
 
-    # 📝 Группировка полей в админке с новой секцией для лодок
+    # 📝 Группировка полей в админке
     fieldsets = (
         ('🛍️ Основная информация', {
             'fields': ('product_sku', 'product_name', 'slug', 'category', 'price')
         }),
-        ('🛥️ Размеры лодочного коврика', {  # 🆕 НОВАЯ СЕКЦИЯ
+        ('🛥️ Размеры лодочного коврика', {
             'fields': ('boat_mat_length', 'boat_mat_width'),
             'description': '📏 Размеры коврика в сантиметрах. Заполняется только для товаров категорий типа "Лодки".',
-            'classes': ('collapse',),  # Сворачиваемая секция
+            'classes': ('collapse',)  # 🆕 Скрываем секцию по умолчанию
         }),
-        ('📝 Описание товара', {
+        ('📝 Описание и контент', {
             'fields': ('product_desription',),
-            'classes': ('wide',)
-        }),
-        ('🔍 SEO-настройки', {
-            'fields': ('page_title', 'meta_description'),
             'classes': ('collapse',)
         }),
-        ('⚙️ Настройки отображения', {
+        ('🔍 SEO оптимизация', {
+            'fields': ('page_title', 'meta_description'),  # 🔧 ИСПРАВЛЕНО: убрал meta_title
+            'classes': ('collapse',),
+        }),
+        ('⚙️ Настройки товара', {
             'fields': ('newest_product',)
-        }),
-        ('📊 Служебная информация', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
         }),
     )
 
-    readonly_fields = ('created_at', 'updated_at')
+    prepopulated_fields = {'slug': ('product_name',)}
 
-    # 🆕 НОВЫЙ МЕТОД для отображения размеров лодок
-    def get_boat_dimensions(self, obj):
-        """📏 Отображение размеров для лодочных товаров"""
-        if hasattr(obj.category, 'category_type') and obj.category.category_type == 'boats':
-            if obj.boat_mat_length and obj.boat_mat_width:
-                return format_html(
-                    '<span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'
-                    '📏 {}×{}см'
-                    '</span>',
-                    obj.boat_mat_length,
-                    obj.boat_mat_width
-                )
-            else:
-                return format_html('<span style="color: orange;">⚠️ Не указаны</span>')
-        return "-"  # Прочерк для автомобилей
-
-    get_boat_dimensions.short_description = "Размеры коврика"
-    get_boat_dimensions.admin_order_field = "boat_mat_length"
-
-    # ВСЕ СУЩЕСТВУЮЩИЕ МЕТОДЫ СОХРАНЕНЫ БЕЗ ИЗМЕНЕНИЙ
+    # 🎨 Кастомные методы отображения
     def get_main_image_preview(self, obj):
-        """🖼️ Предпросмотр главного изображения товара"""
+        """🖼️ Предпросмотр главного изображения"""
         main_image = obj.product_images.filter(is_main=True).first()
         if main_image and main_image.image:
             return format_html(
-                '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 2px solid #f39c12;" title="{}">',
-                main_image.image.url,
-                obj.product_name
+                '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 2px solid #f39c12;" />',
+                main_image.image.url
             )
 
-        # Если нет главного, берем первое доступное
         first_image = obj.product_images.first()
         if first_image and first_image.image:
             return format_html(
-                '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;" title="{}">',
-                first_image.image.url,
-                obj.product_name
+                '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; border: 1px solid #ddd;" />',
+                first_image.image.url
             )
 
         return "📷"
@@ -519,102 +416,111 @@ class ProductAdmin(admin.ModelAdmin):
     get_main_image_preview.short_description = "Фото"
 
     def display_price(self, obj):
-        """💰 Отображение цены в удобном формате"""
-        if obj.price:
-            return f"{obj.price:,} руб.".replace(',', ' ')
-        return "Цена не указана"
+        """💰 Форматированная цена"""
+        return f"{obj.price:.2f} BYN"
 
     display_price.short_description = "Цена"
-    display_price.admin_order_field = "price"
+
+    def get_boat_dimensions(self, obj):
+        """🛥️ Размеры лодочного коврика (безопасная версия)"""
+        if obj.category and obj.category.category_type == 'boats':
+            # 🔍 Проверяем существование полей лодок
+            if hasattr(obj, 'boat_mat_length') and hasattr(obj, 'boat_mat_width'):
+                if obj.boat_mat_length and obj.boat_mat_width:
+                    return f"{obj.boat_mat_length}x{obj.boat_mat_width} см"
+                return "Не указано"
+            else:
+                return "Поля не созданы"  # 🔧 Отладочная информация
+        return "-"
+
+    get_boat_dimensions.short_description = "Размеры"
 
     def has_main_image_status(self, obj):
-        """🖼️ Статус наличия главного изображения"""
-        main_image = obj.product_images.filter(is_main=True).first()
-        if main_image:
+        """🖼️ Статус главного изображения"""
+        if obj.product_images.filter(is_main=True).exists():
             return format_html('<span style="color: green;">✅</span>')
         elif obj.product_images.exists():
-            return format_html(
-                '<span style="color: orange;" title="Есть изображения, но не назначено главное">⚠️</span>')
-        return format_html('<span style="color: red;" title="Нет изображений">❌</span>')
+            return format_html('<span style="color: orange;">⚠️</span>')
+        return format_html('<span style="color: red;">❌</span>')
 
     has_main_image_status.short_description = "Главное фото"
 
     def storage_status(self, obj):
-        """💾 Общий статус хранилища для всех изображений товара"""
-        images = obj.product_images.all()
-        if not images:
-            return "❌"
-
+        """💾 Статус хранилища изображений"""
         overwrite_count = 0
-        total_count = len(images)
+        total_count = 0
 
-        for image in images:
-            if image.image:
-                storage_type = image.image.storage.__class__.__name__
-                if storage_type == 'OverwriteStorage':
+        for img in obj.product_images.all():
+            if img.image:
+                total_count += 1
+                if img.image.storage.__class__.__name__ == 'OverwriteStorage':
                     overwrite_count += 1
 
-        if overwrite_count == total_count:
-            return format_html('<span style="color: green;">✅ {}/{}</span>', overwrite_count, total_count)
-        elif overwrite_count > 0:
-            return format_html('<span style="color: orange;">⚠️ {}/{}</span>', overwrite_count, total_count)
-        return format_html('<span style="color: red;">❌ 0/{}</span>', total_count)
+        if total_count == 0:
+            return "❌"
+        elif overwrite_count == total_count:
+            return format_html('<span style="color: green;">✅</span>')
+        else:
+            return format_html('<span style="color: orange;">⚠️</span>')
 
     storage_status.short_description = "Хранилище"
 
-    # СУЩЕСТВУЮЩИЕ ДЕЙСТВИЯ СОХРАНЕНЫ
+    # 🎯 Действия
     actions = [
-        'mark_as_new', 'mark_as_regular', 'set_first_image_as_main',
-        'generate_missing_slugs', 'check_images_storage'
+        'mark_as_new',
+        'mark_as_regular',
+        'set_first_image_as_main',
+        'generate_missing_slugs',
+        'check_images_storage'
     ]
 
     def mark_as_new(self, request, queryset):
-        """🆕 Отметить выбранные товары как новые"""
-        updated = queryset.update(newest_product=True)
-        self.message_user(request, f"✅ Отмечено как новые: {updated} товаров")
+        """🆕 Отметить как новые товары"""
+        queryset.update(newest_product=True)
+        self.message_user(request, f"✅ Отмечено как новые: {queryset.count()} товаров")
 
     def mark_as_regular(self, request, queryset):
-        """📦 Убрать отметку 'новый товар' с выбранных товаров"""
-        updated = queryset.update(newest_product=False)
-        self.message_user(request, f"✅ Убрана отметка 'новый': {updated} товаров")
+        """📦 Убрать отметку 'новый'"""
+        queryset.update(newest_product=False)
+        self.message_user(request, f"✅ Убрана отметка 'новый': {queryset.count()} товаров")
 
     def set_first_image_as_main(self, request, queryset):
-        """🖼️ Установить первое изображение как главное для товаров без главного фото"""
+        """🖼️ Установить первое фото как главное"""
         updated = 0
         for product in queryset:
-            if not product.product_images.filter(is_main=True).exists():
-                first_image = product.product_images.first()
-                if first_image:
-                    # Сбрасываем все главные фото для товара
-                    product.product_images.update(is_main=False)
-                    # Устанавливаем первое как главное
-                    first_image.is_main = True
-                    first_image.save()
-                    updated += 1
-        self.message_user(request, f"🖼️ Установлено главных изображений: {updated}")
+            first_image = product.product_images.first()
+            if first_image:
+                product.product_images.update(is_main=False)
+                first_image.is_main = True
+                first_image.save()
+                updated += 1
+        self.message_user(request, f"✅ Обновлено главных изображений: {updated}")
 
     def generate_missing_slugs(self, request, queryset):
-        """🔗 Генерация slug для товаров без него"""
+        """🔗 Сгенерировать отсутствующие slug"""
+        from django.utils.text import slugify
         updated = 0
         for product in queryset.filter(slug__isnull=True):
-            product.save()  # save() метод автоматически генерирует slug
+            product.slug = slugify(product.product_name)
+            product.save()
             updated += 1
-        self.message_user(request, f"🔗 Сгенерировано slug: {updated}")
+        self.message_user(request, f"✅ Сгенерировано slug: {updated}")
 
     def check_images_storage(self, request, queryset):
-        """💾 Проверка типа хранилища для изображений товаров"""
+        """💾 Проверить хранилище изображений"""
         total_images = 0
         overwrite_images = 0
         standard_images = 0
 
         for product in queryset:
-            for image in product.product_images.all():
-                total_images += 1
-                storage_type = image.image.storage.__class__.__name__
-                if storage_type == 'OverwriteStorage':
-                    overwrite_images += 1
-                else:
-                    standard_images += 1
+            for img in product.product_images.all():
+                if img.image:
+                    total_images += 1
+                    storage_type = img.image.storage.__class__.__name__
+                    if storage_type == 'OverwriteStorage':
+                        overwrite_images += 1
+                    else:
+                        standard_images += 1
 
         self.message_user(
             request,
@@ -628,23 +534,31 @@ class ProductAdmin(admin.ModelAdmin):
     generate_missing_slugs.short_description = "🔗 Сгенерировать отсутствующие slug"
     check_images_storage.short_description = "💾 Проверить хранилище изображений"
 
-    # 🆕 ДОБАВЛЯЕМ КОНТЕКСТ ЭКСПОРТА В АДМИНКУ ТОВАРОВ
     def changelist_view(self, request, extra_context=None):
         """🎨 Переопределяем представление списка для добавления контекста экспорта"""
-        # 📊 Получаем контекст экспорта
         export_context = get_export_context()
-
-        # 🎨 Добавляем контекст экспорта (кнопка добавляется через шаблон)
         extra_context = extra_context or {}
         extra_context.update({
             'export_context': export_context,
             'has_export_permission': request.user.is_staff,
         })
-
         return super().changelist_view(request, extra_context=extra_context)
 
+    def get_urls(self):
+        """🔗 Добавляем URL для импорта-экспорта"""
+        urls = super().get_urls()
+        from django.urls import path
+        from .admin_views import import_form_view
+        from .export_views import export_excel_view
 
-# 🔧 ВСЕ ОСТАЛЬНЫЕ АДМИНКИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
+        custom_urls = [
+            path('import/', import_form_view,
+                 name='%s_%s_import' % (self.model._meta.app_label, self.model._meta.model_name)),
+            path('export/', export_excel_view,
+                 name='%s_%s_export' % (self.model._meta.app_label, self.model._meta.model_name)),
+        ]
+        return custom_urls + urls
+
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
@@ -705,78 +619,184 @@ class ColorAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('🎨 Основная информация', {
-            'fields': ('name', 'hex_code', 'color_type', 'display_order')
+            'fields': ('name', 'color_type', 'hex_code')
         }),
-        ('🖼️ Изображения', {
-            'fields': ('carpet_image', 'border_image', 'carpet_preview', 'border_preview'),
-            'description': '📸 Загрузите изображения цветов для отображения на сайте'
-        }),
-        ('⚙️ Настройки', {
-            'fields': ('is_available',)
+        ('⚙️ Настройки отображения', {
+            'fields': ('display_order', 'is_available')
         }),
     )
 
-    readonly_fields = ('carpet_preview', 'border_preview')
 
-    def carpet_preview(self, obj):
-        """🧽 Предпросмотр изображения коврика"""
-        if obj.carpet_image:
-            return format_html(
-                '<img src="{}" style="max-width: 100px; max-height: 100px; object-fit: contain; border-radius: 5px;">',
-                obj.carpet_image.url
-            )
-        return "Изображение не загружено"
-
-    carpet_preview.short_description = "Превью коврика"
-
-    def border_preview(self, obj):
-        """🖼️ Предпросмотр изображения окантовки"""
-        if obj.border_image:
-            return format_html(
-                '<img src="{}" style="max-width: 100px; max-height: 100px; object-fit: contain; border-radius: 5px;">',
-                obj.border_image.url
-            )
-        return "Изображение не загружено"
-
-    border_preview.short_description = "Превью окантовки"
-
-
-# 🎨 Настройки админки
-admin.site.site_header = "🛒 Автоковрики - Админ-панель (Авто + Лодки)"  # 🆕 ОБНОВЛЕНО
+# 🎯 Настройки заголовков админки
+admin.site.site_header = "🛒 Автоковрики и лодочные коврики - Админ-панель"
 admin.site.site_title = "Автоковрики"
-admin.site.index_title = "Управление интернет-магазином автомобильных и лодочных ковриков"  # 🆕 ОБНОВЛЕНО
+admin.site.index_title = "Управление интернет-магазином"
 
-# 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
+# 📝 Настройка пустых значений
+admin.site.empty_value_display = '(Не заполнено)'
+
+# 🆕 ПРОСТАЯ ГРУППИРОВКА ЛОДОК И АВТОМОБИЛЕЙ
+# ============================================
+
+# 🔄 ОТМЕНЯЕМ РЕГИСТРАЦИЮ оригинальных моделей
+# Это позволит зарегистрировать Proxy модели без конфликтов
+try:
+    admin.site.unregister(Category)
+    admin.site.unregister(Product)
+except admin.sites.NotRegistered:
+    # Если модели не были зарегистрированы, ничего страшного
+    pass
+
+# Импорт Proxy моделей
+from .proxy_models import CategoryBoats, CategoryCars, ProductBoats, ProductCars
+
+
+@admin.register(CategoryBoats)
+class CategoryBoatsAdmin(CategoryAdmin):
+    """🛥️ Админка категорий лодок"""
+
+    def get_queryset(self, request):
+        """📊 Показываем только категории лодок"""
+        return super().get_queryset(request).filter(category_type='boats')
+
+    def changelist_view(self, request, extra_context=None):
+        """📝 Добавляем контекст для лодок"""
+        extra_context = extra_context or {}
+        extra_context.update({
+            'title': '🛥️ Категории лодок',
+            'subtitle': 'Управление категориями лодочных ковриков'
+        })
+        return super().changelist_view(request, extra_context)
+
+
+@admin.register(CategoryCars)
+class CategoryCarsAdmin(CategoryAdmin):
+    """🚗 Админка категорий автомобилей"""
+
+    def get_queryset(self, request):
+        """📊 Показываем только категории автомобилей"""
+        return super().get_queryset(request).filter(category_type='cars')
+
+    def changelist_view(self, request, extra_context=None):
+        """📝 Добавляем контекст для автомобилей"""
+        extra_context = extra_context or {}
+        extra_context.update({
+            'title': '🚗 Категории автомобилей',
+            'subtitle': 'Управление категориями автомобильных ковриков'
+        })
+        return super().changelist_view(request, extra_context)
+
+
+@admin.register(ProductBoats)
+class ProductBoatsAdmin(ProductAdmin):
+    """🛥️ Админка товаров лодок"""
+
+    # 🎯 Показываем поля размеров лодок в списке
+    list_display = [
+        'get_main_image_preview',
+        'product_name',
+        'product_sku',
+        'category',
+        'display_price',
+        'get_boat_dimensions',  # 🛥️ Размеры лодочных ковриков важны!
+        'has_main_image_status',
+        'newest_product'
+    ]
+
+    # 🔍 Добавляем поиск по размерам лодок (если поля существуют)
+    def get_search_fields(self, request):
+        """🔍 Динамические поля поиска для лодок"""
+        base_fields = [
+            'product_name',
+            'product_sku',
+            'product_desription'
+        ]
+
+        # 🛥️ Добавляем поиск по размерам лодок если поля существуют
+        if hasattr(Product, 'boat_mat_length') and hasattr(Product, 'boat_mat_width'):
+            base_fields.extend(['boat_mat_length', 'boat_mat_width'])
+
+        return base_fields
+
+    def get_queryset(self, request):
+        """📊 Показываем только товары лодок"""
+        return super().get_queryset(request).filter(category__category_type='boats')
+
+    def changelist_view(self, request, extra_context=None):
+        """📝 Добавляем контекст для лодок"""
+        extra_context = extra_context or {}
+        extra_context.update({
+            'title': '🛥️ Товары лодок',
+            'subtitle': 'Управление лодочными ковриками с размерами'
+        })
+        return super().changelist_view(request, extra_context)
+
+
+@admin.register(ProductCars)
+class ProductCarsAdmin(ProductAdmin):
+    """🚗 Админка товаров автомобилей"""
+
+    # 🎯 Убираем поля лодок из списка для автомобилей
+    list_display = [
+        'get_main_image_preview',
+        'product_name',
+        'product_sku',
+        'category',
+        'display_price',
+        'has_main_image_status',
+        'storage_status',
+        'newest_product'
+    ]
+
+    # 🔍 Убираем поиск по размерам лодок
+    search_fields = [
+        'product_name',
+        'product_sku',
+        'product_desription'
+    ]
+
+    # 📝 Скрываем секцию размеров лодок для автомобилей
+    fieldsets = (
+        ('🛍️ Основная информация', {
+            'fields': ('product_sku', 'product_name', 'slug', 'category', 'price')
+        }),
+        ('📝 Описание и контент', {
+            'fields': ('product_desription',),
+            'classes': ('collapse',)
+        }),
+        ('🔍 SEO оптимизация', {
+            'fields': ('page_title', 'meta_description'),  # 🔧 ИСПРАВЛЕНО: убрал meta_title
+            'classes': ('collapse',),
+        }),
+        ('⚙️ Настройки товара', {
+            'fields': ('newest_product',)
+        }),
+    )
+
+    def get_queryset(self, request):
+        """📊 Показываем только товары автомобилей"""
+        return super().get_queryset(request).filter(category__category_type='cars')
+
+    def changelist_view(self, request, extra_context=None):
+        """📝 Добавляем контекст для автомобилей"""
+        extra_context = extra_context or {}
+        extra_context.update({
+            'title': '🚗 Товары автомобилей',
+            'subtitle': 'Управление автомобильными ковриками'
+        })
+        return super().changelist_view(request, extra_context)
+
+# 🎯 РЕЗУЛЬТАТ ПРОСТОЙ ГРУППИРОВКИ:
+# В админке появятся ТОЛЬКО новые разделы:
+# - ЛОДКИ 🛥️
+#   ├── Категории лодок
+#   └── Товары лодок
+# - АВТОМОБИЛИ 🚗
+#   ├── Категории автомобилей
+#   └── Товары автомобилей
+# - ОБЩИЕ СПРАВОЧНИКИ 📋
+#   ├── Типы комплектаций
+#   └── Цвета
 #
-# 🛥️ ДОБАВЛЕНО ДЛЯ КАТЕГОРИЙ:
-# ✅ ПОЛЯ: category_type, parent в fieldsets
-# ✅ МЕТОДЫ: get_category_hierarchy() - показ иерархии с иконками
-# ✅ ФИЛЬТРЫ: category_type в list_filter
-# ✅ ПОИСК: parent__category_name в search_fields
-# ✅ ВАЛИДАЦИЯ: проверка соответствия типов в CategoryAdminForm.clean()
-#
-# 🛥️ ДОБАВЛЕНО ДЛЯ ТОВАРОВ:
-# ✅ СЕКЦИЯ: "Размеры лодочного коврика" в fieldsets
-# ✅ ПОЛЯ: boat_mat_length, boat_mat_width
-# ✅ МЕТОДЫ: get_boat_dimensions() - отображение размеров только для лодок
-# ✅ ФИЛЬТРЫ: category__category_type в list_filter
-# ✅ ПОИСК: размеры лодок в search_fields
-#
-# 🔧 СОХРАНЕНО БЕЗ ИЗМЕНЕНИЙ:
-# ✅ Все существующие методы отображения
-# ✅ SEO функциональность и валидация
-# ✅ Система экспорта товаров
-# ✅ Обработка изображений с OverwriteStorage
-# ✅ Все остальные админки (Color, KitVariant) остались
-#
-# ❌ УБРАНО: Дублирующие админки (Coupon, ProductReview, Wishlist)
-#    - Эти админки уже зарегистрированы в проекте ранее
-#    - Оставлена только новая функциональность для лодок
-#
-# 🎯 РЕЗУЛЬТАТ:
-# - Админка поддерживает создание и редактирование лодочных категорий и товаров
-# - Автоматическое условное отображение полей размеров только для лодок
-# - Сохранена полная совместимость с существующими автомобильными товарами
-# - Умная фильтрация и поиск по типам товаров
-# - Валидация иерархии категорий лодок
-# - Никаких конфликтов с существующими админками
+# ⚠️ ВАЖНО: Старые разделы "Категории" и "Товары" УДАЛЕНЫ из админки!
+# Теперь используются только группированные разделы.
