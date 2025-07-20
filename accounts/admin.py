@@ -125,7 +125,7 @@ class OrderAdmin(admin.ModelAdmin):
             'description': '📦 Способ и адрес доставки заказа'
         }),
         ('📦 Детали заказа', {
-            'fields': ('order_id', 'order_date', 'payment_status', 'tracking_code'),
+            'fields': ('order_id', 'order_date', 'payment_status', 'payment_mode'),
             'description': '🎯 Основная информация о заказе'
         }),
         ('💰 Расчеты', {
@@ -144,7 +144,7 @@ class OrderAdmin(admin.ModelAdmin):
         if obj.shipping_address:
             return format_html(
                 '<span style="color: #007cba;">🚚 {}</span>',
-                obj.get_delivery_method_display_custom()
+                obj.get_delivery_method_display()  # ✅ Стандартный метод Django
             )
         return format_html('<span style="color: #28a745;">🏪 Самовывоз</span>')
 

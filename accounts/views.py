@@ -227,9 +227,12 @@ def send_telegram_notification(order):
             if item.has_podpyatnik:
                 items_text += f"   👞 С подпятником\n"
 
-            # 🔢 Количество и цена
-            items_text += f"   🔢 Количество: <b>{item.quantity} шт. × {item.product_price} BYN</b>\n"
-            items_text += f"   💵 Сумма: <b>{item.quantity * item.product_price} BYN</b>\n\n"
+            # 🔢 ИСПРАВЛЕННЫЙ расчет цены за единицу и общей суммы
+            total_item_price = float(item.product_price)  # Общая цена позиции
+            unit_price = total_item_price / item.quantity  # Цена за единицу
+
+            items_text += f"   🔢 Количество: <b>{item.quantity} шт. × {unit_price:.2f} BYN</b>\n"
+            items_text += f"   💵 Сумма: <b>{total_item_price:.2f} BYN</b>\n\n"
 
         # 🚚 Информация о доставке
         delivery_info = ""
@@ -237,11 +240,10 @@ def send_telegram_notification(order):
             delivery_methods = {
                 'europochta': '📦 Европочта по Беларуси',
                 'belpochta': '📮 Белпочта по Беларуси',
-                'yandex': '🚚 Яндекс курьер по Минску',
+                'yandex': ' 🚕 Яндекс курьер по Минску',
                 'pickup': '🏪 Самовывоз'
             }
             delivery_info = delivery_methods.get(order.delivery_method, order.delivery_method)
-
         # 📍 Адрес доставки
         address_info = "🏪 Самовывоз"
         if order.shipping_address:
@@ -321,7 +323,7 @@ def place_order(request):
         if not cart.cart_items.exists():
             print("❌ Корзина пуста")
             messages.warning(request, "Ваша корзина пуста. Добавьте товары перед оформлением заказа.")
-            return redirect('/')  # 🔄 Перенаправляем на главную
+            return redirect('/')
 
         # 📝 Получаем данные формы
         customer_name = request.POST.get('customer_name', '').strip()
@@ -331,8 +333,8 @@ def place_order(request):
         terms_agree = request.POST.get('terms_agree') == 'on'
         order_notes = request.POST.get('order_notes', '').strip()
 
-        # 🚚 Поля доставки (только если нужна доставка)
-        delivery_method = 'pickup'  # По умолчанию самовывоз
+        # 🚚 Поля доставки
+        delivery_method = 'pickup'
         shipping_address = ''
 
         if need_delivery:
@@ -350,7 +352,6 @@ def place_order(request):
         if not terms_agree:
             missing_fields.append('Согласие с условиями')
 
-        # Проверяем поля доставки только если доставка нужна
         if need_delivery and not shipping_address:
             missing_fields.append('Адрес доставки')
 
@@ -364,21 +365,37 @@ def place_order(request):
         order_total = cart.get_cart_total()
         grand_total = cart.get_cart_total_price_after_coupon()
 
-        # 🆔 Создаем уникальный ID заказа
-        order_id = f"ORD-{uuid.uuid4().hex[:10].upper()}"
+        # 🆔 ИСПРАВЛЕННЫЙ БЛОК: Генерация красивого номера заказа
+        from datetime import datetime
 
-        # 📦 Создаем заказ (БЕЗ привязки к пользователю)
+        # 📊 ИСПРАВЛЕНО: Используем count() вместо Max('id')
+        existing_orders_count = Order.objects.count()
+        next_number = existing_orders_count + 1
+
+        # 📅 Дата ДДММ
+        today = datetime.now()
+        date_part = today.strftime("%d%m%y")
+
+        # 🏙️ Город (всегда из поля)
+        city_part = customer_city.strip().title() if customer_city else "Город"
+
+        # 🔢 Собираем номер: 001-2007-Минск
+        order_id = f"{next_number:03d}-{date_part}-{city_part}"
+
+        print(f"🆔 Сгенерирован номер заказа: {order_id}")
+
+        # 📦 Создаем заказ (остальной код без изменений)
         order = Order.objects.create(
-            user=None,  # ✅ Анонимный заказ
+            user=None,
             customer_name=customer_name,
             customer_phone=customer_phone,
-            customer_email="",  # Пустой email
+            customer_email="",
             customer_city=customer_city,
             delivery_method=delivery_method,
             shipping_address=shipping_address,
             order_notes=order_notes,
-            order_id=order_id,
-            payment_status="pending",
+            order_id=order_id,  # ✅ Используем новый формат
+            payment_status="Новый",
             order_total_price=order_total,
             coupon=cart.coupon,
             grand_total=grand_total
@@ -409,7 +426,7 @@ def place_order(request):
         cart.is_paid = True
         cart.save()
 
-        # 📧 Отправляем уведомления (если настроены)
+        # 📧 Отправляем уведомления
         try:
             send_order_notification(order)
         except Exception as e:
@@ -428,7 +445,7 @@ def place_order(request):
         error_msg = f"Произошла ошибка при оформлении заказа: {str(e)}"
         print(f"❌ ОШИБКА: {error_msg}")
         messages.error(request,
-                    "Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.")
+                       "Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.")
         return redirect('cart')
 
 
