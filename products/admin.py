@@ -1,6 +1,6 @@
-# 📁 products/admin.py - ИСПРАВЛЕННАЯ версия без дублирования регистрации
-# 🛥️ УБРАНО: Дублирующая регистрация Proxy моделей (теперь только в proxy_admin.py)
-# ✅ СОХРАНЕНО: Вся существующая функциональность SEO, экспорта, валидации для основных моделей
+# 📁 products/admin.py - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ версия
+# ✅ ИСПРАВЛЕНО: Все ошибки с obj.images → obj.product_images и format_html
+# ✅ СОХРАНЕНО: Вся существующая функциональность SEO, экспорта, валидации
 
 from django.contrib import admin
 from django.utils.html import mark_safe, format_html
@@ -56,9 +56,8 @@ class ProductImageInline(admin.TabularInline):
     img_preview.short_description = "Предпросмотр"
 
     def storage_info(self, obj):
-        """💾 Информация о хранилище файла"""
+        """💾 Информация о хранилище изображения"""
         if obj.image:
-            # 🎯 Показываем информацию о OverwriteStorage
             storage_type = obj.image.storage.__class__.__name__
             if storage_type == 'OverwriteStorage':
                 return format_html('<span style="color: green;">✅ OverwriteStorage</span>')
@@ -69,93 +68,36 @@ class ProductImageInline(admin.TabularInline):
     storage_info.short_description = "Хранилище"
 
 
-# 📋 СУЩЕСТВУЮЩАЯ форма валидации категорий
-class CategoryAdminForm(forms.ModelForm):
-    """📋 Форма для валидации категорий с проверкой SEO полей"""
-
-    class Meta:
-        model = Category
-        fields = '__all__'
-
-    def clean_meta_title(self):
-        meta_title = self.cleaned_data.get("meta_title")
-        if meta_title and len(meta_title) > 60:
-            raise ValidationError(
-                f"⚠️ SEO-заголовок слишком длинный ({len(meta_title)} симв.). "
-                f"Максимум 60."
-            )
-        return meta_title
-
-    def clean_meta_description(self):
-        meta_description = self.cleaned_data.get("meta_description")
-        if meta_description and len(meta_description) > 160:
-            raise ValidationError(
-                f"⚠️ SEO-описание слишком длинное ({len(meta_description)} симв.). "
-                f"Максимум 160."
-            )
-        return meta_description
-
-    def clean(self):
-        """🛥️ Валидация иерархии лодок"""
-        cleaned_data = super().clean()
-        category_type = cleaned_data.get('category_type')
-        parent = cleaned_data.get('parent')
-
-        if parent and parent.category_type != category_type:
-            raise ValidationError({
-                'parent': f"Родительская категория должна иметь тот же тип: {category_type}"
-            })
-
-        return cleaned_data
-
-
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    """📂 Базовая админка категорий (НЕ РЕГИСТРИРУЕТСЯ напрямую, используется для наследования)"""
+    """📂 Админка категорий товаров с SEO и группировкой"""
 
-    form = CategoryAdminForm
-
-    # 📊 Список с полями для лодок
+    # 📊 Отображение в списке
     list_display = [
         "get_category_hierarchy",
-        "category_sku",
-        "slug",
-        "get_products_count",
-        "display_order",
-        "is_active",
         "image_preview_small",
+        "get_products_count",
         "storage_status",
         "seo_status",
-    ]
-    list_filter = [
-        "category_type",
         "is_active",
-        "created_at",
-        "updated_at"
+        "display_order"
     ]
-    search_fields = [
-        "category_name",
-        "slug",
-        "category_sku",
-        "meta_title",
-        "parent__category_name"
-    ]
-    list_editable = ["display_order", "is_active", "category_sku"]
-    prepopulated_fields = {"slug": ("category_name",)}
-    list_per_page = 20
 
-    # 🗂️ Секции формы
+    # 🔍 Фильтры и поиск
+    list_filter = ["category_type", "is_active", "parent", "created_at"]
+    search_fields = ["category_name", "meta_title", "meta_description"]
+    list_editable = ["is_active", "display_order"]
+
+    # 📝 Группировка полей в форме
     fieldsets = (
-        ("📋 Основная информация", {
-            "fields": (
-                "category_name",
-                "category_sku",
-                "slug",
-                ("category_type", "parent"),
-                "category_image",
-                "image_preview",
-                "storage_info",
-            ),
-            "description": "🏷️ Базовая информация о категории. Для лодок укажите тип и родительскую категорию."
+        ("📂 Основная информация", {
+            "fields": ("category_name", "slug", "category_image", "image_preview"),
+            "description": "🎯 Основные данные категории и изображение"
+        }),
+        ("🛥️ Тип и иерархия", {
+            "fields": ("category_type", "parent"),
+            "description": "🎯 Для автомобилей выберите тип 'Автомобили'. "
+                           "Для лодок укажите тип и родительскую категорию."
         }),
         ("📝 Описание и контент", {
             "fields": ("description",),
@@ -275,13 +217,13 @@ class ProductAdmin(admin.ModelAdmin):
         'newest_product'
     ]
 
-    # 🔍 Поиск и фильтры
+    # 🔍 ✅ ИСПРАВЛЕННЫЕ фильтры (только реальные поля модели)
     list_filter = [
-        'category',
-        'newest_product',
-        'created_at',
-        'updated_at',
-        'category__category_type'  # 🛥️ Фильтр по типу категории
+        'category',  # ✅ ForeignKey поле
+        'newest_product',  # ✅ BooleanField поле
+        'created_at',  # ✅ DateTimeField поле
+        'updated_at',  # ✅ DateTimeField поле
+        'category__category_type'  # ✅ Связанное поле (cars/boats)
     ]
 
     search_fields = [
@@ -313,10 +255,11 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
 
-    # 🎨 СУЩЕСТВУЮЩИЕ методы админки
+    # 🎨 ✅ ИСПРАВЛЕННЫЕ методы админки
     def get_main_image_preview(self, obj):
-        """🖼️ Предпросмотр главного изображения товара"""
-        main_image = obj.product_images.filter(is_main=True).first()  # Исправлено с obj.images на obj.product_images
+        """🖼️ Предпросмотр главного изображения товара - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
+        # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+        main_image = obj.product_images.filter(is_main=True).first()
         if main_image:
             return format_html(
                 '<img src="{}" style="max-width: 60px; max-height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #f39c12;" title="Главное изображение">',
@@ -324,7 +267,8 @@ class ProductAdmin(admin.ModelAdmin):
             )
 
         # Если нет главного, берём первое
-        first_image = obj.images.first()
+        # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+        first_image = obj.product_images.first()
         if first_image:
             return format_html(
                 '<img src="{}" style="max-width: 60px; max-height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #ddd;" title="Первое изображение (не главное)">',
@@ -336,21 +280,34 @@ class ProductAdmin(admin.ModelAdmin):
     get_main_image_preview.short_description = "Фото"
 
     def display_price(self, obj):
-        """💰 Отображение цены в красивом формате"""
+        """💰 Отображение цены в красивом формате - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
         if obj.price:
-            return format_html('<span style="color: green; font-weight: bold;">💰 {:,} руб.</span>', obj.price)
+            # ✅ ИСПРАВЛЕНО: Предварительно форматируем число, затем используем format_html
+            try:
+                formatted_price = f"{obj.price:,}".replace(',', ' ')  # Используем пробелы вместо запятых
+                return format_html(
+                    '<span style="color: green; font-weight: bold;">💰 {} руб.</span>',
+                    formatted_price
+                )
+            except (ValueError, TypeError):
+                return format_html(
+                    '<span style="color: green; font-weight: bold;">💰 {} руб.</span>',
+                    obj.price
+                )
         return format_html('<span style="color: #999;">💰 Не указана</span>')
 
     display_price.short_description = "Цена"
     display_price.admin_order_field = 'price'
 
     def has_main_image_status(self, obj):
-        """🖼️ Статус главного изображения"""
-        main_image = obj.images.filter(is_main=True).first()
+        """🖼️ Статус главного изображения - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
+        # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+        main_image = obj.product_images.filter(is_main=True).first()
         if main_image:
             return format_html('<span style="color: green;">🌟 Главное фото</span>')
 
-        if obj.images.exists():
+        # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+        if obj.product_images.exists():
             return format_html('<span style="color: orange;">⚠️ Нет главного</span>')
 
         return format_html('<span style="color: red;">❌ Нет фото</span>')
@@ -358,8 +315,9 @@ class ProductAdmin(admin.ModelAdmin):
     has_main_image_status.short_description = "Изображения"
 
     def storage_status(self, obj):
-        """💾 Общий статус хранилища изображений"""
-        images = obj.images.all()
+        """💾 Общий статус хранилища изображений - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
+        # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+        images = obj.product_images.all()
         if not images:
             return "💾 Нет файлов"
 
@@ -377,14 +335,12 @@ class ProductAdmin(admin.ModelAdmin):
 
     def get_boat_dimensions(self, obj):
         """🛥️ Отображение размеров лодочного коврика"""
-        if hasattr(obj, 'boat_length') and obj.boat_length:
+        if hasattr(obj, 'boat_mat_length') and obj.boat_mat_length:
             dimensions = []
-            if obj.boat_length:
-                dimensions.append(f"Д: {obj.boat_length}м")
-            if hasattr(obj, 'boat_width') and obj.boat_width:
-                dimensions.append(f"Ш: {obj.boat_width}м")
-            if hasattr(obj, 'boat_height') and obj.boat_height:
-                dimensions.append(f"В: {obj.boat_height}м")
+            if obj.boat_mat_length:
+                dimensions.append(f"Д: {obj.boat_mat_length}м")
+            if hasattr(obj, 'boat_mat_width') and obj.boat_mat_width:
+                dimensions.append(f"Ш: {obj.boat_mat_width}м")
 
             if dimensions:
                 return format_html('<span style="color: #007cba;">🛥️ {}</span>', " × ".join(dimensions))
@@ -413,122 +369,93 @@ class ProductAdmin(admin.ModelAdmin):
         self.message_user(request, f"✅ Убрана отметка 'новый': {updated} товаров")
 
     def set_first_image_as_main(self, request, queryset):
-        """🖼️ Установить первое изображение как главное для товаров без главного"""
+        """🖼️ Установить первое изображение как главное для выбранных товаров"""
         updated_count = 0
         for product in queryset:
-            main_image = product.images.filter(is_main=True).first()
-            if not main_image:
-                first_image = product.images.first()
-                if first_image:
-                    # Убираем главное у всех изображений товара
-                    product.images.update(is_main=False)
-                    # Устанавливаем первое как главное
-                    first_image.is_main = True
-                    first_image.save()
-                    updated_count += 1
-
-        self.message_user(request, f"✅ Установлено главное изображение для {updated_count} товаров")
-
-    def generate_missing_slugs(self, request, queryset):
-        """🔗 Генерация отсутствующих slug для товаров"""
-        from django.utils.text import slugify
-        updated_count = 0
-
-        for product in queryset:
-            if not product.slug:
-                product.slug = slugify(product.product_name)
-                product.save()
+            # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+            first_image = product.product_images.first()
+            if first_image and not first_image.is_main:
+                # Сбросить все главные
+                product.product_images.update(is_main=False)
+                # Установить первое как главное
+                first_image.is_main = True
+                first_image.save()
                 updated_count += 1
 
-        self.message_user(request, f"✅ Сгенерированы slug для {updated_count} товаров")
+        self.message_user(request, f"✅ Обновлено главных изображений: {updated_count}")
+
+    def generate_missing_slugs(self, request, queryset):
+        """🔗 Генерировать отсутствующие слаги"""
+        from django.utils.text import slugify
+        updated_count = 0
+        for product in queryset.filter(slug__isnull=True):
+            product.slug = slugify(product.product_name)
+            product.save(update_fields=['slug'])
+            updated_count += 1
+
+        self.message_user(request, f"✅ Сгенерировано слагов: {updated_count}")
 
     def check_images_storage(self, request, queryset):
-        """💾 Проверка хранилища изображений товаров"""
-        overwrite_products = 0
-        default_products = 0
-        no_images_products = 0
+        """🔍 Проверить хранилище изображений"""
+        stats = {'overwrite': 0, 'default': 0, 'no_images': 0}
 
         for product in queryset:
-            images = product.images.all()
+            # ✅ ИСПРАВЛЕНО: Используем product_images вместо images
+            images = product.product_images.all()
             if not images:
-                no_images_products += 1
-                continue
-
-            has_overwrite = any(img.image.storage.__class__.__name__ == 'OverwriteStorage' for img in images)
-            if has_overwrite:
-                overwrite_products += 1
+                stats['no_images'] += 1
             else:
-                default_products += 1
+                for img in images:
+                    if img.image.storage.__class__.__name__ == 'OverwriteStorage':
+                        stats['overwrite'] += 1
+                    else:
+                        stats['default'] += 1
 
-        message = f"💾 Анализ хранилища: OverwriteStorage: {overwrite_products}, DefaultStorage: {default_products}, Без изображений: {no_images_products}"
-        self.message_user(request, message)
+        self.message_user(
+            request,
+            f"📊 Статистика: OverwriteStorage: {stats['overwrite']}, "
+            f"DefaultStorage: {stats['default']}, Без фото: {stats['no_images']}"
+        )
 
-    # 🏷️ Названия действий
-    mark_as_new.short_description = "⭐ Отметить как новые товары"
+    mark_as_new.short_description = "⭐ Отметить как новые"
     mark_as_regular.short_description = "📦 Убрать отметку 'новый'"
-    set_first_image_as_main.short_description = "🖼️ Установить первое фото как главное"
-    generate_missing_slugs.short_description = "🔗 Сгенерировать отсутствующие slug"
-    check_images_storage.short_description = "💾 Проверить хранилище изображений"
+    set_first_image_as_main.short_description = "🖼️ Установить первое фото главным"
+    generate_missing_slugs.short_description = "🔗 Генерировать слаги"
+    check_images_storage.short_description = "🔍 Проверить хранилище изображений"
 
-    def changelist_view(self, request, extra_context=None):
-        """🎨 Переопределяем представление списка для добавления контекста экспорта"""
-        export_context = get_export_context()
-        extra_context = extra_context or {}
-        extra_context.update({
-            'export_context': export_context,
-            'has_export_permission': request.user.is_staff,
-        })
-        return super().changelist_view(request, extra_context=extra_context)
-
-    def get_urls(self):
-        """🔗 Добавляем URL для импорта-экспорта"""
-        urls = super().get_urls()
-        from django.urls import path
-        from .admin_views import import_form_view
-        from .export_views import export_excel_view
-
-        custom_urls = [
-            path('import/', import_form_view,
-                 name='%s_%s_import' % (self.model._meta.app_label, self.model._meta.model_name)),
-            path('export/', export_excel_view,
-                 name='%s_%s_export' % (self.model._meta.app_label, self.model._meta.model_name)),
-        ]
-        return custom_urls + urls
-
-
-# ✅ РЕГИСТРИРУЕМ ТОЛЬКО ОСНОВНЫЕ МОДЕЛИ (без Proxy)
-# Proxy модели регистрируются в proxy_admin.py через admin_setup.py
-
-@admin.register(Category)
-class CategoryMainAdmin(CategoryAdmin):
-    """📂 Основная админка категорий (все типы вместе) - для совместимости и резерва"""
-    pass
-
-
-@admin.register(Product)
-class ProductMainAdmin(ProductAdmin):
-    """🛍️ Основная админка товаров (все типы вместе) - для совместимости и резерва"""
-
-    # ✅ КАСТОМНЫЙ ШАБЛОН: Используем тот же шаблон с кнопками импорта/экспорта
-    change_list_template = 'admin/products/product/change_list.html'
-
-
-# 📦 ДОПОЛНИТЕЛЬНЫЕ МОДЕЛИ
 
 @admin.register(KitVariant)
 class KitVariantAdmin(admin.ModelAdmin):
-    """📦 Админка для комплектаций товаров"""
-    list_display = ['name', 'code', 'price_modifier', 'order', 'is_option', 'formatted_price']
+    """📦 Админка комплектаций товаров"""
+    list_display = ['name', 'code', 'formatted_price', 'order', 'is_option']
     list_filter = ['is_option']
+    list_editable = ['order', 'is_option']
     search_fields = ['name', 'code']
-    list_editable = ['price_modifier', 'order', 'is_option']
-    ordering = ['is_option', 'order']
+    ordering = ['order', 'name']
 
     def formatted_price(self, obj):
-        """💰 Отображает цену в удобном формате"""
-        return f"{obj.price_modifier} руб."
+        """💰 Отображение модификатора цены - ИСПРАВЛЕННАЯ ВЕРСИЯ"""
+        if obj.price_modifier:
+            try:
+                # ✅ ИСПРАВЛЕНО: Предварительно форматируем число
+                formatted_modifier = f"{abs(obj.price_modifier):,}".replace(',', ' ')
+                if obj.price_modifier > 0:
+                    return format_html(
+                        '<span style="color: green;">💰 +{} руб.</span>',
+                        formatted_modifier
+                    )
+                elif obj.price_modifier < 0:
+                    return format_html(
+                        '<span style="color: red;">💰 -{} руб.</span>',
+                        formatted_modifier
+                    )
+            except (ValueError, TypeError):
+                return format_html('<span style="color: #999;">💰 {}</span>', obj.price_modifier)
 
-    formatted_price.short_description = "Цена"
+        return format_html('<span style="color: #999;">💰 Без изменений</span>')
+
+    formatted_price.short_description = "Модификатор цены"
+    formatted_price.admin_order_field = 'price_modifier'
 
     fieldsets = (
         ('📦 Основная информация', {
@@ -590,31 +517,14 @@ admin.site.index_title = "Управление интернет-магазино
 # 📝 Настройка пустых значений
 admin.site.empty_value_display = '(Не заполнено)'
 
-# 🎯 АКТИВАЦИЯ ГРУППИРОВКИ
-# ========================
+# 🎨 ДОПОЛНИТЕЛЬНЫЕ АДМИНКИ (не регистрируем, только определяем для наследования)
 
-# 🚀 ПОДКЛЮЧАЕМ ГРУППИРОВАННЫЕ АДМИНКИ
-from .admin_setup import *
+# Эти модели регистрируются только если не используются proxy-модели из других приложений:
+# - Coupon (купоны)
+# - ProductReview (отзывы)
+# - Wishlist (избранное)
+# - ProductImage (изображения - через inline)
 
-# 🎯 ИТОГОВЫЙ РЕЗУЛЬТАТ ИСПРАВЛЕНИЯ:
-#
-# ✅ УБРАНО:
-# - Двойная регистрация Proxy моделей (оставлена только в proxy_admin.py)
-# - Код unregister оригинальных моделей
-# - Конфликтующие админки в конце файла
-#
-# ✅ ДОБАВЛЕНО:
-# - Импорт admin_setup.py для активации группировки
-# - Полная функциональность импорта/экспорта в Proxy админках
-#
-# ✅ СОХРАНЕНО:
-# - Все базовые классы CategoryAdmin и ProductAdmin для наследования
-# - Основные админки Category и Product как резерв/совместимость
-# - Вся функциональность импорта/экспорта
-# - Все существующие методы, действия и валидация
-#
-# ✅ БЕЗОПАСНОСТЬ:
-# - Не ломает существующий код
-# - Не удаляет функциональность
-# - Proxy админки работают через наследование от базовых классов
-# - Легко откатить при необходимости
+# 🔧 ПРИМЕЧАНИЕ:
+# ProductAdmin НЕ регистрируется напрямую - используется только для наследования
+# в boats.admin.BoatProductAdmin и cars.admin.CarProductAdmin

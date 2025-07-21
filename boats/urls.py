@@ -1,7 +1,7 @@
-# 📁 boats/urls.py - URL-маршруты для раздела "Лодки"
+# 📁 boats/urls.py - ОБНОВЛЕННЫЕ URL-маршруты для раздела "Лодки"
 
 from django.urls import path
-from . import views  # Мы создадим этот файл на следующем шаге
+from . import views
 
 app_name = 'boats'
 
@@ -14,4 +14,13 @@ urlpatterns = [
 
     # 🛥️ Детальная страница товара-лодки
     path('product/<slug:slug>/', views.boat_product_detail, name='product_detail'),
+
+    # 🛒 Добавление в корзину (специальная версия для лодок)
+    path('add-to-cart/<uid>/', views.boat_add_to_cart, name='add_to_cart'),
+
+    # ❤️ Добавление в избранное (специальная версия для лодок)
+    path('add-to-wishlist/<uid>/', views.boat_add_to_wishlist, name='add_to_wishlist'),
+
+    # 🔍 Поиск среди лодок
+    path('search/', views.boat_search, name='search'),
 ]

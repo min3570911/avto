@@ -1,6 +1,5 @@
-# 📁 ecomm/urls.py - ОБНОВЛЕНО для CKEditor 5
-# 🏠 Основные URL-паттерны проекта
-# ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
+# 📁 ecomm/urls.py - ПОЛНОЕ ИСПРАВЛЕНИЕ для активных ссылок
+# 🔗 Теперь все ссылки в админке будут работать
 
 from django.contrib import admin
 from django.urls import path, include
@@ -12,19 +11,25 @@ urlpatterns = [
     # 🔧 Админка Django
     path('admin/', admin.site.urls),
 
-    # ✅ НОВОЕ: CKEditor 5 URLs (для загрузки файлов)
+    # ✅ CKEditor 5 URLs (для загрузки файлов)
     path('ckeditor5/', include('django_ckeditor_5.urls')),
 
     # 🛒 Корзина и заказы
     path('accounts/', include('accounts.urls')),
 
-    # 🛍️ Товары и каталог
+    # 🛍️ Товары и каталог (общие функции: импорт, экспорт, избранное, отзывы)
     path('products/', include('products.urls')),
+
+    # 🚗 Раздел "Автомобили" (ОБЯЗАТЕЛЬНО должен быть)
+    path('cars/', include('cars.urls')),
+
+    # 🛥️ Раздел "Лодки" (ОБЯЗАТЕЛЬНО должен быть)
+    path('boats/', include('boats.urls')),
 
     # 📝 Блог - статьи
     path('blog/', include('blog.urls')),
 
-    # 🏠 Главная страница и статические страницы
+    # 🏠 Главная страница и статические страницы (должно быть последним)
     path('', include('home.urls')),
 ]
 
@@ -33,7 +38,10 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# 🔧 ИЗМЕНЕНИЯ:
-# ❌ УДАЛЕНО: path('ckeditor/', include('ckeditor_uploader.urls'))
-# ✅ ДОБАВЛЕНО: path('ckeditor5/', include('django_ckeditor_5.urls'))
-# ✅ СОВРЕМЕННО: Поддержка загрузки файлов в CKEditor 5
+# ✅ КРИТИЧНО: Порядок URL имеет значение!
+# - Специфичные URL (cars/, boats/) должны быть ДО общих ('')
+# - Иначе home.urls перехватит все запросы
+
+# 🔗 РЕЗУЛЬТАТ: Теперь ссылки будут работать:
+# - /boats/product/lodka-challenger/ → boats.views.boat_product_detail
+# - /cars/product/bmw-x5/ → cars.views.car_product_detail

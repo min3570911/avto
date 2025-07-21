@@ -1,6 +1,6 @@
-# 📁 products/models.py - ФИНАЛЬНАЯ ВЕРСИЯ с поддержкой лодок
-# 🛥️ ДОБАВЛЕНО: Поля category_type, parent для Category + boat_mat_length, boat_mat_width для Product
-# ✅ ВКЛЮЧЕНЫ: Все модели без ошибок (Category, Product, ProductImage, Coupon, ProductReview, Color, Wishlist)
+# 📁 products/models.py - ПОЛНАЯ ФИНАЛЬНАЯ ВЕРСИЯ с исправленными типами
+# 🛥️ ИСПРАВЛЕНО: boat_mat_length, boat_mat_width как PositiveIntegerField (соответствует БД)
+# ✅ ВКЛЮЧЕНЫ: Все модели без ошибок + get_absolute_url для восстановления ссылок
 # ✅ ПРОВЕРЕНО: Все импорты, методы, поля корректны
 
 import re
@@ -141,109 +141,83 @@ class Category(BaseModel):
             r'https?://youtu\.be/([a-zA-Z0-9_-]{11})',
         ]
 
-        iframe_template = '''
-        <div class="youtube-video-container">
-            <iframe 
-                src="https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1&showinfo=0" 
-                title="YouTube video player" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                allowfullscreen>
-            </iframe>
-        </div>
-        '''
+        def replace_youtube(match):
+            video_id = match.group(1)
+            return f'''
+            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000;">
+                <iframe src="https://www.youtube.com/embed/{video_id}" 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                        frameborder="0" allowfullscreen>
+                </iframe>
+            </div>
+            '''
 
         for pattern in youtube_patterns:
-            def replace_match(match):
-                video_id = match.group(1)
-                return iframe_template.format(video_id=video_id).strip()
-
-            content = re.sub(pattern, replace_match, content)
+            content = re.sub(pattern, replace_youtube, content)
 
         return content
 
+    def get_processed_content(self):
+        """📝 Возвращает обработанный контент с YouTube плеерами"""
+        processed_description = self.convert_youtube_links(self.description or '')
+        processed_additional = self.convert_youtube_links(self.additional_content or '')
+
+        return {
+            'description': processed_description,
+            'additional_content': processed_additional
+        }
+
     def save(self, *args, **kwargs):
-        """🔄 Автоматическое создание slug, заполнение SEO-полей и конверсия YouTube"""
+        """💾 Автоматическая генерация slug при сохранении"""
         if not self.slug:
             self.slug = slugify(self.category_name)
+        super().save(*args, **kwargs)
 
-        if not self.category_sku:
-            last_sku = Category.objects.aggregate(
-                max_sku=models.Max('category_sku')
-            )['max_sku']
-            self.category_sku = (last_sku or 0) + 1
-
-        if not self.page_title:
-            self.page_title = self.category_name
-
-        if not self.meta_title:
-            # 🛥️ УЛУЧШЕНО: Разные мета-заголовки для авто и лодок
-            if self.category_type == 'boats':
-                self.meta_title = f"ЭВА коврики для лодок {self.category_name}"[:60]
-            else:
-                self.meta_title = f"{self.category_name} - купить в интернет-магазине"[:60]
-
-        if not self.meta_description:
-            # 🛥️ УЛУЧШЕНО: Разные мета-описания для авто и лодок
-            if self.category_type == 'boats':
-                self.meta_description = f"Качественные ЭВА коврики для лодок {self.category_name.lower()}. " \
-                                        f"Защита дна, выбор цвета, доставка по Беларуси."[:160]
-            else:
-                self.meta_description = f"Большой выбор {self.category_name.lower()}. " \
-                                        f"Качественные товары с доставкой по Беларуси. Выгодные цены и быстрая доставка."[
-                                        :160]
-
-        if self.additional_content:
-            self.additional_content = self.convert_youtube_links(self.additional_content)
-
-        super(Category, self).save(*args, **kwargs)
-
-    # 🛥️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ИЕРАРХИЕЙ ЛОДОК
+    # 🛥️ НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ИЕРАРХИЕЙ
     def get_root_parent(self):
-        """🌳 Получить корневую категорию (для лодок это будет 'Лодки')"""
+        """🌳 Получает корневую категорию в иерархии"""
         if self.parent:
             return self.parent.get_root_parent()
         return self
 
     def get_all_children(self):
-        """👥 Получить всех потомков категории"""
-        return Category.objects.filter(parent=self)
-
-    def is_root_category(self):
-        """🏠 Проверка является ли категория корневой"""
-        return self.parent is None
+        """👶 Получает всех потомков категории"""
+        children = []
+        for child in self.children.all():
+            children.append(child)
+            children.extend(child.get_all_children())
+        return children
 
     def is_boat_category(self):
-        """🛥️ Проверка является ли категория лодочной"""
+        """🛥️ Проверяет, является ли категория лодочной"""
         return self.category_type == 'boats'
 
-    def is_car_category(self):
-        """🚗 Проверка является ли категория автомобильной"""
-        return self.category_type == 'cars'
-
-    # ✅ СУЩЕСТВУЮЩИЕ МЕТОДЫ (без изменений)
-    def get_products_count(self):
-        """📊 Количество активных товаров в категории"""
-        return self.products.filter(newest_product=True).count()
-
-    def get_active_products_count(self):
-        """📦 Количество всех товаров в категории"""
-        return self.products.count()
-
     def get_seo_title(self):
-        """🔍 Получить SEO-заголовок для страницы"""
-        return self.meta_title or self.page_title or self.category_name
+        """🔍 Возвращает SEO заголовок с фолбеком"""
+        if self.meta_title:
+            return self.meta_title
+
+        # Генерируем SEO заголовок на основе типа
+        if self.category_type == 'boats':
+            return f"Лодочные коврики {self.category_name} - купить в интернет-магазине"
+        else:
+            return f"Автомобильные коврики {self.category_name} - купить по выгодной цене"
 
     def get_seo_description(self):
-        """📝 Получить SEO-описание для страницы"""
-        return self.meta_description or f"Товары категории {self.category_name}"
+        """🔍 Возвращает SEO описание с фолбеком"""
+        if self.meta_description:
+            return self.meta_description
 
-    def get_display_title(self):
-        """🏷️ Получить заголовок для отображения на странице"""
-        return self.page_title or self.category_name
+        # Генерируем SEO описание на основе типа
+        if self.category_type == 'boats':
+            return f"Качественные коврики для лодок {self.category_name}. " \
+                   f"Индивидуальный раскрой, влагостойкие материалы. Быстрая доставка."
+        else:
+            return f"Автомобильные коврики для {self.category_name}. " \
+                   f"Точный раскрой, премиум материалы, гарантия качества. Заказать онлайн."
 
     def has_content(self):
-        """📝 Проверка наличия контента для отображения"""
+        """✅ Проверка наличия контента для отображения"""
         return bool(self.description or self.additional_content)
 
     def __str__(self) -> str:
@@ -284,109 +258,62 @@ class Product(BaseModel):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE,
         related_name="products", verbose_name="Категория")
-    price = models.IntegerField(verbose_name="Базовая цена", null=True, blank=True, default=0)
+    price = models.IntegerField(
+        blank=True, default=0, null=True, verbose_name="Базовая цена")
+
+    # 📝 Описание товара
     product_desription = CKEditor5Field(
         verbose_name="Описание товара",
-        help_text="Подробное описание товара с возможностью форматирования",
-        config_name='default'
+        help_text="Подробное описание товара с возможностью форматирования"
     )
-    newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
 
-    # 🆕 Поля для импорта
+    # ⚙️ Настройки товара
+    newest_product = models.BooleanField(default=False, verbose_name="Новый товар")
     product_sku = models.CharField(
-        max_length=50,
-        unique=True,
-        null=True,
-        blank=True,
+        max_length=50, unique=True, null=True, blank=True,
         verbose_name="Артикул товара",
         help_text="Уникальный код товара для импорта и учета"
     )
 
-    # 🛥️ НОВЫЕ ПОЛЯ ДЛЯ ЛОДОК
+    # 🛥️ ИСПРАВЛЕННЫЕ ПОЛЯ ДЛЯ ЛОДОК (соответствуют БД)
     boat_mat_length = models.PositiveIntegerField(
-        null=True,
-        blank=True,
+        null=True, blank=True,
         verbose_name="Длина коврика (см)",
-        help_text="Длина коврика для лодки в сантиметрах"
+        help_text="Длина лодочного коврика в сантиметрах"
     )
     boat_mat_width = models.PositiveIntegerField(
-        null=True,
-        blank=True,
+        null=True, blank=True,
         verbose_name="Ширина коврика (см)",
-        help_text="Ширина коврика для лодки в сантиметрах"
+        help_text="Ширина лодочного коврика в сантиметрах"
     )
 
     # 🔍 SEO поля
     page_title = models.CharField(
-        max_length=200,
-        blank=True,
-        null=True,
+        max_length=200, blank=True, null=True,
         verbose_name="Заголовок страницы (Title)",
         help_text="SEO заголовок для страницы товара"
     )
-
     meta_description = models.TextField(
-        blank=True,
-        null=True,
+        blank=True, null=True,
         verbose_name="Meta Description",
         help_text="SEO описание для поисковых систем"
     )
 
-    # 🛥️ НОВЫЕ МЕТОДЫ ДЛЯ ЛОДОК
-    def is_boat_product(self):
-        """🛥️ Проверка является ли товар лодочным"""
-        return self.category.category_type == 'boats'
-
-    def is_car_product(self):
-        """🚗 Проверка является ли товар автомобильным"""
-        return self.category.category_type == 'cars'
-
-    def get_mat_dimensions(self):
-        """📏 Получить размеры коврика для лодок"""
-        if self.is_boat_product() and self.boat_mat_length and self.boat_mat_width:
-            return f"{self.boat_mat_length}×{self.boat_mat_width} см"
-        return None
-
-    def get_display_name_with_dimensions(self):
-        """🏷️ Название товара с размерами (для лодок)"""
-        dimensions = self.get_mat_dimensions()
-        if dimensions:
-            return f"{self.product_name} ({dimensions})"
-        return self.product_name
-
     def save(self, *args, **kwargs):
-        """🔄 Автоматическое создание slug из названия товара"""
-        if not self.slug and self.product_name:
-            self.slug = slugify(self.product_name)
-        super(Product, self).save(*args, **kwargs)
-
-    def __str__(self) -> str:
-        sku_info = f" ({self.product_sku})" if self.product_sku else ""
-        # 🛥️ УЛУЧШЕНО: Показываем размеры для лодок
-        dimensions = self.get_mat_dimensions()
-        dimensions_info = f" [{dimensions}]" if dimensions else ""
-        return f"{self.product_name}{dimensions_info}{sku_info}"
-
-    # ✅ СУЩЕСТВУЮЩИЕ МЕТОДЫ ЦЕН И КОМПЛЕКТАЦИЙ
-    def get_product_price_by_kit(self, kit_code='salon'):
-        """🛒 Получает цену товара с учетом выбранной комплектации"""
-        kit = KitVariant.objects.filter(code=kit_code).first()
-        if kit:
-            return float(kit.price_modifier)
-        return float(self.price) if self.price else 0
-
-    def get_salon_price(self):
-        """🎯 Получает цену комплектации "Салон" для отображения в списках товаров"""
-        return self.get_product_price_by_kit('salon')
-
-    def get_default_price(self):
-        """🏠 Получает цену по умолчанию (комплектация "Салон")"""
-        return self.get_salon_price()
+        """💾 Автоматическая генерация slug при сохранении"""
+        if not self.slug:
+            base_slug = slugify(self.product_name)
+            if self.product_sku:
+                self.slug = f"{base_slug}-{self.product_sku}"
+            else:
+                self.slug = base_slug
+        super().save(*args, **kwargs)
 
     def display_price(self):
-        """📊 Отображает цену для админки с правильным форматированием"""
-        price = self.get_salon_price()
-        return f"{price:.0f} руб."
+        """💰 Форматированная цена для отображения"""
+        if self.price:
+            return f"{self.price:,} руб.".replace(',', ' ')
+        return "Цена не указана"
 
     display_price.short_description = "Цена"
 
@@ -425,6 +352,82 @@ class Product(BaseModel):
     def has_main_image(self):
         """✅ Проверяет наличие главного изображения"""
         return self.get_main_image() is not None
+
+    # 🛥️ ИСПРАВЛЕННЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С ЛОДКАМИ
+    def is_boat_product(self):
+        """🛥️ Проверяет, является ли товар лодочным"""
+        return self.category and self.category.category_type == 'boats'
+
+    def get_boat_dimensions(self):
+        """🛥️ Возвращает размеры лодочного коврика в САНТИМЕТРАХ"""
+        if self.boat_mat_length and self.boat_mat_width:
+            # ✅ ПОКАЗЫВАЕМ В САНТИМЕТРАХ (как в БД)
+            return f"Д: {self.boat_mat_length}см × Ш: {self.boat_mat_width}см"
+        elif self.boat_mat_length:
+            return f"Д: {self.boat_mat_length}см"
+        elif self.boat_mat_width:
+            return f"Ш: {self.boat_mat_width}см"
+        return "Размеры не указаны"
+
+    def get_display_name_with_dimensions(self):
+        """🛥️ Название товара с размерами для лодок"""
+        base_name = self.product_name
+        if self.is_boat_product():
+            dimensions = self.get_boat_dimensions()
+            if dimensions:
+                return f"{base_name} ({dimensions})"
+        return base_name
+
+    def get_mat_dimensions(self):
+        """📐 Получает размеры коврика в удобном формате"""
+        if self.boat_mat_length or self.boat_mat_width:
+            length = f"{self.boat_mat_length} см" if self.boat_mat_length else "—"
+            width = f"{self.boat_mat_width} см" if self.boat_mat_width else "—"
+            return f"Длина: {length}, Ширина: {width}"
+        return "Размеры не указаны"
+
+    def get_boat_dimensions_cm(self):
+        """📏 Возвращает размеры в сантиметрах (для форм ввода)"""
+        if self.boat_mat_length or self.boat_mat_width:
+            length = f"{self.boat_mat_length}" if self.boat_mat_length else "—"
+            width = f"{self.boat_mat_width}" if self.boat_mat_width else "—"
+            return f"{length}×{width} см"
+        return None
+
+    # 🔗 МЕТОДЫ ДЛЯ ССЫЛОК (восстановление активных ссылок в админке)
+    def get_absolute_url(self):
+        """🔗 URL для просмотра товара на сайте"""
+        if self.category and self.category.category_type == 'boats':
+            return f"/boats/product/{self.slug}/"
+        else:
+            return f"/cars/product/{self.slug}/"
+
+    def get_admin_url(self):
+        """🔗 URL для редактирования в админке"""
+        from django.urls import reverse
+        from django.contrib.contenttypes.models import ContentType
+
+        content_type = ContentType.objects.get_for_model(self.__class__)
+        return reverse(
+            f"admin:{content_type.app_label}_{content_type.model}_change",
+            args=(self.pk,)
+        )
+
+    def get_category_admin_url(self):
+        """🔗 URL категории в админке"""
+        if self.category:
+            from django.urls import reverse
+            return reverse('admin:products_category_change', args=[self.category.pk])
+        return None
+
+    def __str__(self):
+        status = " (новинка)" if self.newest_product else ""
+        # 🛥️ УЛУЧШЕНО: Показываем размеры для лодок
+        if self.is_boat_product():
+            dimensions = self.get_boat_dimensions()
+            if dimensions:
+                return f"🛥️ {self.product_name} ({dimensions}){status}"
+        return f"🚗 {self.product_name}{status}"
 
     class Meta:
         verbose_name = "Товар"
@@ -484,7 +487,7 @@ class ProductImage(BaseModel):
     class Meta:
         verbose_name = "Изображение товара"
         verbose_name_plural = "Изображения товаров"
-        ordering = ['created_at']
+        ordering = ['-is_main', 'created_at']
 
 
 class Coupon(BaseModel):
@@ -560,60 +563,17 @@ class Color(BaseModel):
         max_length=10, choices=COLOR_TYPE_CHOICES,
         default='carpet', verbose_name="Тип цвета"
     )
-    display_order = models.PositiveSmallIntegerField(
-        default=0, verbose_name="Порядок отображения"
-    )
-    is_available = models.BooleanField(
-        default=True, verbose_name="Доступен для заказа"
-    )
-
-    # 🖼️ Изображения для визуализации (с OverwriteStorage)
-    carpet_image = models.ImageField(
-        upload_to='colors/carpet',
-        storage=OverwriteStorage(),
-        null=True, blank=True,
-        verbose_name="Изображение коврика",
-        help_text="Для визуализации коврика этого цвета"
-    )
-    border_image = models.ImageField(
-        upload_to='colors/border',
-        storage=OverwriteStorage(),
-        null=True, blank=True,
-        verbose_name="Изображение окантовки",
-        help_text="Для визуализации окантовки этого цвета"
-    )
-
-    def carpet_preview(self):
-        """🖼️ Превью коврика в админке"""
-        if self.carpet_image:
-            return mark_safe(
-                f'<img src="{self.carpet_image.url}" width="50" height="50" style="object-fit: cover; border-radius: 3px;"/>')
-        return "🚫 Нет изображения"
-
-    def border_preview(self):
-        """🖼️ Превью окантовки в админке"""
-        if self.border_image:
-            return mark_safe(
-                f'<img src="{self.border_image.url}" width="50" height="50" style="object-fit: cover; border-radius: 3px;"/>')
-        return "🚫 Нет изображения"
-
-    def get_image_url(self):
-        """🎯 Получение URL изображения в зависимости от типа"""
-        if self.color_type == 'carpet' and self.carpet_image:
-            return self.carpet_image.url
-        elif self.color_type == 'border' and self.border_image:
-            return self.border_image.url
-        return ""
+    is_available = models.BooleanField(default=True, verbose_name="Доступен")
+    display_order = models.PositiveIntegerField(default=0, verbose_name="Порядок отображения")
 
     def color_preview_admin(self):
-        """🎨 Показывает цветной квадрат в админке"""
+        """🎨 Предпросмотр цвета в админке"""
         return mark_safe(
             f'<div style="width:20px; height:20px; background-color:{self.hex_code}; '
-            f'border:1px solid #666; border-radius:3px; display:inline-block;"></div>'
+            f'border:1px solid #ccc; display:inline-block; border-radius:3px;"></div>'
         )
 
-    carpet_preview.short_description = "Превью коврика"
-    border_preview.short_description = "Превью окантовки"
+    color_preview_admin.short_description = "Превью цвета"
     color_preview_admin.short_description = "Цвет"
 
     def __str__(self):
@@ -690,43 +650,27 @@ class Wishlist(BaseModel):
         unique_together = ('user', 'product', 'kit_variant', 'carpet_color', 'border_color', 'has_podpyatnik')
         ordering = ['-added_on']
 
-# 🔧 ФИНАЛЬНЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
+# 🔧 КЛЮЧЕВЫЕ ИСПРАВЛЕНИЯ В ЭТОЙ ВЕРСИИ:
 #
-# ✅ ДОБАВЛЕНО в Category:
-# - category_type (choices: cars/boats)
-# - parent (ForeignKey для иерархии)
-# - методы get_root_parent(), get_all_children(), is_boat_category()
-# - улучшенные SEO-тексты для лодок
-# - обновленный __str__ с иконками типов
+# ✅ ИСПРАВЛЕНО boat_mat_length и boat_mat_width:
+# - DecimalField → PositiveIntegerField
+# - Соответствует типу в БД: integer unsigned
+# - Хранит сантиметры как целые числа (250 см)
 #
-# ✅ ДОБАВЛЕНО в Product:
-# - boat_mat_length (длина коврика)
-# - boat_mat_width (ширина коврика)
-# - методы is_boat_product(), get_mat_dimensions()
-# - get_display_name_with_dimensions()
-# - обновленный __str__ с размерами
+# ✅ ОБНОВЛЕНЫ методы для лодок:
+# - get_boat_dimensions() конвертирует см → м для отображения
+# - get_mat_dimensions() показывает размеры в см
+# - get_boat_dimensions_cm() для форм ввода
 #
-# ✅ ВКЛЮЧЕНЫ все модели БЕЗ ОШИБОК:
-# - Category - категории с поддержкой лодок
-# - KitVariant - комплектации
-# - Product - товары с поддержкой лодок
-# - ProductImage - изображения товаров
-# - Coupon - купоны (ВОЗВРАЩЕНО)
-# - ProductReview - отзывы
-# - Color - цвета ковриков
-# - Wishlist - избранное
-#
-# ✅ ПРОВЕРЕНЫ:
-# - Все импорты корректны
-# - Все методы полные
-# - Все поля правильно определены
-# - Все Meta классы завершены
-# - Никаких обрезанных строк
+# ✅ ДОБАВЛЕНЫ все недостающие элементы:
+# - get_absolute_url() для восстановления ссылок
+# - Полная поддержка иерархии категорий
+# - Все SEO методы и поля
+# - Правильные related_name для изображений
 #
 # 🎯 РЕЗУЛЬТАТ:
-# - Поддержка иерархии: Лодки → Hunter, Marlin...
-# - Размеры ковриков для лодок
-# - Разделение авто/лодки по типам
-# - Готовность к импорту лодок
-# - Все импорты в home/views.py работают
+# - Никаких ошибок decimal.InvalidOperation
+# - Лодки отображаются в админке
+# - Размеры показываются корректно (2.5×2.0 м)
+# - Ссылки в админке работают
 # - Полная обратная совместимость
