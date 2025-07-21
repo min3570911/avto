@@ -4,12 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="установил jazzmine для админки">
-      <change beforePath="$PROJECT_DIR$/.idea/avtokovriki.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/avtokovriki.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="начинаю рефакторинг.">
+      <change afterPath="$PROJECT_DIR$/boats/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cars/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ecomm/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ecomm/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/boats/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/boats/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cars/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/cars/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/proxy_admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/proxy_admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/proxy_models.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/proxy_models.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -348,7 +350,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753001522560</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="начинаю рефакторинг.">
+      <option name="closed" value="true" />
+      <created>1753088113196</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1753088113196</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -378,7 +388,8 @@
     <MESSAGE value="работают лодки в заказаз" />
     <MESSAGE value="Пробую разделить в админке по категориям." />
     <MESSAGE value="установил jazzmine для админки" />
-    <option name="LAST_COMMIT_MESSAGE" value="установил jazzmine для админки" />
+    <MESSAGE value="начинаю рефакторинг." />
+    <option name="LAST_COMMIT_MESSAGE" value="начинаю рефакторинг." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$jazzmin_diagnostic.coverage" NAME="jazzmin_diagnostic Coverage Results" MODIFIED="1753003007270" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

@@ -5,17 +5,39 @@ from products.admin import ProductAdmin, CategoryAdmin
 @admin.register(BoatCategory)
 class BoatCategoryAdmin(CategoryAdmin):
     """
-    Настройки админ-панели для категорий лодок.
-    Наследует всю логику от основного CategoryAdmin.
+    Админка для категорий лодок.
+    Наследует всю логику от CategoryAdmin, но показывает только лодки.
     """
-    pass
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='boat')
 
 @admin.register(BoatProduct)
 class BoatProductAdmin(ProductAdmin):
     """
-    Настройки админ-панели для товаров-лодок.
-    Наследует всю логику от основного ProductAdmin.
+    Админка для товаров-лодок.
+    Наследует всю логику от ProductAdmin, но показывает только лодки
+    и использует правильные поля для них.
     """
-    # Здесь можно будет добавлять специфичные для лодок поля в будущем,
-    # например, отображение размеров в списке.
-    pass
+    # ИСПРАВЛЕНО: Используем метод get_boat_dimensions, как в оригинале
+    list_display = [
+        'get_main_image_preview',
+        'product_name',
+        'product_sku',
+        'category',
+        'display_price',
+        'get_boat_dimensions',  # <-- ПРАВИЛЬНЫЙ МЕТОД
+        'has_main_image_status',
+        'newest_product'
+    ]
+
+    # ИСПРАВЛЕНО: Используем поля boat_mat_width и boat_mat_length для поиска
+    search_fields = [
+        'product_name',
+        'product_sku',
+        'product_desription',
+        'boat_mat_width',   # <-- ПРАВИЛЬНОЕ ПОЛЕ
+        'boat_mat_length'   # <-- ПРАВИЛЬНОЕ ПОЛЕ
+    ]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(type='boat')
