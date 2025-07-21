@@ -316,7 +316,7 @@ class ProductAdmin(admin.ModelAdmin):
     # 🎨 СУЩЕСТВУЮЩИЕ методы админки
     def get_main_image_preview(self, obj):
         """🖼️ Предпросмотр главного изображения товара"""
-        main_image = obj.images.filter(is_main=True).first()
+        main_image = obj.product_images.filter(is_main=True).first()  # Исправлено с obj.images на obj.product_images
         if main_image:
             return format_html(
                 '<img src="{}" style="max-width: 60px; max-height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #f39c12;" title="Главное изображение">',
