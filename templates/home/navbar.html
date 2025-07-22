@@ -52,6 +52,8 @@
       <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto" style="gap: 20px;">
           <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Главная</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'cars:category_list' %}">🚗 Автомобили</a></li>
+<li class="nav-item"><a class="nav-link" href="{% url 'boats:category_list' %}">🛥️ Лодки</a></li>
           {% if user.is_authenticated %}
             <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное ({{ request.user.wishlist.count }})</a></li>
           {% else %}

@@ -1,0 +1,561 @@
+<!-- 📁 templates/boats/product_detail.html -->
+<!-- 🛥️ Страница товара лодок -->
+<!-- ✅ ОСНОВАНО на templates/product/product.html, сохранена ВСЯ существующая логика -->
+
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}
+{% if is_boat_product %}
+  {{ product.get_display_name_with_dimensions }}
+{% else %}
+  {{ product.product_name }}
+{% endif %} | Автоковрики
+{% endblock %}
+
+{% block start %}
+<style>
+  /* ✅ ПОЛНОСТЬЮ СОХРАНЕНЫ все существующие стили из templates/product/product.html */
+
+  .gallery-wrap {
+    margin-bottom: 20px;
+  }
+
+  .carousel-inner {
+    position: relative;
+  }
+
+  .thumbs-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .item-thumb {
+    margin: 0 3px;
+    cursor: pointer;
+  }
+
+  .item-thumb img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .item-thumb img:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+  }
+
+  /* Скрыть галерею на мобильных устройствах */
+  @media (max-width: 767px) {
+    .gallery-wrap {
+      display: none;
+    }
+  }
+
+  /* Стили для блока описания */
+  .product-description-block {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .product-description-block h4 {
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+  }
+
+  /* Стили для блока количества и цены */
+  .quantity-price-block {
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 8px 0;
+    margin: 8px 0;
+    background-color: #f8f8f8;
+    border-radius: 5px;
+  }
+
+  /* Стили для изображения комплектации */
+  .kit-configuration-image {
+    max-width: 300px;
+    width: 100%;
+    height: auto;
+    margin: 5px auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+  }
+
+  /* Стили для нового расположения количества и цены */
+  .quantity-and-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+  }
+
+  .quantity-selector {
+    display: flex;
+    align-items: center;
+  }
+
+  .quantity-selector button {
+    border: none;
+    background-color: #f0f0f0;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  .quantity-selector input {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ccc;
+    margin: 0 5px;
+  }
+
+  .final-price {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  /* 🛥️ СОХРАНЕНЫ стили для размеров лодок */
+  .boat-dimensions {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+    border: 2px solid #2196f3;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .boat-dimensions h6 {
+    color: #1976d2;
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+  }
+
+  .boat-dimensions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .boat-dimensions li {
+    background: rgba(33, 150, 243, 0.1);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 500;
+    color: #1565c0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 🛥️ Специальный заголовок для лодок */
+  .boat-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    padding: 40px 0;
+    margin-bottom: 30px;
+    color: white;
+  }
+
+  .boat-badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  /* 🛥️ Особенности лодок */
+  .boat-features {
+    background: #e8f7fa;
+    border: 1px solid #17a2b8;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+  }
+
+  .boat-features h6 {
+    color: #17a2b8;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .boat-features ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+
+  .boat-features li {
+    color: #138496;
+    margin-bottom: 5px;
+  }
+
+  /* Хлебные крошки */
+  .breadcrumb {
+    background-color: transparent;
+    padding-left: 0;
+  }
+
+  .breadcrumb a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: white;
+  }
+
+  .breadcrumb-item.active {
+    color: white;
+  }
+</style>
+
+<!-- 🛥️ Заголовок товара лодок -->
+<div class="boat-header">
+  <div class="container">
+    <!-- 🧭 Хлебные крошки -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'boats:category_list' %}">Лодки</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'boats:product_list_by_category' product.category.slug %}">{{ product.category.category_name }}</a></li>
+        <li class="breadcrumb-item active">{{ product.product_name }}</li>
+      </ol>
+    </nav>
+
+    <div class="boat-badge">🛥️ Лодочные коврики</div>
+    <!-- ✅ СОХРАНЕНА существующая логика заголовка -->
+    <h1>
+      {% if is_boat_product %}
+        {{ product.get_display_name_with_dimensions }}
+      {% else %}
+        {{ product.product_name }}
+      {% endif %}
+    </h1>
+    {% if product.product_sku %}
+      <p>Артикул: {{ product.product_sku }}</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container">
+  {% include 'base/alert.html' %}
+
+  <div class="row">
+    <!-- 🖼️ Галерея изображений товара (полностью сохранена логика) -->
+    <aside class="col-md-4">
+      <article class="gallery-wrap">
+        {% if product.product_images.all %}
+        <div class="img-big-wrap">
+          <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+            <ol class="carousel-indicators">
+              {% for image in product.product_images.all %}
+              <li data-target="#carouselExampleIndicators" data-slide-to="{{ forloop.counter0 }}"
+                  {% if forloop.first %}class="active"{% endif %}></li>
+              {% endfor %}
+            </ol>
+            <div class="carousel-inner">
+              {% for image in product.product_images.all %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="/media/{{ image.image }}" class="d-block w-100" alt="{{ product.product_name }}">
+              </div>
+              {% endfor %}
+            </div>
+            {% if product.product_images.count > 1 %}
+            <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Миниатюры -->
+        {% if product.product_images.count > 1 %}
+        <div class="thumbs-wrap">
+          {% for image in product.product_images.all %}
+          <div class="item-thumb" data-target="#carouselExampleIndicators" data-slide-to="{{ forloop.counter0 }}">
+            <img src="/media/{{ image.image }}" alt="Thumbnail {{ forloop.counter }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% else %}
+        <img src="{% static 'images/placeholder-product.png' %}" class="img-fluid" alt="{{ product.product_name }}">
+        {% endif %}
+      </article>
+    </aside>
+
+    <!-- 📋 Информация о товаре - ПОЛНОСТЬЮ СОХРАНЕНА СУЩЕСТВУЮЩАЯ ЛОГИКА -->
+    <main class="col-md-8 border-left">
+      <article class="content-body">
+        <!-- ✅ СОХРАНЕН условный заголовок с размерами для лодок -->
+        <h2 class="title">
+          {% if is_boat_product %}
+            {{ product.get_display_name_with_dimensions }}
+          {% else %}
+            {{ product.product_name }}
+          {% endif %}
+        </h2>
+        <h6 class="text-muted">{{ product.category }}</h6>
+
+        <!-- ✅ СОХРАНЕН блок размеров ТОЛЬКО для лодок -->
+        {% if is_boat_product and product.boat_mat_length and product.boat_mat_width %}
+          <div class="boat-dimensions">
+            <h6>📏 Размеры коврика:</h6>
+            <ul>
+              <li>Длина: {{ product.boat_mat_length }} см</li>
+              <li>Ширина: {{ product.boat_mat_width }} см</li>
+            </ul>
+          </div>
+        {% endif %}
+
+        <!-- 🛥️ Особенности лодочных ковриков -->
+        <div class="boat-features">
+          <h6>🌊 Особенности лодочных ковриков</h6>
+          <ul>
+            <li>💧 Водонепроницаемые материалы EVA</li>
+            <li>🧂 Устойчивость к соленой воде</li>
+            <li>☀️ Защита от UV-излучения</li>
+            <li>🛡️ Противоскользящие свойства</li>
+            <li>🧽 Легкая очистка и обслуживание</li>
+          </ul>
+        </div>
+
+        <hr />
+        <label><strong>СОБЕРИ СВОЙ ЗАКАЗ:</strong></label>
+
+        <!-- ✅ СОХРАНЕНА существующая логика выбора цвета коврика -->
+        <div class="form-group">
+          <label><strong>Цвет коврика</strong></label>
+          <div class="color-wrapper">
+            <div class="color-picker" data-color-type="carpet">
+              {% for color in carpet_colors %}
+              <div class="color-selection">
+                <div class="color-item {% if color.uid == initial_carpet_color.uid %}active{% endif %}"
+                  data-color-uuid="{{ color.uid }}"
+                  data-image-url="{{ color.get_image_url }}"
+                  data-is-available="{{ color.is_available|yesno:'true,false' }}"
+                  title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+                  style="background-color: {{ color.hex_code }};
+                    {% if color.uid == initial_carpet_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+                    {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+                  {% if color.is_available %}onclick="activateColor(this, 'carpet');"{% endif %}>
+                  {% if not color.is_available %}
+                  <div class="unavailable-overlay">✕</div>
+                  {% endif %}
+                </div>
+                <div class="color-name {% if not color.is_available %}text-muted{% endif %}">{{ color.name }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" name="carpet_color" id="carpet_color_input" value="{{ initial_carpet_color.uid }}">
+        </div>
+
+        <!-- ✅ СОХРАНЕНА существующая логика выбора цвета окантовки -->
+        <div class="form-group">
+          <label><strong>Цвет окантовки</strong></label>
+          <div class="color-wrapper">
+            <div class="color-picker" data-color-type="border">
+              {% for color in border_colors %}
+              <div class="color-selection">
+                <div class="color-item {% if color.uid == initial_border_color.uid %}active{% endif %}"
+                  data-color-uuid="{{ color.uid }}"
+                  data-image-url="{{ color.get_image_url }}"
+                  data-is-available="{{ color.is_available|yesno:'true,false' }}"
+                  title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+                  style="background-color: {{ color.hex_code }};
+                    {% if color.uid == initial_border_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+                    {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+                  {% if color.is_available %}onclick="activateColor(this, 'border');"{% endif %}>
+                  {% if not color.is_available %}
+                  <div class="unavailable-overlay">✕</div>
+                  {% endif %}
+                </div>
+                <div class="color-name {% if not color.is_available %}text-muted{% endif %}">{{ color.name }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" name="border_color" id="border_color_input" value="{{ initial_border_color.uid }}">
+        </div>
+
+        <!-- ✅ СОХРАНЕНА существующая логика: Комплектация ТОЛЬКО для автомобилей (для лодок этого блока НЕТ) -->
+        {% if not is_boat_product %}
+        <div>
+          <h6 class="font-weight-bold text-uppercase mb-2">КОМПЛЕКТАЦИЯ</h6>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="kit-options">
+                {% for kit in sorted_kit_variants %}
+                <label class="kit-option-label {% if forloop.first %}active{% endif %}" for="kit-{{ kit.code }}">
+                  <input
+                    type="radio"
+                    name="selected_kit"
+                    value="{{ kit.code }}"
+                    id="kit-{{ kit.code }}"
+                    {% if forloop.first %}checked{% endif %}
+                    class="custom-control-input" />
+                  {{ kit.name }} ({{ kit.price_modifier }} руб.)
+                </label>
+                {% endfor %}
+
+                <div class="form-check mt-3">
+                  <input class="form-check-input" type="checkbox" id="podp_check" data-attr-id="7" data-attr-value="1">
+                  <label class="form-check-label" for="podp_check">
+                    Подпятник ({{ podpyatnik_option.price_modifier }} руб.)
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- 📝 Описание товара -->
+        {% if product.product_desription %}
+        <div class="product-description-block">
+          <h4>Описание</h4>
+          <div class="product-description">
+            {{ product.product_desription|safe }}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- 🛒 Количество и кнопки действий -->
+        <div class="quantity-and-price">
+          <div class="quantity-selector">
+            <button type="button" onclick="decreaseQuantity()">−</button>
+            <input type="number" id="quantity" name="quantity" value="1" min="1" max="99">
+            <button type="button" onclick="increaseQuantity()">+</button>
+          </div>
+          <div class="final-price">
+            <span id="price-display">{{ updated_price|default:product.price }} руб.</span>
+          </div>
+        </div>
+
+        <!-- 🛒 Кнопки действий -->
+        <div class="action-buttons mt-4">
+          <button class="btn btn-info btn-lg mr-2" onclick="addToCart()">
+            🛒 Добавить в корзину
+          </button>
+
+          {% if user.is_authenticated %}
+          <a href="{% url 'products:add_to_wishlist' product.uid %}" class="btn btn-outline-danger">
+            ❤️ В избранное
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- 📞 Дополнительная информация -->
+        <div class="additional-info mt-4 pt-3 border-top">
+          <p><strong>🛥️ Категория:</strong> <a href="{% url 'boats:product_list_by_category' product.category.slug %}">{{ product.category.category_name }}</a></p>
+          {% if product.product_sku %}
+            <p><strong>🏷️ Артикул:</strong> {{ product.product_sku }}</p>
+          {% endif %}
+          {% if product.boat_mat_length and product.boat_mat_width %}
+            <p><strong>📐 Размеры:</strong> {{ product.boat_mat_length }} × {{ product.boat_mat_width }} см</p>
+          {% endif %}
+          <p><strong>📅 Добавлен:</strong> {{ product.created_at|date:"d.m.Y" }}</p>
+        </div>
+      </article>
+    </main>
+  </div>
+</div>
+
+<script>
+// ✅ ПОЛНОСТЬЮ СОХРАНЕНА существующая JavaScript логика
+
+$(document).ready(function() {
+  // Активация миниатюр
+  $('.item-thumb').click(function() {
+    var slideIndex = $(this).data('slide-to');
+    $('#carouselExampleIndicators').carousel(slideIndex);
+  });
+});
+
+// ✅ СОХРАНЕНЫ существующие функции
+
+function activateColor(element, colorType) {
+  // Убираем активный класс у всех цветов этого типа
+  $(element).closest('.color-picker').find('.color-item').removeClass('active');
+
+  // Добавляем активный класс к выбранному
+  $(element).addClass('active');
+
+  // Обновляем скрытое поле
+  const colorUuid = $(element).data('color-uuid');
+  $('#' + colorType + '_color_input').val(colorUuid);
+}
+
+function increaseQuantity() {
+  const input = document.getElementById('quantity');
+  const current = parseInt(input.value);
+  if (current < 99) {
+    input.value = current + 1;
+  }
+}
+
+function decreaseQuantity() {
+  const input = document.getElementById('quantity');
+  const current = parseInt(input.value);
+  if (current > 1) {
+    input.value = current - 1;
+  }
+}
+
+function addToCart() {
+  // ✅ АДАПТИРОВАНО для лодок - НЕ передаем комплектацию и подпятник
+  const formData = new FormData();
+
+  // Для лодок НЕ нужна комплектация (kit) и подпятник (podp)
+  formData.append('carpet_color', $('#carpet_color_input').val());
+  formData.append('border_color', $('#border_color_input').val());
+  formData.append('quantity', $('#quantity').val());
+
+  // Отправляем запрос к базовой функции добавления в корзину
+  fetch("{% url 'products:add_to_cart' product.uid %}", {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status) {
+      alert('✅ Товар добавлен в корзину!');
+    } else {
+      alert('❌ Ошибка: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('❌ Произошла ошибка при добавлении в корзину');
+  });
+}
+</script>
+
+{% endblock %}
