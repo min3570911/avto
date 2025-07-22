@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="Админка заработала с двумя отдельными приложениями">
-      <change afterPath="$PROJECT_DIR$/templates/boats/category.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/cars/category.html" afterDir="false" />
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="Работает главная, не работают ссылки на каталог">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/home/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/cars/category.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cars/category_list.html.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -374,7 +372,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753101989929</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Работает главная, не работают ссылки на каталог">
+      <option name="closed" value="true" />
+      <created>1753161843472</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1753161843472</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -407,7 +413,8 @@
     <MESSAGE value="начинаю рефакторинг." />
     <MESSAGE value="Раздели приложения Лодки и Автомобили" />
     <MESSAGE value="Админка заработала с двумя отдельными приложениями" />
-    <option name="LAST_COMMIT_MESSAGE" value="Админка заработала с двумя отдельными приложениями" />
+    <MESSAGE value="Работает главная, не работают ссылки на каталог" />
+    <option name="LAST_COMMIT_MESSAGE" value="Работает главная, не работают ссылки на каталог" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
