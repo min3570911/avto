@@ -18,7 +18,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
 
     # 🛍️ Товары и каталог (общие функции: импорт, экспорт, избранное, отзывы)
-    path('products/', include('products.urls')),
+    path('references/', include('references.urls')),
 
     # 🚗 Раздел "Автомобили" (ОБЯЗАТЕЛЬНО должен быть)
     path('cars/', include('cars.urls')),

@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="не отображаются категории по ссылкам">
+    <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="установил jazzmine для админки">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boats/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/boats/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cars/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cars/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/boats/category_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/boats/category_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/boats/product_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/boats/product_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/cars/product_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cars/product_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/home/navbar.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/navbar.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/products/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/products/admin.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,13 +20,13 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
-        <option value="HTML File" />
       </list>
     </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="HARD" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -39,12 +34,12 @@
     &quot;assignee&quot;: &quot;min3570911&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/min3570911/avto.git&quot;,
-    &quot;accountId&quot;: &quot;18629b04-2906-4453-8b5d-7c23d7d697ae&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/min3570911/avto.git",
+    "accountId": "502038a7-7703-43ac-96d8-e8cbd4a75480"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -58,10 +53,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
     "Django Server.Unnamed.executor": "Run",
     "JavaScript Debug.index.html.executor": "Run",
-    "Python.db_scan.executor": "Run",
     "Python.jazzmin_diagnostic.executor": "Run",
     "Python.manage.executor": "Run",
     "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
@@ -353,55 +346,7 @@
       <option name="project" value="LOCAL" />
       <updated>1753001522560</updated>
     </task>
-    <task id="LOCAL-00013" summary="начинаю рефакторинг.">
-      <option name="closed" value="true" />
-      <created>1753088113196</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1753088113196</updated>
-    </task>
-    <task id="LOCAL-00014" summary="Раздели приложения Лодки и Автомобили">
-      <option name="closed" value="true" />
-      <created>1753093842181</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1753093842181</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Админка заработала с двумя отдельными приложениями">
-      <option name="closed" value="true" />
-      <created>1753101989929</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1753101989929</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Работает главная, не работают ссылки на каталог">
-      <option name="closed" value="true" />
-      <created>1753161843472</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1753161843472</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Переделал страницы каталога">
-      <option name="closed" value="true" />
-      <created>1753188753849</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1753188753849</updated>
-    </task>
-    <task id="LOCAL-00018" summary="не отображаются категории по ссылкам">
-      <option name="closed" value="true" />
-      <created>1753192577808</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1753192577808</updated>
-    </task>
-    <option name="localTasksCounter" value="19" />
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -431,17 +376,12 @@
     <MESSAGE value="работают лодки в заказаз" />
     <MESSAGE value="Пробую разделить в админке по категориям." />
     <MESSAGE value="установил jazzmine для админки" />
-    <MESSAGE value="начинаю рефакторинг." />
-    <MESSAGE value="Раздели приложения Лодки и Автомобили" />
-    <MESSAGE value="Админка заработала с двумя отдельными приложениями" />
-    <MESSAGE value="Работает главная, не работают ссылки на каталог" />
-    <MESSAGE value="Переделал страницы каталога" />
-    <MESSAGE value="не отображаются категории по ссылкам" />
-    <option name="LAST_COMMIT_MESSAGE" value="не отображаются категории по ссылкам" />
+    <option name="LAST_COMMIT_MESSAGE" value="установил jazzmine для админки" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/avtokovriki$db_scan.coverage" NAME="db_scan Coverage Results" MODIFIED="1753096870142" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/avtokovriki$analyze_database.coverage" NAME="analyze_database Coverage Results" MODIFIED="1753349996304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/avtokovriki$jazzmin_diagnostic.coverage" NAME="jazzmin_diagnostic Coverage Results" MODIFIED="1753003007270" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

@@ -4,7 +4,7 @@
 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
-from products.models import Product, Category, KitVariant, ProductImage
+from references.models import Product, Category, KitVariant, ProductImage
 from .models import FAQ, HeroSection, CompanyDescription
 import random
 

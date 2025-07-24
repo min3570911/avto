@@ -1,6 +1,6 @@
 # 📁 cars/views.py - ИСПРАВЛЕННЫЕ View функции для раздела автомобилей
 # 🚗 Представления для каталога автомобилей с использованием proxy-моделей
-# ✅ ИСПРАВЛЕНО: Завершены все неполные функции
+# 🔧 ИСПРАВЛЕНО: Импорт products.models → references.models
 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
@@ -10,8 +10,8 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 
 from .models import CarCategory, CarProduct
-from products.models import Color
-from products.views import (
+from references.models import Color  # ✅ ИСПРАВЛЕНО: products → references
+from references.views import (  # ✅ ИСПРАВЛЕНО: products → references
     add_to_cart,  # 🛒 Функция добавления в корзину
     add_to_wishlist,  # ❤️ Функция добавления в избранное
 )
@@ -52,16 +52,19 @@ def car_product_list(request, slug):
     category = get_object_or_404(CarCategory, slug=slug, is_active=True)
 
     # 📦 Получаем все товары этой категории и подкатегорий
-    if category.children.exists():
-        # Если есть подкатегории, показываем товары из всех подкатегорий
-        subcategory_ids = list(category.children.values_list('id', flat=True))
-        subcategory_ids.append(category.id)
-        products = CarProduct.objects.filter(category_id__in=subcategory_ids)
-    else:
-        # Если подкатегорий нет, показываем только товары текущей категории
-        products = CarProduct.objects.filter(category=category)
+    products = CarProduct.objects.filter(
+        Q(category=category) | Q(category__parent=category)
+    ).select_related('category').prefetch_related('product_images')
 
-    # 🔍 Фильтрация и сортировка
+    # 🔍 Поиск
+    search_query = request.GET.get('search', '')
+    if search_query:
+        products = products.filter(
+            Q(product_name__icontains=search_query) |
+            Q(product_desription__icontains=search_query)
+        )
+
+    # 📊 Сортировка
     sort_by = request.GET.get('sort', 'name')
     if sort_by == 'price_asc':
         products = products.order_by('price')
@@ -73,21 +76,22 @@ def car_product_list(request, slug):
         products = products.order_by('product_name')
 
     # 📄 Пагинация
-    paginator = Paginator(products, 12)  # 12 товаров на страницу
+    paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # 📂 Подкатегории для навигации
-    subcategories = category.children.filter(is_active=True).order_by('display_order')
+    # 📂 Дочерние категории
+    subcategories = CarCategory.objects.filter(parent=category, is_active=True)
 
     context = {
         'category': category,
         'subcategories': subcategories,
         'page_obj': page_obj,
+        'search_query': search_query,
         'sort_by': sort_by,
         'total_products': products.count(),
-        'page_title': f'{category.category_name} - Автомобильные коврики',
-        'page_description': category.meta_description or f'Коврики для {category.category_name}',
+        'page_title': f'Автомобильные коврики {category.category_name}',
+        'page_description': category.get_seo_description(),
         'section_type': 'cars',
     }
 
@@ -96,30 +100,47 @@ def car_product_list(request, slug):
 
 def car_product_detail(request, slug):
     """
-    🚗 Детальная страница товара-автомобиля
-    ✅ ИСПРАВЛЕНО: Завершена функция с поддержкой конфигуратора
+    🚗 Детальная страница товара автомобиля
+    ✅ ИСПРАВЛЕНО: Завершена функция с комплектациями и подпятником
     """
-    # 📦 Получаем товар авто по slug
+    # 📦 Получаем товар автомобиля по slug
     product = get_object_or_404(CarProduct, slug=slug)
 
-    # 🔄 Похожие товары из той же категории авто
+    # 🔄 Похожие товары из той же категории автомобилей
     similar_products = CarProduct.objects.filter(
         category=product.category
     ).exclude(id=product.id)[:4]
 
-    # 🎨 Цвета для конфигуратора (только для автомобилей)
-    carpet_colors = Color.objects.filter(color_type='carpet', is_active=True)
-    border_colors = Color.objects.filter(color_type='border', is_active=True)
+    # 📦 Комплектации для автомобилей
+    from references.models import KitVariant  # ✅ ИСПРАВЛЕНО: products → references
+    kit_variants = KitVariant.objects.filter(is_option=False).order_by('order')
+    additional_options = KitVariant.objects.filter(is_option=True).order_by('order')
+
+    # 🎨 Цвета для автомобилей
+    carpet_colors = Color.objects.filter(color_type='carpet', is_available=True)
+    border_colors = Color.objects.filter(color_type='border', is_available=True)
+
+    # 💰 Базовая цена и расчеты
+    selected_kit_code = request.GET.get('kit', 'salon')  # Комплектация по умолчанию
+    selected_kit = kit_variants.filter(code=selected_kit_code).first()
+
+    updated_price = product.price or 0
+    if selected_kit:
+        updated_price += float(selected_kit.price_modifier)
 
     context = {
         'product': product,
         'similar_products': similar_products,
-        'carpet_colors': carpet_colors,  # 🚗 Цвета ковриков для авто
-        'border_colors': border_colors,  # 🚗 Цвета окантовки для авто
+        'kit_variants': kit_variants,  # 🚗 Комплектации для автомобилей
+        'additional_options': additional_options,  # 🚗 Дополнительные опции
+        'carpet_colors': carpet_colors,
+        'border_colors': border_colors,
+        'selected_kit': selected_kit,
+        'updated_price': updated_price,
         'page_title': product.product_name,
         'page_description': product.meta_description or f'Автомобильные коврики {product.product_name}',
         'section_type': 'cars',
-        'show_configurator': True,  # 🔧 Показываем конфигуратор только для авто
+        'show_car_features': True,  # 🚗 Показываем особенности автомобилей
     }
 
     return render(request, 'cars/product_detail.html', context)
@@ -140,26 +161,25 @@ def car_add_to_cart(request, uid):
 def car_add_to_wishlist(request, uid):
     """
     ❤️ Добавление автомобильного товара в избранное
-    ✅ ИСПРАВЛЕНО: Используем базовую функцию с правильными параметрами
+    ✅ ИСПРАВЛЕНО: Используем базовую функцию
     """
     return add_to_wishlist(request, uid)
 
 
 def car_search(request):
     """
-    🔍 Поиск среди автомобилей
-    ✅ НОВАЯ функция для поиска в автомобильном разделе
+    🔍 Поиск среди автомобильных товаров
+    ✅ НОВАЯ функция - специальная для автомобилей
     """
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     sort_by = request.GET.get('sort', 'name')
 
     products = CarProduct.objects.none()
 
     if query:
-        # 🔎 Поиск по названию товара и категории
+        # 🔍 Поиск по названию, описанию и артикулу
         products = CarProduct.objects.filter(
             Q(product_name__icontains=query) |
-            Q(category__category_name__icontains=query) |
             Q(product_desription__icontains=query) |
             Q(product_sku__icontains=query)
         ).distinct()
@@ -197,8 +217,8 @@ def car_configurator(request):
     ✅ НОВАЯ функция - специальная для автомобилей
     """
     # 🎨 Получаем все доступные цвета
-    carpet_colors = Color.objects.filter(color_type='carpet', is_active=True)
-    border_colors = Color.objects.filter(color_type='border', is_active=True)
+    carpet_colors = Color.objects.filter(color_type='carpet', is_available=True)
+    border_colors = Color.objects.filter(color_type='border', is_available=True)
 
     # 📂 Получаем все категории автомобилей для выбора
     categories = CarCategory.objects.filter(is_active=True).order_by('display_order', 'category_name')
@@ -217,14 +237,17 @@ def car_configurator(request):
 # 🔧 КОММЕНТАРИЙ ДЛЯ РАЗРАБОТЧИКА:
 #
 # ✅ ИСПРАВЛЕНО:
-# 1. Завершена функция car_product_list
-# 2. Завершена функция car_product_detail
-# 3. Добавлены функции car_search и car_configurator
-# 4. Исправлены импорты и добавлены недостающие зависимости
+# 1. Импорт products.models → references.models
+# 2. Импорт products.views → references.views
+# 3. Завершены все неполные функции
+# 4. Добавлена поддержка комплектаций в car_product_detail
+# 5. Добавлены функции car_search и car_configurator
 #
-# 🎯 РЕЗУЛЬТАТ:
-# Теперь все URL из cars/urls.py будут работать корректно,
-# если добавить соответствующие шаблоны.
+# 🚗 ОСОБЕННОСТИ ДЛЯ АВТОМОБИЛЕЙ:
+# - Комплектации и дополнительные опции
+# - Расчет цены с учетом комплектации
+# - Конфигуратор ковриков
+# - Поддержка подпятника
 #
 # 📝 СЛЕДУЮЩИЙ ШАГ:
 # Создать шаблоны:

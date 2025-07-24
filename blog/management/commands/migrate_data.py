@@ -120,7 +120,7 @@ class Command(BaseCommand):
 
         # Импортируем модель, с проверкой на ее существование
         try:
-            from products.models import InstallationOption
+            from references.models import InstallationOption
         except ImportError:
             self.stdout.write("[ПРОПУСК] Модель InstallationOption не найдена")
             return
@@ -165,7 +165,7 @@ class Command(BaseCommand):
 
         # Импортируем модели цветов, с проверкой на их существование
         try:
-            from products.models import MatColor, BorderColor
+            from references.models import MatColor, BorderColor
             mat_color_available = True
             border_color_available = True
         except ImportError:
@@ -253,7 +253,7 @@ class Command(BaseCommand):
 
         # Импортируем модели продуктов, с проверкой на их существование
         try:
-            from products.models import FloorMatProduct, InstallationOption
+            from references.models import FloorMatProduct, InstallationOption
         except ImportError:
             self.stdout.write("[ПРОПУСК] Модели продуктов не найдены")
             return

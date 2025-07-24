@@ -12,7 +12,7 @@ from django.core.files import File
 from django.conf import settings
 from decimal import Decimal
 
-from products.models import Product, Category, ProductImage
+from references.models import Product, Category, ProductImage
 from .import_utils import (
     read_excel_file,
     separate_categories_and_products,

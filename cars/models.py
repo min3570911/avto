@@ -1,9 +1,9 @@
 # 📁 cars/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
 # 🚗 Proxy-модели для работы с автомобилями
-# ✅ ИСПРАВЛЕНО: Правильная фильтрация по category_type='cars'
+# 🔧 ИСПРАВЛЕНО: Импорт products.models → references.models
 
 from django.db import models
-from products.models import Product, Category
+from references.models import Product, Category  # ✅ ИСПРАВЛЕНО: products → references
 
 # --- Менеджеры для фильтрации ---
 

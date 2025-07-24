@@ -11,7 +11,7 @@ import shutil
 from typing import Tuple, List, Dict
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from products.models import Category
+from references.models import Category
 
 logger = logging.getLogger(__name__)
 

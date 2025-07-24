@@ -1,66 +1,66 @@
-# 📁 boats/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
-# 🛥️ Proxy-модели для работы с лодками
-# ✅ ИСПРАВЛЕНО: Правильная фильтрация по category_type='boats'
+# 📁 cars/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
+# 🚗 Proxy-модели для работы с автомобилями
+# 🔧 ИСПРАВЛЕНО: Импорт products.models → references.models
 
 from django.db import models
-from products.models import Product, Category
+from references.models import Product, Category  # ✅ ИСПРАВЛЕНО: products → references
 
 # --- Менеджеры для фильтрации ---
 
-class BoatCategoryManager(models.Manager):
+class CarCategoryManager(models.Manager):
     """
-    🛥️ Менеджер для фильтрации категорий лодок.
-    ✅ ИСПРАВЛЕНО: Используем category_type='boats' вместо type='boat'
+    🚗 Менеджер для фильтрации категорий автомобилей.
+    ✅ ИСПРАВЛЕНО: Используем category_type='cars' вместо type='auto'
     """
     def get_queryset(self):
-        return super().get_queryset().filter(category_type='boats')
+        return super().get_queryset().filter(category_type='cars')
 
-class BoatProductManager(models.Manager):
+class CarProductManager(models.Manager):
     """
-    🛥️ Менеджер для фильтрации товаров-лодок.
+    🚗 Менеджер для фильтрации товаров-автомобилей.
     ✅ ИСПРАВЛЕНО: Используем правильное поле для фильтрации
     """
     def get_queryset(self):
-        # Фильтруем товары, которые принадлежат к категориям лодок
-        return super().get_queryset().filter(category__category_type='boats')
+        # Фильтруем товары, которые принадлежат к категориям автомобилей
+        return super().get_queryset().filter(category__category_type='cars')
 
 # --- Proxy-модели ---
 
-class BoatCategory(Category):
+class CarCategory(Category):
     """
-    🛥️ Proxy-модель для категорий лодок.
+    🚗 Proxy-модель для категорий автомобилей.
     Не создает новую таблицу в БД, а предоставляет интерфейс
-    к существующей модели Category, отфильтрованный по типу 'boats'.
+    к существующей модели Category, отфильтрованный по типу 'cars'.
     """
-    objects = BoatCategoryManager()
+    objects = CarCategoryManager()
 
     def save(self, *args, **kwargs):
-        """🔒 Автоматически устанавливаем тип 'boats' при сохранении"""
-        self.category_type = 'boats'
+        """🔒 Автоматически устанавливаем тип 'cars' при сохранении"""
+        self.category_type = 'cars'
         super().save(*args, **kwargs)
 
     class Meta:
         proxy = True
-        verbose_name = '🛥️ Категория лодок'
-        verbose_name_plural = '🛥️ Категории лодок'
+        verbose_name = '🚗 Категория авто'
+        verbose_name_plural = '🚗 Категории авто'
 
-class BoatProduct(Product):
+class CarProduct(Product):
     """
-    🛥️ Proxy-модель для товаров-лодок.
+    🚗 Proxy-модель для товаров-автомобилей.
     Не создает новую таблицу в БД, а предоставляет интерфейс
-    к существующей модели Product, отфильтрованный для лодок.
+    к существующей модели Product, отфильтрованный для автомобилей.
     """
-    objects = BoatProductManager()
+    objects = CarProductManager()
 
     def save(self, *args, **kwargs):
         """
-        🔒 Проверяем, что товар относится к категории лодок при сохранении
+        🔒 Проверяем, что товар относится к категории авто при сохранении
         """
-        if self.category and self.category.category_type != 'boats':
-            raise ValueError("Товар может быть сохранен только в категории лодок")
+        if self.category and self.category.category_type != 'cars':
+            raise ValueError("Товар может быть сохранен только в категории автомобилей")
         super().save(*args, **kwargs)
 
     class Meta:
         proxy = True
-        verbose_name = '🛥️ Товар (лодка)'
-        verbose_name_plural = '🛥️ Товары (лодки)'
+        verbose_name = '🚗 Товар (авто)'
+        verbose_name_plural = '🚗 Товары (авто)'

@@ -7,7 +7,7 @@ import json
 import uuid
 import requests
 import logging
-from products.models import *
+from references.models import *
 from django.urls import reverse
 from django.conf import settings
 from django.contrib import messages

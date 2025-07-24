@@ -2,7 +2,7 @@
 
 import django.db.models.deletion
 import django_ckeditor_5.fields
-import products.storage
+import references.storage
 import uuid
 from django.conf import settings
 from django.db import migrations, models
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now_add=True)),
                 ('category_name', models.CharField(help_text='Основное название категории для отображения', max_length=100, verbose_name='Название категории')),
                 ('slug', models.SlugField(blank=True, help_text='Автоматически генерируется из названия', null=True, unique=True, verbose_name='URL-адрес')),
-                ('category_image', models.ImageField(help_text='Рекомендуемый размер: 800x400 px. Файл сохранится с точным именем', storage=products.storage.OverwriteStorage(), upload_to='categories', verbose_name='Изображение категории')),
+                ('category_image', models.ImageField(help_text='Рекомендуемый размер: 800x400 px. Файл сохранится с точным именем', storage=references.storage.OverwriteStorage(), upload_to='categories', verbose_name='Изображение категории')),
                 ('category_sku', models.PositiveIntegerField(blank=True, help_text='Уникальный номер для внутреннего учета', null=True, unique=True, verbose_name='Артикул категории')),
                 ('display_order', models.PositiveIntegerField(default=0, help_text='Чем меньше число, тем выше в списке (0 = сверху)', verbose_name='Порядок отображения')),
                 ('is_active', models.BooleanField(default=True, help_text='Отображать категорию на сайте', verbose_name='Активна')),
@@ -125,7 +125,7 @@ class Migration(migrations.Migration):
                 ('uid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('created_at', models.DateTimeField(auto_now=True)),
                 ('updated_at', models.DateTimeField(auto_now_add=True)),
-                ('image', models.ImageField(help_text='Файл сохранится с точным именем без хеш-суффиксов', storage=products.storage.OverwriteStorage(), upload_to='product', verbose_name='Изображение')),
+                ('image', models.ImageField(help_text='Файл сохранится с точным именем без хеш-суффиксов', storage=references.storage.OverwriteStorage(), upload_to='product', verbose_name='Изображение')),
                 ('is_main', models.BooleanField(default=False, help_text='Отображается в каталоге и как основное в карточке товара', verbose_name='Главное изображение')),
                 ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='product_images', to='products.product', verbose_name='Товар')),
             ],

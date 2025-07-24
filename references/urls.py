@@ -3,7 +3,7 @@
 # ❌ УДАЛЕНЫ маршруты каталога и товаров, так как они перенесены в `cars` и `boats`.
 
 from django.urls import path
-from products.views import *
+from references.views import *
 from . import views
 
 # Импорт view-функций для импорта

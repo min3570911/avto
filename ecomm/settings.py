@@ -47,7 +47,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'accounts',
-    'products',
+    'references',
     'home',
     'base',
     'blog',  # Приложение для статей
