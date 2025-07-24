@@ -1,66 +1,77 @@
-# 📁 cars/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
-# 🚗 Proxy-модели для работы с автомобилями
-# 🔧 ИСПРАВЛЕНО: Импорт products.models → references.models
+# 📁 boats/models.py - ИСПРАВЛЕННАЯ ВЕРСИЯ
+# 🛥️ Proxy-модели для работы с лодками
+# 🔧 ИСПРАВЛЕНО: Правильные названия классов и импорты
 
 from django.db import models
-from references.models import Product, Category  # ✅ ИСПРАВЛЕНО: products → references
+from products.models import Product, Category  # ⚠️ ВРЕМЕННО: пока есть products, потом заменим на references
 
 # --- Менеджеры для фильтрации ---
 
-class CarCategoryManager(models.Manager):
+class BoatCategoryManager(models.Manager):
     """
-    🚗 Менеджер для фильтрации категорий автомобилей.
-    ✅ ИСПРАВЛЕНО: Используем category_type='cars' вместо type='auto'
+    🛥️ Менеджер для фильтрации категорий лодок.
     """
     def get_queryset(self):
-        return super().get_queryset().filter(category_type='cars')
+        return super().get_queryset().filter(category_type='boats')
 
-class CarProductManager(models.Manager):
+class BoatProductManager(models.Manager):
     """
-    🚗 Менеджер для фильтрации товаров-автомобилей.
-    ✅ ИСПРАВЛЕНО: Используем правильное поле для фильтрации
+    🛥️ Менеджер для фильтрации товаров-лодок.
     """
     def get_queryset(self):
-        # Фильтруем товары, которые принадлежат к категориям автомобилей
-        return super().get_queryset().filter(category__category_type='cars')
+        # Фильтруем товары, которые принадлежат к категориям лодок
+        return super().get_queryset().filter(category__category_type='boats')
 
 # --- Proxy-модели ---
 
-class CarCategory(Category):
+class BoatCategory(Category):
     """
-    🚗 Proxy-модель для категорий автомобилей.
+    🛥️ Proxy-модель для категорий лодок.
     Не создает новую таблицу в БД, а предоставляет интерфейс
-    к существующей модели Category, отфильтрованный по типу 'cars'.
+    к существующей модели Category, отфильтрованный по типу 'boats'.
     """
-    objects = CarCategoryManager()
+    objects = BoatCategoryManager()
 
     def save(self, *args, **kwargs):
-        """🔒 Автоматически устанавливаем тип 'cars' при сохранении"""
-        self.category_type = 'cars'
+        """🔒 Автоматически устанавливаем тип 'boats' при сохранении"""
+        self.category_type = 'boats'
         super().save(*args, **kwargs)
 
     class Meta:
         proxy = True
-        verbose_name = '🚗 Категория авто'
-        verbose_name_plural = '🚗 Категории авто'
+        verbose_name = '🛥️ Категория лодок'
+        verbose_name_plural = '🛥️ Категории лодок'
 
-class CarProduct(Product):
+class BoatProduct(Product):
     """
-    🚗 Proxy-модель для товаров-автомобилей.
+    🛥️ Proxy-модель для товаров-лодок.
     Не создает новую таблицу в БД, а предоставляет интерфейс
-    к существующей модели Product, отфильтрованный для автомобилей.
+    к существующей модели Product, отфильтрованный для лодок.
     """
-    objects = CarProductManager()
+    objects = BoatProductManager()
 
     def save(self, *args, **kwargs):
         """
-        🔒 Проверяем, что товар относится к категории авто при сохранении
+        🔒 Проверяем, что товар относится к категории лодок при сохранении
         """
-        if self.category and self.category.category_type != 'cars':
-            raise ValueError("Товар может быть сохранен только в категории автомобилей")
+        if self.category and self.category.category_type != 'boats':
+            raise ValueError("Товар может быть сохранен только в категории лодок")
         super().save(*args, **kwargs)
+
+    def get_boat_dimensions(self):
+        """
+        🛥️ Получаем размеры лодочного коврика
+        Специальный метод для лодок
+        """
+        if self.boat_mat_length and self.boat_mat_width:
+            return f"{self.boat_mat_length}×{self.boat_mat_width} см"
+        elif self.boat_mat_length:
+            return f"Длина: {self.boat_mat_length} см"
+        elif self.boat_mat_width:
+            return f"Ширина: {self.boat_mat_width} см"
+        return None
 
     class Meta:
         proxy = True
-        verbose_name = '🚗 Товар (авто)'
-        verbose_name_plural = '🚗 Товары (авто)'
+        verbose_name = '🛥️ Товар (лодка)'
+        verbose_name_plural = '🛥️ Товары (лодки)'
