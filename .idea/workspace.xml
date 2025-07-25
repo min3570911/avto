@@ -6,12 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="214d88c3-4d6a-4c29-8e22-b584247f3d8d" name="Changes" comment="не отображаются категории по ссылкам">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/boats/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/boats/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cars/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cars/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/boats/category_list.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/boats/category_list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/boats/product_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/boats/product_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/cars/product_detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cars/product_detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/home/navbar.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/home/navbar.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,31 +50,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "Django Server.Unnamed.executor": "Run",
-    "JavaScript Debug.index.html.executor": "Run",
-    "Python.db_scan.executor": "Run",
-    "Python.jazzmin_diagnostic.executor": "Run",
-    "Python.manage.executor": "Run",
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.pycharm.django.structure.promotion.once.per.project": "true",
-    "git-widget-placeholder": "main",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;Django Server.Unnamed.executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript Debug.index.html.executor&quot;: &quot;Run&quot;,
+    &quot;Python.db_scan.executor&quot;: &quot;Run&quot;,
+    &quot;Python.jazzmin_diagnostic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.manage.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration default="true" type="DjangoTestsConfigurationType">
       <option name="ENV_FILES" value="" />
@@ -401,7 +395,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753192577808</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="хочу сделать отдельное приложение">
+      <option name="closed" value="true" />
+      <created>1753435143088</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1753435143088</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -437,7 +439,8 @@
     <MESSAGE value="Работает главная, не работают ссылки на каталог" />
     <MESSAGE value="Переделал страницы каталога" />
     <MESSAGE value="не отображаются категории по ссылкам" />
-    <option name="LAST_COMMIT_MESSAGE" value="не отображаются категории по ссылкам" />
+    <MESSAGE value="хочу сделать отдельное приложение" />
+    <option name="LAST_COMMIT_MESSAGE" value="хочу сделать отдельное приложение" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/avtokovriki$manage.coverage" NAME="manage Coverage Results" MODIFIED="1751517482081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
