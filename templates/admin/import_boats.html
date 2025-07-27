@@ -1,0 +1,260 @@
+```html project="avtokovriki" file="templates/admin/boats/import_boats.html" version=1
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content_title %}
+    <h1>📊 Импорт лодок из Excel</h1>
+    <p>Загрузка категорий и товаров лодок по образу products, но с размерами ковриков</p>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .import-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .import-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        
+        .form-group small {
+            display: block;
+            color: #666;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        
+        .btn-primary {
+            background: #007cba;
+            border: none;
+            padding: 10px 20px;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background: #005a87;
+        }
+        
+        .import-help {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .help-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .help-table th,
+        .help-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .help-table th {
+            background: #f1f1f1;
+            font-weight: bold;
+        }
+        
+        .help-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        .format-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fd;
+            border-radius: 5px;
+            border-left: 4px solid #007cba;
+        }
+        
+        .boats-specific {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="import-section">
+        <!-- 📊 Форма загрузки файлов -->
+        <div class="import-form">
+            <form method="post" enctype="multipart/form-data" action="{% url 'admin:boats_boatproduct_import' %}">
+                {% csrf_token %}
+                
+                {% if form %}
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small>{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="error">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="form-group">
+                        <label for="id_excel_file">📊 Excel файл с данными лодок:</label>
+                        <input type="file" name="excel_file" accept=".xlsx,.xls" required id="id_excel_file">
+                        <small>Поддерживаемые форматы: .xlsx, .xls. Максимальный размер: 10 МБ</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_images_zip">🖼️ ZIP архив с изображениями (необязательно):</label>
+                        <input type="file" name="images_zip" accept=".zip" id="id_images_zip">
+                        <small>ZIP файл с изображениями лодок. Поддерживаемые форматы: PNG, JPG, JPEG, WEBP</small>
+                    </div>
+                {% endif %}
+                
+                <button type="submit" class="btn btn-primary">📊 Импортировать лодки</button>
+            </form>
+        </div>
+        
+        <!-- 📋 Справка по формату Excel -->
+        <div class="import-help">
+            <h3>📋 Формат Excel для лодок</h3>
+            
+            <div class="boats-specific">
+                <strong>🛥️ ОСОБЕННОСТИ ДЛЯ ЛОДОК:</strong> В отличие от автомобилей, для лодок обязательно указывать размеры коврика в колонках C и D
+            </div>
+            
+            <p><strong>Структура файла Excel:</strong></p>
+            <table class="help-table">
+                <thead>
+                    <tr>
+                        <th>A</th>
+                        <th>B</th>
+                        <th>C</th>
+                        <th>D</th>
+                        <th>E</th>
+                        <th>F</th>
+                        <th>G</th>
+                        <th>H</th>
+                    </tr>
+                    <tr>
+                        <th>Категория/SKU</th>
+                        <th>Название</th>
+                        <th>🛥️ Длина (см)</th>
+                        <th>🛥️ Ширина (см)</th>
+                        <th>Цена</th>
+                        <th>Описание</th>
+                        <th>Meta-описание</th>
+                        <th>Изображение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #c8e6c9;">
+                        <td><strong>1.Yamaha</strong></td>
+                        <td>Лодочные моторы Yamaha</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Описание категории</td>
+                        <td>SEO категории</td>
+                        <td>yamaha.jpg</td>
+                    </tr>
+                    <tr style="background: #bbdefb;">
+                        <td><strong>BOAT001</strong></td>
+                        <td>Коврик EVA Yamaha F150</td>
+                        <td><strong>120</strong></td>
+                        <td><strong>80</strong></td>
+                        <td>4500</td>
+                        <td>Качественный коврик...</td>
+                        <td>SEO товара</td>
+                        <td>yamaha_f150.jpg</td>
+                    </tr>
+                    <tr style="background: #bbdefb;">
+                        <td><strong>BOAT002</strong></td>
+                        <td>Коврик EVA Yamaha F90</td>
+                        <td><strong>110</strong></td>
+                        <td><strong>75</strong></td>
+                        <td>4200</td>
+                        <td>Качественный коврик...</td>
+                        <td>SEO товара</td>
+                        <td>yamaha_f90.jpg</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="format-section">
+                <h4>💡 Как работает система:</h4>
+                <ul>
+                    <li>🔍 <strong>Система читает построчно сверху вниз</strong></li>
+                    <li>📂 <strong>Строка с точкой в A</strong> (1.Yamaha, 2.Mercury) → создаётся <strong>категория лодок</strong></li>
+                    <li>🛥️ <strong>Строка без точки в A</strong> (BOAT001, BOAT002) → создаётся <strong>товар лодки в последней категории</strong></li>
+                    <li>📏 <strong>Колонки C и D</strong> → размеры коврика <code>boat_mat_length</code> и <code>boat_mat_width</code></li>
+                    <li>💰 <strong>Цена товара может быть пустой</strong> (будет установлена 0.00)</li>
+                    <li>📷 <strong>У категорий НЕТ размеров и цены</strong>, у товаров есть</li>
+                    <li>🖼️ <strong>Изображения связываются по именам файлов</strong> из колонки H</li>
+                </ul>
+            </div>
+            
+            <div class="boats-specific">
+                <h4>🛥️ Пример структуры файла для лодок:</h4>
+                <pre style="font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 3px;">
+A         | B                        | C   | D  | E    | F               | G           | H
+1.Yamaha  | Лодочные моторы Yamaha   |     |    |      | Описание кат.   | SEO кат.    | yamaha.jpg
+BOAT001   | Коврик EVA Yamaha F150   | 120 | 80 | 4500 | Качественный... | SEO товара  | f150.jpg
+BOAT002   | Коврик EVA Yamaha F90    | 110 | 75 | 4200 | Качественный... | SEO товара  | f90.jpg
+2.Mercury | Лодочные моторы Mercury  |     |    |      | Описание кат.   | SEO кат.    | mercury.jpg
+BOAT003   | Коврик EVA Mercury 150   | 118 | 78 | 4600 | Качественный... | SEO товара  | merc150.jpg
+                </pre>
+            </div>
+            
+            <div class="format-section">
+                <h4>🔧 Рекомендации:</h4>
+                <ul>
+                    <li>📊 Сохраняйте файл в формате <strong>.xlsx</strong> для лучшей совместимости</li>
+                    <li>📏 Обязательно заполняйте размеры (колонки C и D) для всех товаров лодок</li>
+                    <li>🖼️ Имена изображений должны точно совпадать с файлами в ZIP архиве</li>
+                    <li>📝 Используйте понятные названия категорий и товаров</li>
+                    <li>💰 Цены указывайте в рублях (например: 4500 или 4500.00)</li>
+                    <li>⚠️ Избегайте специальных символов в именах файлов изображений</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    {{ block.super }}
+{% endblock %}
