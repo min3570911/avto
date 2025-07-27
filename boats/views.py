@@ -1,6 +1,6 @@
 # 📁 boats/views.py - ИСПРАВЛЕННЫЕ View функции для раздела лодок
 # 🛥️ Представления для каталога лодок с использованием proxy-моделей
-# 🔧 ИСПРАВЛЕНО: Импорт products.models → references.models
+# 🔧 ИСПРАВЛЕНО: Импорт references.models → products.models
 
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
@@ -10,8 +10,8 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 
 from .models import BoatCategory, BoatProduct
-from references.models import Color  # ✅ ИСПРАВЛЕНО: products → references
-from references.views import (  # ✅ ИСПРАВЛЕНО: products → references
+from products.models import Color  # ✅ ИСПРАВЛЕНО: references → products
+from products.views import (  # ✅ ИСПРАВЛЕНО: references → products
     add_to_cart,  # 🛒 Функция добавления в корзину
     add_to_wishlist,  # ❤️ Функция добавления в избранное
 )
@@ -46,9 +46,9 @@ def boat_category_list(request):
 def boat_product_list(request, slug):
     """
     🛥️ Список товаров в конкретной категории лодок
-    ✅ ИСПРАВЛЕНО: Завершена функция с поддержкой размеров лодок
+    ✅ ИСПРАВЛЕНО: Завершена функция
     """
-    # 📂 Получаем категорию лодки по slug
+    # 📂 Получаем категорию лодок по slug
     category = get_object_or_404(BoatCategory, slug=slug, is_active=True)
 
     # 📦 Получаем все товары этой категории и подкатегорий
@@ -90,8 +90,8 @@ def boat_product_list(request, slug):
         'search_query': search_query,
         'sort_by': sort_by,
         'total_products': products.count(),
-        'page_title': f'Коврики для лодок {category.category_name}',
-        'page_description': category.get_seo_description(),
+        'page_title': f'Лодочные коврики {category.category_name}',
+        'page_description': category.get_seo_description() if hasattr(category, 'get_seo_description') else f'Коврики для лодок {category.category_name}',
         'section_type': 'boats',
     }
 
@@ -203,23 +203,10 @@ def boat_search(request):
 
     return render(request, 'boats/search_results.html', context)
 
-# 🔧 КОММЕНТАРИЙ ДЛЯ РАЗРАБОТЧИКА:
-#
-# ✅ ИСПРАВЛЕНО:
-# 1. Импорт products.models → references.models
-# 2. Импорт products.views → references.views
-# 3. Завершены все неполные функции
-# 4. Добавлена поддержка размеров лодок в product_detail
-# 5. Добавлена функция поиска boat_search
-#
-# 🛥️ ОСОБЕННОСТИ ДЛЯ ЛОДОК:
-# - Отображение размеров коврика (boat_mat_length × boat_mat_width)
-# - Упрощенная логика без комплектаций и подпятника
-# - Специальные контексты для шаблонов
-#
-# 📝 СЛЕДУЮЩИЙ ШАГ:
-# Создать шаблоны:
-# - templates/boats/category_list.html
-# - templates/boats/product_list.html
-# - templates/boats/product_detail.html
-# - templates/boats/search_results.html
+# 🔧 ИСПРАВЛЕНИЯ:
+# ✅ ЗАМЕНЕНО: from references.models → from products.models
+# ✅ ЗАМЕНЕНО: from references.views → from products.views
+# ✅ ЗАВЕРШЕНЫ: Все неполные функции с правильной логикой
+# ✅ ДОБАВЛЕНА: Поддержка размеров лодок в product_detail
+# ✅ ДОБАВЛЕНА: Функция поиска boat_search
+# ✅ СОХРАНЕНО: Лодочная логика без комплектаций и подпятника

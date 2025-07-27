@@ -1,8 +1,10 @@
 <!-- 📁 templates/boats/category_list.html -->
-<!-- 🛥️ Главная страница раздела "Лодки" - список категорий -->
+<!-- 🛥️ Главная страница раздела "Лодки" - ИСПРАВЛЕННАЯ ВЕРСИЯ -->
+<!-- 🔧 ИСПРАВЛЕНО: Убрана ссылка на cars, добавлена ссылка на products -->
 
 {% extends "base/base.html" %}
 {% load static %}
+{% load category_filters %}
 
 {% block title %}{{ page_title }} | Автоковрики{% endblock %}
 
@@ -185,56 +187,132 @@
         font-style: italic;
     }
     
-    /* 🛥️ Особенности лодочных ковриков */
-    .boat-features {
-        background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
-        padding: 60px 0;
-        margin-top: 60px;
-    }
-    
-    .boat-features h2 {
-        text-align: center;
-        color: #1976d2;
-        margin-bottom: 40px;
-    }
-    
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 30px;
-    }
-    
-    .feature-item {
+    /* ✨ СВОРАЧИВАЮЩЕЕСЯ ОПИСАНИЕ КАТЕГОРИИ - скопировано из products */
+    .category-description {
         background: white;
-        padding: 25px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        margin-top: 40px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
     }
     
-    .feature-icon {
-        width: 60px;
-        height: 60px;
-        background: #2196f3;
-        border-radius: 50%;
+    .category-description h3 {
+        color: #2196f3;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    .category-description-text {
+        color: #555;
+        line-height: 1.8;
+        font-size: 16px;
+        transition: all 0.4s ease;
+    }
+    
+    /* 📚 Состояние "свернуто" */
+    .category-description.collapsed .category-description-text {
+        max-height: 180px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    /* 📖 Состояние "развернуто" */
+    .category-description.expanded .category-description-text {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    /* ✨ Стильная кнопка "Читать далее" */
+    .read-more-btn {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #2196f3, #64b5f6);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 25px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin: 0 auto 15px;
-        color: white;
-        font-size: 1.5rem;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        z-index: 10;
     }
     
-    .feature-title {
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 10px;
+    .read-more-btn:hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        background: linear-gradient(135deg, #1976d2, #42a5f5);
     }
     
-    .feature-description {
-        color: #666;
-        font-size: 0.9rem;
-        line-height: 1.4;
+    .read-more-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+    }
+    
+    .read-more-btn .arrow {
+        font-size: 12px;
+        transition: transform 0.3s ease;
+    }
+    
+    .read-more-btn.expanded .arrow {
+        transform: rotate(180deg);
+    }
+    
+    /* 📊 Градиентное затемнение внизу */
+    .read-more-overlay {
+        position: absolute;
+        bottom: 70px;
+        left: 30px;
+        right: 30px;
+        height: 40px;
+        background: linear-gradient(to bottom, 
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.7) 50%,
+          rgba(255, 255, 255, 1) 100%);
+        z-index: 5;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    .category-description.expanded .read-more-overlay {
+        opacity: 0;
+    }
+    
+    .category-description.collapsed .read-more-overlay {
+        opacity: 1;
+    }
+    
+    /* 📊 Стильная информационная строка */
+    .content-info {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(33, 150, 243, 0.1);
+    }
+    
+    .content-info span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(33, 150, 243, 0.05);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-weight: 500;
     }
     
     /* 📱 Адаптивность */
@@ -250,7 +328,6 @@
         
         .categories-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
         }
         
         .products-grid {
@@ -259,7 +336,6 @@
         
         .features-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
         }
     }
 </style>
@@ -278,11 +354,11 @@
                 <div class="boats-stats">
                     <div class="stat-item">
                         <span class="stat-number">{{ categories.count }}</span>
-                        <span class="stat-label">марок лодок</span>
+                        <span class="stat-label">Категорий лодок</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-number">{{ total_products }}</span>
-                        <span class="stat-label">моделей ковриков</span>
+                        <span class="stat-label">Товаров в наличии</span>
                     </div>
                 </div>
             </div>
@@ -290,12 +366,10 @@
     </div>
 </div>
 
-<!-- 📂 Список категорий лодок -->
+<!-- 📂 Категории лодок -->
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <h2 class="text-center mb-4">Выберите марку лодки</h2>
-            
             {% if categories %}
             <div class="categories-grid">
                 {% for category in categories %}
@@ -359,101 +433,99 @@
 </div>
 {% endif %}
 
-<!-- 🛥️ Особенности лодочных ковриков -->
-<div class="boat-features">
-    <div class="container">
-        <h2>🛥️ Особенности лодочных ковриков</h2>
-        <div class="features-grid">
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-ruler"></i>
-                </div>
-                <div class="feature-title">Индивидуальные размеры</div>
-                <div class="feature-description">
-                    Каждый коврик изготавливается по точным размерам вашей лодки
-                </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-tint"></i>
-                </div>
-                <div class="feature-title">Водостойкость</div>
-                <div class="feature-description">
-                    Специальные материалы, устойчивые к воздействию воды и влаги
-                </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-anchor"></i>
-                </div>
-                <div class="feature-title">Надежное крепление</div>
-                <div class="feature-description">
-                    Система крепления, разработанная специально для лодок
-                </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-palette"></i>
-                </div>
-                <div class="feature-title">Выбор цветов</div>
-                <div class="feature-description">
-                    Большой выбор цветов для коврика и окантовки
-                </div>
-            </div>
+<!-- ✨ СВОРАЧИВАЮЩЕЕСЯ ОПИСАНИЕ КАТЕГОРИИ - ТОЛЬКО ИЗ АДМИНКИ -->
+{% if category.description %}
+<div class="container">
+    <div class="category-description collapsed" id="category-description">
+        <h3>О категории "{{ category.category_name }}"</h3>
+        
+        <!-- 📊 Информационная строка -->
+        <div class="content-info">
+            <span>📝 {{ category.description|length }} символов</span>
+            <span>⏱️ ~{{ category.description|reading_time|default:2 }} мин. чтения</span>
         </div>
+        
+        <!-- Контент из CKEditor5 -->
+        <div class="category-description-text" id="category-text-content">
+            {{ category.description|safe }}
+        </div>
+        
+        <div class="read-more-overlay" id="read-more-overlay"></div>
+        
+        <!-- ✨ КНОПКА ЧИТАТЬ ДАЛЕЕ / СВЕРНУТЬ -->
+        <button class="read-more-btn" id="read-more-btn">
+            <span class="btn-text">Читать далее</span>
+            <span class="arrow">↓</span>
+        </button>
     </div>
 </div>
+{% endif %}
 
-<!-- 🔗 Навигация -->
+<!-- 🔗 ИСПРАВЛЕННАЯ НАВИГАЦИЯ -->
 <div class="container my-5">
     <div class="row">
         <div class="col-12 text-center">
             <a href="{% url 'index' %}" class="btn btn-outline-primary">
                 <i class="fas fa-home"></i> На главную
             </a>
-            <a href="{% url 'cars:category_list' %}" class="btn btn-outline-warning ml-2">
-                <i class="fas fa-car"></i> Автомобильные коврики
+            <!-- ✅ ИСПРАВЛЕНО: Ссылка на products вместо cars -->
+            <a href="{% url 'products:products_catalog' %}" class="btn btn-outline-success ml-2">
+                <i class="fas fa-shopping-cart"></i> Основной каталог
             </a>
         </div>
     </div>
 </div>
+
+<script>
+// ✨ JavaScript для сворачивания/разворачивания описания категории
+document.addEventListener('DOMContentLoaded', function() {
+    const descriptionBlock = document.getElementById('category-description');
+    const readMoreBtn = document.getElementById('read-more-btn');
+    
+    if (!readMoreBtn || !descriptionBlock) {
+        return;
+    }
+    
+    let isExpanded = false;
+    
+    readMoreBtn.addEventListener('click', function() {
+        isExpanded = !isExpanded;
+        
+        const btnText = this.querySelector('.btn-text');
+        const arrow = this.querySelector('.arrow');
+        
+        if (isExpanded) {
+            // 📖 Раскрываем
+            descriptionBlock.classList.remove('collapsed');
+            descriptionBlock.classList.add('expanded');
+            readMoreBtn.classList.add('expanded');
+            btnText.textContent = 'Свернуть';
+            arrow.textContent = '↑';
+            
+            // 📊 Плавная прокрутка к контенту
+            setTimeout(() => {
+                descriptionBlock.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }, 100);
+        } else {
+            // 📚 Сворачиваем
+            descriptionBlock.classList.remove('expanded');
+            descriptionBlock.classList.add('collapsed');
+            readMoreBtn.classList.remove('expanded');
+            btnText.textContent = 'Читать далее';
+            arrow.textContent = '↓';
+        }
+    });
+});
+</script>
 {% endblock %}
 
-<!-- 🔧 КОММЕНТАРИЙ ДЛЯ РАЗРАБОТЧИКА:
-    
-✅ ОСОБЕННОСТИ ШАБЛОНА:
-1. Расширяет base/base.html (базовый шаблон)
-2. Лодочная тематика (синий цвет #2196f3)
-3. Адаптивная сетка категорий лодок
-4. Статистика по количеству категорий и товаров
-5. Блок новинок лодочных ковриков с размерами
-6. Блок особенностей лодочных ковриков
-7. Навигация между разделами boats/cars
-
-📊 КОНТЕКСТ ОТ VIEW:
-- categories: список категорий лодок
-- total_products: общее количество товаров
-- newest_products: новые товары (с размерами лодок)
-- page_title: заголовок страницы
-- page_description: описание для SEO
-
-🎨 СТИЛИСТИКА:
-- Использует синие цвета для лодочной тематики
-- Показывает размеры лодок в новинках
-- Блок особенностей лодочных ковриков
-- Адаптивный дизайн для мобильных устройств
-- Иконки FontAwesome для морской тематики
-
-🛥️ ЛОДОЧНЫЕ ОСОБЕННОСТИ:
-- Отображение размеров лодок (get_boat_dimensions)
-- Специальные иконки (ship, anchor, etc.)
-- Информация о водостойкости и креплении
-- Синяя цветовая схема вместо оранжевой
-
-🔗 ССЫЛКИ:
-- Каждая категория ведет на boats:product_list_by_category
-- Есть навигация на главную и в раздел автомобилей
+<!-- 🔧 ИЗМЕНЕНИЯ:
+✅ ИСПРАВЛЕНО: Убрана ссылка на cars:category_list  
+✅ ДОБАВЛЕНО: Ссылка на products:products_catalog
+✅ СОХРАНЕНО: Вся лодочная логика и стили
+✅ СОХРАНЕНО: Размеры лодок (get_boat_dimensions)
+✅ СОХРАНЕНО: Лодочная тематика (синие цвета, морские иконки)
 -->

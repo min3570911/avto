@@ -21,6 +21,8 @@ urlpatterns = [
     # 🛍️ Товары и каталог
     path('products/', include('products.urls')),
 
+    path('boats/', include('boats.urls')),
+
     # 📝 Блог - статьи
     path('blog/', include('blog.urls')),
 
