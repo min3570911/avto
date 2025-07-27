@@ -1,0 +1,459 @@
+<!-- 📁 templates/boats/category_list.html -->
+<!-- 🛥️ Главная страница раздела "Лодки" - список категорий -->
+
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Автоковрики{% endblock %}
+
+{% block meta_description %}{{ page_description }}{% endblock %}
+
+{% block start %}
+<style>
+    /* 🛥️ Стили для лодочного раздела */
+    .boats-header {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+        color: white;
+        padding: 60px 0;
+        margin-bottom: 40px;
+    }
+    
+    .boats-header h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .boats-header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .boats-stats {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-top: 30px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    /* 📂 Категории лодок */
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+    
+    .category-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+        border: 2px solid transparent;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
+        border-color: #2196f3;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .category-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2196f3, #64b5f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .category-icon img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    
+    .category-icon i {
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .category-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .category-description {
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    /* 🆕 Новинки */
+    .newest-products {
+        background: #f8f9fa;
+        padding: 60px 0;
+    }
+    
+    .newest-products h2 {
+        text-align: center;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 40px;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 120px;
+        background: #f0f0f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .product-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 5px;
+    }
+    
+    .product-price {
+        color: #2196f3;
+        font-weight: bold;
+    }
+    
+    .product-dimensions {
+        font-size: 0.8rem;
+        color: #666;
+        font-style: italic;
+    }
+    
+    /* 🛥️ Особенности лодочных ковриков */
+    .boat-features {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+        padding: 60px 0;
+        margin-top: 60px;
+    }
+    
+    .boat-features h2 {
+        text-align: center;
+        color: #1976d2;
+        margin-bottom: 40px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+    }
+    
+    .feature-item {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: #2196f3;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        color: white;
+        font-size: 1.5rem;
+    }
+    
+    .feature-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .feature-description {
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    /* 📱 Адаптивность */
+    @media (max-width: 768px) {
+        .boats-header h1 {
+            font-size: 2rem;
+        }
+        
+        .boats-stats {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .categories-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 🛥️ Заголовок раздела лодок -->
+<div class="boats-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h1>🛥️ {{ page_title }}</h1>
+                <p>{{ page_description }}</p>
+                
+                <!-- 📊 Статистика -->
+                <div class="boats-stats">
+                    <div class="stat-item">
+                        <span class="stat-number">{{ categories.count }}</span>
+                        <span class="stat-label">марок лодок</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">{{ total_products }}</span>
+                        <span class="stat-label">моделей ковриков</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📂 Список категорий лодок -->
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Выберите марку лодки</h2>
+            
+            {% if categories %}
+            <div class="categories-grid">
+                {% for category in categories %}
+                <a href="{% url 'boats:product_list_by_category' category.slug %}" class="category-card">
+                    <div class="category-icon">
+                        {% if category.category_image %}
+                            <img src="{{ category.category_image.url }}" alt="{{ category.category_name }}">
+                        {% else %}
+                            <i class="fas fa-ship"></i>
+                        {% endif %}
+                    </div>
+                    <div class="category-name">{{ category.category_name }}</div>
+                    {% if category.description %}
+                    <div class="category-description">
+                        {{ category.description|truncatechars:80 }}
+                    </div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center">
+                <div class="alert alert-info">
+                    <h4>🔧 Категории лодок пока не добавлены</h4>
+                    <p>Пожалуйста, добавьте категории лодок в админ-панели с типом "boats"</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 🆕 Новинки лодочных ковриков -->
+{% if newest_products %}
+<div class="newest-products">
+    <div class="container">
+        <h2>🆕 Новинки лодочных ковриков</h2>
+        <div class="products-grid">
+            {% for product in newest_products %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.product_images.first %}
+                        <img src="{{ product.product_images.first.image.url }}" alt="{{ product.product_name }}">
+                    {% else %}
+                        <i class="fas fa-image" style="color: #ccc; font-size: 2rem;"></i>
+                    {% endif %}
+                </div>
+                <div class="product-name">{{ product.product_name }}</div>
+                {% if product.boat_mat_length or product.boat_mat_width %}
+                <div class="product-dimensions">
+                    {{ product.get_boat_dimensions }}
+                </div>
+                {% endif %}
+                {% if product.price %}
+                <div class="product-price">{{ product.price }} руб.</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 🛥️ Особенности лодочных ковриков -->
+<div class="boat-features">
+    <div class="container">
+        <h2>🛥️ Особенности лодочных ковриков</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-ruler"></i>
+                </div>
+                <div class="feature-title">Индивидуальные размеры</div>
+                <div class="feature-description">
+                    Каждый коврик изготавливается по точным размерам вашей лодки
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="feature-title">Водостойкость</div>
+                <div class="feature-description">
+                    Специальные материалы, устойчивые к воздействию воды и влаги
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-anchor"></i>
+                </div>
+                <div class="feature-title">Надежное крепление</div>
+                <div class="feature-description">
+                    Система крепления, разработанная специально для лодок
+                </div>
+            </div>
+            
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <div class="feature-title">Выбор цветов</div>
+                <div class="feature-description">
+                    Большой выбор цветов для коврика и окантовки
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔗 Навигация -->
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12 text-center">
+            <a href="{% url 'index' %}" class="btn btn-outline-primary">
+                <i class="fas fa-home"></i> На главную
+            </a>
+            <a href="{% url 'cars:category_list' %}" class="btn btn-outline-warning ml-2">
+                <i class="fas fa-car"></i> Автомобильные коврики
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- 🔧 КОММЕНТАРИЙ ДЛЯ РАЗРАБОТЧИКА:
+    
+✅ ОСОБЕННОСТИ ШАБЛОНА:
+1. Расширяет base/base.html (базовый шаблон)
+2. Лодочная тематика (синий цвет #2196f3)
+3. Адаптивная сетка категорий лодок
+4. Статистика по количеству категорий и товаров
+5. Блок новинок лодочных ковриков с размерами
+6. Блок особенностей лодочных ковриков
+7. Навигация между разделами boats/cars
+
+📊 КОНТЕКСТ ОТ VIEW:
+- categories: список категорий лодок
+- total_products: общее количество товаров
+- newest_products: новые товары (с размерами лодок)
+- page_title: заголовок страницы
+- page_description: описание для SEO
+
+🎨 СТИЛИСТИКА:
+- Использует синие цвета для лодочной тематики
+- Показывает размеры лодок в новинках
+- Блок особенностей лодочных ковриков
+- Адаптивный дизайн для мобильных устройств
+- Иконки FontAwesome для морской тематики
+
+🛥️ ЛОДОЧНЫЕ ОСОБЕННОСТИ:
+- Отображение размеров лодок (get_boat_dimensions)
+- Специальные иконки (ship, anchor, etc.)
+- Информация о водостойкости и креплении
+- Синяя цветовая схема вместо оранжевой
+
+🔗 ССЫЛКИ:
+- Каждая категория ведет на boats:product_list_by_category
+- Есть навигация на главную и в раздел автомобилей
+-->

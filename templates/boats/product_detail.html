@@ -1,0 +1,834 @@
+<!-- 📁 templates/boats/product_detail.html -->
+<!-- 🛥️ Детальная страница товара-лодки -->
+
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} | Автоковрики{% endblock %}
+
+{% block meta_description %}{{ page_description }}{% endblock %}
+
+{% block start %}
+<style>
+    /* 🛥️ Стили для детальной страницы лодки */
+    .boat-product-header {
+        background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 40px;
+    }
+
+    .boat-product-header .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+    }
+
+    .boat-product-header .breadcrumb a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+    }
+
+    .boat-product-header .breadcrumb a:hover {
+        color: white;
+        text-decoration: underline;
+    }
+
+    .boat-product-header .breadcrumb-item.active {
+        color: white;
+    }
+
+    /* 📱 Галерея товара */
+    .product-gallery {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+    .main-image {
+        width: 100%;
+        height: 400px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        position: relative;
+    }
+
+    .main-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #ccc;
+        font-size: 3rem;
+    }
+
+    .thumbnail-grid {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 5px 0;
+    }
+
+    .thumbnail {
+        flex-shrink: 0;
+        width: 80px;
+        height: 60px;
+        border-radius: 5px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .thumbnail:hover,
+    .thumbnail.active {
+        border-color: #2196f3;
+        transform: scale(1.05);
+    }
+
+    .thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* 📋 Информация о товаре */
+    .product-info {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+    .product-category {
+        color: #2196f3;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+    }
+
+    .product-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        line-height: 1.3;
+    }
+
+    .product-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2196f3;
+        margin-bottom: 20px;
+    }
+
+    .product-description {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 30px;
+    }
+
+    /* 🛥️ Размеры лодки */
+    .boat-dimensions {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+        border: 2px solid #2196f3;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .boat-dimensions h5 {
+        color: #1976d2;
+        font-weight: 600;
+        margin-bottom: 20px;
+        font-size: 1.2rem;
+    }
+
+    .dimensions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .dimension-item {
+        background: rgba(33, 150, 243, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .dimension-icon {
+        font-size: 1.5rem;
+        color: #2196f3;
+        margin-bottom: 8px;
+    }
+
+    .dimension-label {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .dimension-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1565c0;
+    }
+
+    .dimensions-note {
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+        margin-top: 10px;
+    }
+
+    /* 🎨 Выбор цветов для лодок */
+    .color-selector {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .color-section {
+        margin-bottom: 20px;
+    }
+
+    .color-section h6 {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .color-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .color-option {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .color-option:hover,
+    .color-option.selected {
+        border-color: #2196f3;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .color-option[data-color] {
+        background-color: var(--color);
+    }
+
+    .color-name {
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.7rem;
+        color: #666;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .color-option:hover .color-name,
+    .color-option.selected .color-name {
+        opacity: 1;
+    }
+
+    /* 🛒 Панель покупки */
+    .purchase-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 20px;
+    }
+
+    .quantity-selector {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .quantity-selector label {
+        margin-right: 15px;
+        font-weight: 500;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .quantity-btn {
+        background: #f8f9fa;
+        border: none;
+        padding: 8px 12px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .quantity-btn:hover {
+        background: #2196f3;
+        color: white;
+    }
+
+    .quantity-input {
+        border: none;
+        width: 60px;
+        text-align: center;
+        padding: 8px;
+        font-weight: 500;
+    }
+
+    .btn-boat-primary {
+        background: #2196f3;
+        border-color: #2196f3;
+        color: white;
+        width: 100%;
+        padding: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 10px;
+    }
+
+    .btn-boat-primary:hover {
+        background: #1976d2;
+        border-color: #1976d2;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-boat-secondary {
+        background: transparent;
+        border: 2px solid #2196f3;
+        color: #2196f3;
+        width: 100%;
+        padding: 10px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-boat-secondary:hover {
+        background: #2196f3;
+        color: white;
+    }
+
+    /* 🛥️ Особенности лодочных ковриков */
+    .boat-features {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .boat-features h6 {
+        color: #1976d2;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .features-list li {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        color: #666;
+    }
+
+    .features-list li i {
+        color: #2196f3;
+        margin-right: 10px;
+        width: 20px;
+    }
+
+    /* 🔄 Похожие товары */
+    .similar-products {
+        background: #f8f9fa;
+        padding: 60px 0;
+        margin-top: 60px;
+    }
+
+    .similar-products h3 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 40px;
+    }
+
+    .similar-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .similar-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .similar-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .similar-image {
+        width: 100%;
+        height: 150px;
+        background: #f0f0f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .similar-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .similar-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .similar-dimensions {
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .similar-price {
+        color: #2196f3;
+        font-weight: bold;
+    }
+
+    /* 📱 Адаптивность */
+    @media (max-width: 768px) {
+        .product-title {
+            font-size: 1.5rem;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+        }
+
+        .main-image {
+            height: 300px;
+        }
+
+        .dimensions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .color-options {
+            justify-content: center;
+        }
+
+        .similar-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .purchase-panel {
+            position: static;
+            margin-top: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 🛥️ Заголовок товара -->
+<div class="boat-product-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <!-- 🧭 Хлебные крошки -->
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'index' %}">
+                                <i class="fas fa-home"></i> Главная
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'boats:category_list' %}">
+                                <i class="fas fa-ship"></i> Лодки
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'boats:product_list_by_category' product.category.slug %}">
+                                {{ product.category.category_name }}
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">{{ product.product_name }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- 📱 Галерея товара -->
+        <div class="col-md-6">
+            <div class="product-gallery">
+                <div class="main-image" id="mainImage">
+                    {% if product.product_images.first %}
+                        <img src="{{ product.product_images.first.image.url }}" alt="{{ product.product_name }}" id="mainImg">
+                    {% else %}
+                        <div class="image-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if product.product_images.count > 1 %}
+                <div class="thumbnail-grid">
+                    {% for image in product.product_images.all %}
+                    <div class="thumbnail {% if forloop.first %}active{% endif %}"
+                         onclick="changeMainImage('{{ image.image.url }}', this)">
+                        <img src="{{ image.image.url }}" alt="{{ product.product_name }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 🛥️ Размеры лодки -->
+            {% if boat_dimensions %}
+            <div class="boat-dimensions">
+                <h5>📐 Размеры коврика для лодки</h5>
+                <div class="dimensions-grid">
+                    {% if boat_dimensions.length %}
+                    <div class="dimension-item">
+                        <div class="dimension-icon">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                        <div class="dimension-label">Длина</div>
+                        <div class="dimension-value">{{ boat_dimensions.length }} см</div>
+                    </div>
+                    {% endif %}
+                    {% if boat_dimensions.width %}
+                    <div class="dimension-item">
+                        <div class="dimension-icon">
+                            <i class="fas fa-arrows-alt-v"></i>
+                        </div>
+                        <div class="dimension-label">Ширина</div>
+                        <div class="dimension-value">{{ boat_dimensions.width }} см</div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="dimensions-note">
+                    💡 Размеры указаны для стандартного исполнения. Возможно индивидуальное изготовление по вашим размерам.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 📋 Информация о товаре -->
+        <div class="col-md-6">
+            <div class="product-info">
+                <div class="product-category">{{ product.category.category_name }}</div>
+                <h1 class="product-title">{{ product.product_name }}</h1>
+
+                {% if product.price %}
+                <div class="product-price">от {{ product.price }} руб.</div>
+                {% endif %}
+
+                {% if product.product_desription %}
+                <div class="product-description">
+                    {{ product.product_desription|safe }}
+                </div>
+                {% endif %}
+
+                <!-- 🛥️ Особенности лодочных ковриков -->
+                <div class="boat-features">
+                    <h6>🛥️ Особенности лодочных ковриков:</h6>
+                    <ul class="features-list">
+                        <li><i class="fas fa-tint"></i> Водостойкий материал EVA</li>
+                        <li><i class="fas fa-anchor"></i> Специальное крепление для лодок</li>
+                        <li><i class="fas fa-ruler"></i> Индивидуальные размеры</li>
+                        <li><i class="fas fa-palette"></i> Выбор цветов коврика и окантовки</li>
+                        <li><i class="fas fa-shield-alt"></i> Устойчивость к морской воде</li>
+                    </ul>
+                </div>
+
+                <!-- 🎨 Выбор цветов для лодок -->
+                {% if carpet_colors %}
+                <div class="color-selector">
+                    <h5 class="mb-3">🎨 Выбор цветов</h5>
+
+                    <!-- 📍 Цвет коврика -->
+                    <div class="color-section">
+                        <h6>Цвет коврика:</h6>
+                        <div class="color-options">
+                            {% for color in carpet_colors %}
+                            <div class="color-option"
+                                 data-color="{{ color.hex_code }}"
+                                 style="--color: {{ color.hex_code }}"
+                                 onclick="selectColor('carpet', '{{ color.id }}', this)">
+                                <div class="color-name">{{ color.name }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- 🔲 Цвет окантовки -->
+                    {% if border_colors %}
+                    <div class="color-section">
+                        <h6>Цвет окантовки:</h6>
+                        <div class="color-options">
+                            {% for color in border_colors %}
+                            <div class="color-option"
+                                 data-color="{{ color.hex_code }}"
+                                 style="--color: {{ color.hex_code }}"
+                                 onclick="selectColor('border', '{{ color.id }}', this)">
+                                <div class="color-name">{{ color.name }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 🛒 Панель покупки -->
+            <div class="purchase-panel">
+                <div class="quantity-selector">
+                    <label>Количество:</label>
+                    <div class="quantity-controls">
+                        <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                        <input type="number" class="quantity-input" value="1" min="1" id="quantity">
+                        <button type="button" class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-boat-primary" onclick="addToCart()">
+                    <i class="fas fa-shopping-cart"></i> Добавить в корзину
+                </button>
+
+                <button class="btn btn-boat-secondary" onclick="addToWishlist()">
+                    <i class="fas fa-heart"></i> В избранное
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🔄 Похожие товары -->
+{% if similar_products %}
+<div class="similar-products">
+    <div class="container">
+        <h3>🔄 Похожие лодочные коврики</h3>
+        <div class="similar-grid">
+            {% for similar in similar_products %}
+            <a href="{% url 'boats:product_detail' similar.slug %}" class="similar-card">
+                <div class="similar-image">
+                    {% if similar.product_images.first %}
+                        <img src="{{ similar.product_images.first.image.url }}" alt="{{ similar.product_name }}">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100">
+                            <i class="fas fa-image" style="color: #ccc; font-size: 2rem;"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="similar-name">{{ similar.product_name }}</div>
+                {% if similar.boat_mat_length or similar.boat_mat_width %}
+                <div class="similar-dimensions">
+                    {{ similar.get_boat_dimensions }}
+                </div>
+                {% endif %}
+                {% if similar.price %}
+                <div class="similar-price">от {{ similar.price }} руб.</div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// 🖼️ Смена главного изображения
+function changeMainImage(imageUrl, thumbnail) {
+    const mainImg = document.getElementById('mainImg');
+    if (mainImg) {
+        mainImg.src = imageUrl;
+    }
+
+    // Обновляем активную миниатюру
+    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+    thumbnail.classList.add('active');
+}
+
+// 🔢 Изменение количества
+function changeQuantity(delta) {
+    const quantityInput = document.getElementById('quantity');
+    const currentValue = parseInt(quantityInput.value) || 1;
+    const newValue = Math.max(1, currentValue + delta);
+    quantityInput.value = newValue;
+}
+
+// 🎨 Выбор цвета
+function selectColor(type, colorId, element) {
+    // Убираем выделение с других цветов этого типа
+    const siblings = element.parentNode.querySelectorAll('.color-option');
+    siblings.forEach(sibling => sibling.classList.remove('selected'));
+
+    // Выделяем выбранный цвет
+    element.classList.add('selected');
+
+    // Сохраняем выбор (можно отправить на сервер или сохранить в localStorage)
+    console.log(`Выбран цвет ${type}: ${colorId}`);
+}
+
+// 🛒 Добавление в корзину
+function addToCart() {
+    const quantity = document.getElementById('quantity').value;
+
+    // Здесь должен быть AJAX-запрос для добавления в корзину
+    // Пока показываем уведомление
+    alert(`Товар добавлен в корзину (количество: ${quantity})`);
+
+    // Пример AJAX-запроса:
+    /*
+    fetch('{% url "boats:add_to_cart" product.uid %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            quantity: quantity,
+            carpet_color: getSelectedColor('carpet'),
+            border_color: getSelectedColor('border')
+        })
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Показать уведомление об успехе
+              showNotification('Товар добавлен в корзину!', 'success');
+          }
+      });
+    */
+}
+
+// ❤️ Добавление в избранное
+function addToWishlist() {
+    alert('Товар добавлен в избранное!');
+
+    // Пример AJAX-запроса:
+    /*
+    fetch('{% url "boats:add_to_wishlist" product.uid %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    }).then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              showNotification('Товар добавлен в избранное!', 'success');
+          }
+      });
+    */
+}
+
+// 🎨 Получение выбранного цвета
+function getSelectedColor(type) {
+    const selected = document.querySelector(`.color-section:has(h6:contains("${type}")) .color-option.selected`);
+    return selected ? selected.dataset.colorId : null;
+}
+</script>
+{% endblock %}
+
+<!-- 🔧 КОММЕНТАРИЙ ДЛЯ РАЗРАБОТЧИКА:
+
+✅ ОСОБЕННОСТИ ШАБЛОНА:
+1. Детальная страница лодочного товара
+2. Галерея изображений с миниатюрами
+3. Специальный блок размеров лодки
+4. Селектор цветов для лодок (коврик + окантовка)
+5. Панель покупки с количеством
+6. Блок особенностей лодочных ковриков
+7. Похожие товары из той же категории
+8. Хлебные крошки для навигации
+
+📊 КОНТЕКСТ ОТ VIEW:
+- product: детальная информация о товаре-лодке
+- boat_dimensions: размеры лодки (length, width, display)
+- similar_products: похожие товары с размерами
+- carpet_colors: цвета ковриков
+- border_colors: цвета окантовки
+- show_boat_features: флаг показа особенностей лодок
+
+🎨 СТИЛИСТИКА:
+- Лодочная тематика (синие цвета #2196f3)
+- Специальные блоки размеров лодки
+- Интерактивные элементы (галерея, селектор цветов)
+- Sticky панель покупки
+- Адаптивный дизайн
+
+🛥️ ЛОДОЧНЫЕ ОСОБЕННОСТИ:
+- Отображение размеров лодки (boat_mat_length, boat_mat_width)
+- Синяя цветовая схема
+- Иконки морской тематики (ship, anchor, tint)
+- Блок особенностей лодочных ковриков
+- Информация о водостойкости и креплении
+
+🔧 ФУНКЦИОНАЛЬНОСТЬ:
+- Смена главного изображения
+- Выбор цветов ковриков и окантовки
+- Изменение количества товара
+- AJAX-запросы для корзины и избранного (заготовки)
+-->
