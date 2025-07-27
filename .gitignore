@@ -156,3 +156,14 @@ setup_*.py
 
 # 🧹 Собранные статические файлы Django
 /staticfiles
+
+# Ignore all of PyCharm IDE folder
+.idea/
+
+# Except inspection profiles and run configurations (optional)
+!.idea/inspectionProfiles/
+!.idea/runConfigurations/
+
+# Explicitly ignore workspace files (redundant, but safe)
+.idea/workspace.xml
+.idea/**/workspace.xml
