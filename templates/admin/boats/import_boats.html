@@ -1,4 +1,7 @@
-```html project="avtokovriki" file="templates/admin/boats/import_boats.html" version=1
+<!-- 📁 templates/admin/boats/import_boats.html -->
+<!-- 📊 Шаблон импорта Excel для лодок (по образу products) -->
+<!-- 🛥️ Адаптированный формат с размерами boat_mat_length, boat_mat_width -->
+
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls static admin_list %}
 
@@ -120,32 +123,17 @@
             <form method="post" enctype="multipart/form-data" action="{% url 'admin:boats_boatproduct_import' %}">
                 {% csrf_token %}
                 
-                {% if form %}
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.help_text %}
-                                <small>{{ field.help_text }}</small>
-                            {% endif %}
-                            {% if field.errors %}
-                                <div class="error">{{ field.errors }}</div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="form-group">
-                        <label for="id_excel_file">📊 Excel файл с данными лодок:</label>
-                        <input type="file" name="excel_file" accept=".xlsx,.xls" required id="id_excel_file">
-                        <small>Поддерживаемые форматы: .xlsx, .xls. Максимальный размер: 10 МБ</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="id_images_zip">🖼️ ZIP архив с изображениями (необязательно):</label>
-                        <input type="file" name="images_zip" accept=".zip" id="id_images_zip">
-                        <small>ZIP файл с изображениями лодок. Поддерживаемые форматы: PNG, JPG, JPEG, WEBP</small>
-                    </div>
-                {% endif %}
+                <div class="form-group">
+                    <label for="id_excel_file">📊 Excel файл с данными лодок:</label>
+                    <input type="file" name="excel_file" accept=".xlsx,.xls" required id="id_excel_file">
+                    <small>Поддерживаемые форматы: .xlsx, .xls. Максимальный размер: 10 МБ</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_images_zip">🖼️ ZIP архив с изображениями (необязательно):</label>
+                    <input type="file" name="images_zip" accept=".zip" id="id_images_zip">
+                    <small>ZIP файл с изображениями лодок. Поддерживаемые форматы: PNG, JPG, JPEG, WEBP</small>
+                </div>
                 
                 <button type="submit" class="btn btn-primary">📊 Импортировать лодки</button>
             </form>
@@ -258,3 +246,19 @@ BOAT003   | Коврик EVA Mercury 150   | 118 | 78 | 4600 | Качестве�
     
     {{ block.super }}
 {% endblock %}
+
+<!-- 🔧 КОММЕНТАРИЙ:
+✅ СОЗДАН ШАБЛОН ИМПОРТА ПО ОБРАЗУ PRODUCTS:
+• Адаптирован под лодки с размерами в колонках C и D
+• Показывает примеры с boat_mat_length и boat_mat_width
+• Объясняет отличия от автомобильного импорта
+• Красивый дизайн с подсветкой особенностей лодок
+• Справка по формату файла Excel
+• Поддержка ZIP архивов с изображениями
+
+🛥️ ОСОБЕННОСТИ ДЛЯ ЛОДОК:
+• Колонки C и D для размеров коврика
+• Выделение размеров в примерах
+• Объяснение отличий от products
+• Рекомендации по заполнению размеров
+-->
