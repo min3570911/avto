@@ -1,14 +1,25 @@
 <!-- 📁 templates/admin/boats/import_boats.html -->
-<!-- 📊 Шаблон импорта Excel для лодок (по образу products) -->
-<!-- 🛥️ Адаптированный формат с размерами boat_mat_length, boat_mat_width -->
+<!-- 📊 Шаблон импорта Excel для лодок (ИСПРАВЛЕННАЯ версия) -->
+<!-- ✅ ИСПРАВЛЕНО: Правильное наследование и breadcrumbs -->
 
-{% extends "admin/change_list.html" %}
-{% load i18n admin_urls static admin_list %}
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
 
-{% block content_title %}
-    <h1>📊 Импорт лодок из Excel</h1>
-    <p>Загрузка категорий и товаров лодок по образу products, но с размерами ковриков</p>
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url 'admin:boats_boatproduct_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ title }}
+</div>
 {% endblock %}
+
+{% block content %}
+
+<h1>{{ title }}</h1>
+{% if subtitle %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
 
 {% block extrahead %}
     {{ block.super }}
@@ -125,17 +136,34 @@
                 
                 <div class="form-group">
                     <label for="id_excel_file">📊 Excel файл с данными лодок:</label>
-                    <input type="file" name="excel_file" accept=".xlsx,.xls" required id="id_excel_file">
+                    {{ form.excel_file }}
+                    {% if form.excel_file.errors %}
+                        <div class="errorlist">
+                            {% for error in form.excel_file.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <small>Поддерживаемые форматы: .xlsx, .xls. Максимальный размер: 10 МБ</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="id_images_zip">🖼️ ZIP архив с изображениями (необязательно):</label>
-                    <input type="file" name="images_zip" accept=".zip" id="id_images_zip">
+                    {{ form.images_zip }}
+                    {% if form.images_zip.errors %}
+                        <div class="errorlist">
+                            {% for error in form.images_zip.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                     <small>ZIP файл с изображениями лодок. Поддерживаемые форматы: PNG, JPG, JPEG, WEBP</small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">📊 Импортировать лодки</button>
+                <div class="submit-row">
+                    <input type="submit" value="📊 Импортировать лодки" class="default" />
+                    <a href="{% url 'admin:boats_boatproduct_changelist' %}" class="button">Отмена</a>
+                </div>
             </form>
         </div>
         
@@ -243,22 +271,19 @@ BOAT003   | Коврик EVA Mercury 150   | 118 | 78 | 4600 | Качестве�
             </div>
         </div>
     </div>
-    
-    {{ block.super }}
 {% endblock %}
 
 <!-- 🔧 КОММЕНТАРИЙ:
-✅ СОЗДАН ШАБЛОН ИМПОРТА ПО ОБРАЗУ PRODUCTS:
-• Адаптирован под лодки с размерами в колонках C и D
-• Показывает примеры с boat_mat_length и boat_mat_width
-• Объясняет отличия от автомобильного импорта
-• Красивый дизайн с подсветкой особенностей лодок
-• Справка по формату файла Excel
-• Поддержка ZIP архивов с изображениями
+✅ ИСПРАВЛЕН ШАБЛОН ИМПОРТА:
+• Наследует admin/base_site.html вместо change_list.html
+• Правильные breadcrumbs с app_label
+• Форма Django admin стиля
+• Кнопки submit в стиле админки
+• Обработка ошибок форм
 
-🛥️ ОСОБЕННОСТИ ДЛЯ ЛОДОК:
-• Колонки C и D для размеров коврика
-• Выделение размеров в примерах
-• Объяснение отличий от products
-• Рекомендации по заполнению размеров
+🛥️ ОСОБЕННОСТИ:
+• Breadcrumbs: Главная → Boats → Товары лодок → Импорт
+• Форма с полями Excel и ZIP
+• Справка по формату Excel для лодок
+• Кнопка "Отмена" возвращает к списку товаров
 -->
