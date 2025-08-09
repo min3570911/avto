@@ -1,12 +1,14 @@
-# 🐍 Скомпилированные Python-файлы
+################################
+# Python
+################################
 __pycache__/
 *.py[cod]
 *$py.class
 
-# 🧩 C-библиотеки
+# C extensions
 *.so
 
-# 📦 Файлы сборки и установки
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -26,15 +28,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# 🧊 PyInstaller — артефакты сборки EXE
-*.manifest
-*.spec
-
-# 📜 Логи установки
+# Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-# 🧪 Тесты и покрытие
+# Unit test / coverage reports
 htmlcov/
 .tox/
 .nox/
@@ -49,56 +47,74 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# 🌍 Переводы
+# Translations
 *.mo
 *.pot
 
-# 🌐 Django: настройки, базы и логи
+# Django stuff:
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# 🌱 Flask: данные окружения
+# Django media/static (сгенерированные файлы)
+media/
+staticfiles/
+static/
+
+# Flask stuff:
 instance/
 .webassets-cache
 
-# 🕷 Scrapy: кэш
+# Scrapy stuff:
 .scrapy
 
-# 📚 Документация Sphinx
+# Sphinx documentation
 docs/_build/
 
-# 🧱 PyBuilder
+# PyBuilder
 .pybuilder/
 target/
 
-# 📓 Jupyter Notebook
-.ipynb_checkpoints
-
-# ⚙️ IPython настройки
+# IPython
 profile_default/
 ipython_config.py
 
-# 🌡️ pyenv
+# pyenv
 .python-version
 
-# 📁 pipenv, poetry, pdm (опционально)
-# Pipfile.lock
-# poetry.lock
-.pdm.toml
+# pipenv
+Pipfile.lock
 
-# 📦 PEP 582
+# poetry
+poetry.lock
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
-# 🐇 Celery файлы задач
-celerybeat-schedule
-celerybeat.pid
+# pyright
+typings/
 
-# 🧙 SageMath
-*.sage.py
+# mkdocs documentation
+/site
 
-# 🌍 Окружения
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+################################
+# Environments
+################################
 .env
 .venv
 env/
@@ -107,63 +123,64 @@ ENV/
 env.bak/
 venv.bak/
 
-# 🧪 Spyder IDE
-.spyderproject
-.spyproject
-
-# 🪢 Rope IDE
-.ropeproject
-
-# 📚 mkdocs сайт
-/site
-
-# 🔍 Анализаторы типов
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
-
-# 🧬 Отладка Cython
-cython_debug/
-
-# 🧠 PyCharm / JetBrains IDE
+################################
+# IDEs and editors
+################################
+# PyCharm / IntelliJ IDEA
 .idea/
 *.iml
-*.xml
-
-# 💻 VSCode
-.vscode/
-
-# 📦 Служебные и временные файлы проекта
-*.backup
-*_backup*.py
-*_backup*.txt
-*_backup*.xml
-
-# 🖼️ Медиафайлы и статичные изображения
-public/media/
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.svg
-*.ico
-
-# 🧰 Временные и разовые скрипты
-copy_*.py
-setup_*.py
-
-# 🧹 Собранные статические файлы Django
-/staticfiles
-
-# Ignore all of PyCharm IDE folder
-.idea/
-
-# Except inspection profiles and run configurations (optional)
-!.idea/inspectionProfiles/
-!.idea/runConfigurations/
-
-# Explicitly ignore workspace files (redundant, but safe)
-.idea/workspace.xml
 .idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+.idea/**/gradle.xml
+.idea/**/libraries
+out/
+
+# VS Code
+.vscode/
+.history/
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+################################
+# OS generated files
+################################
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+._*
+
+# Windows image file caches
+Desktop.ini
+
+# Recycle Bin
+$RECYCLE.BIN/
+
+################################
+# Node.js / Frontend
+################################
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+yarn.lock
+package-lock.json
+
+################################
+# Logs and temp files
+################################
+*.log
+logs/
+tmp/
+temp/
