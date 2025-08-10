@@ -88,7 +88,7 @@ class BoatCategory(BaseModel):
 
     def get_absolute_url(self):
         """🌐 URL категории лодок"""
-        return reverse('boats:category_detail', kwargs={'slug': self.slug})
+        return reverse('boats:product_list_by_category', kwargs={'slug': self.slug})
 
     def get_products_count(self):
         """📊 Количество товаров в категории"""

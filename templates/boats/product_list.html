@@ -1,684 +1,160 @@
-{% extends 'base/base.html' %}
+{% comment %}
+🛥️ Шаблон списка товаров в категории лодок
+✅ Простая рабочая версия
+{% endcomment %}
+
+{% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ category.category_name }} | Лодочные коврики{% endblock %}
-
-<!-- 🔍 SEO мета-теги -->
-{% block extra_head %}
-<meta name="description" content="{{ category.get_seo_description }}">
-<meta name="robots" content="index, follow">
-
-<!-- 📱 Open Graph мета-теги -->
-<meta property="og:title" content="{{ category.get_seo_title }}">
-<meta property="og:description" content="{{ category.get_seo_description }}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Лодочные коврики">
-{% if category.category_image %}
-<meta property="og:image" content="{{ request.build_absolute_uri }}{{ category.category_image.url }}">
-{% endif %}
-
-<!-- 🐦 Twitter Card мета-теги -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{{ category.get_seo_title }}">
-<meta name="twitter:description" content="{{ category.get_seo_description }}">
-{% if category.category_image %}
-<meta name="twitter:image" content="{{ request.build_absolute_uri }}{{ category.category_image.url }}">
-{% endif %}
-{% endblock %}
-
-{% block start %}
-
-<style>
-  /* 🎨 Объединенные стили: современный дизайн + YouTube поддержка */
-  .filter-section {
-    margin-bottom: 20px;
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-  }
-
-  /* 🆕 НОВЫЕ стили для панели управления */
-  .control-panel {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-
-  .control-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-  }
-
-  .control-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 200px;
-  }
-
-  .control-group label {
-    font-weight: 600;
-    color: #495057;
-    margin: 0;
-    white-space: nowrap;
-    font-size: 14px;
-  }
-
-  .control-select {
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 8px 12px;
-    background: white;
-    color: #495057;
-    font-size: 14px;
-    min-width: 140px;
-    transition: all 0.3s ease;
-  }
-
-  .control-select:focus {
-    border-color: #17a2b8;
-    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
-    outline: none;
-  }
-
-  .control-select:hover {
-    border-color: #17a2b8;
-  }
-
-  /* 📊 Статистика товаров */
-  .products-stats {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: #6c757d;
-    font-size: 14px;
-  }
-
-  .stats-badge {
-    background: #17a2b8;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  /* 📱 Мобильная адаптация для панели управления */
-  @media (max-width: 768px) {
-    .control-row {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 15px;
-    }
-
-    .control-group {
-      justify-content: space-between;
-      min-width: auto;
-    }
-
-    .control-select {
-      min-width: 120px;
-    }
-
-    .products-stats {
-      justify-content: center;
-      text-align: center;
-    }
-  }
-
-  @keyframes appear {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .card {
-    animation: appear 0.5s ease-out;
-    border: none;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-  }
-
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-  }
-
-  .category-header {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    padding: 30px 0;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    color: white;
-  }
-
-  .category-header h1 {
-    margin: 0;
-    font-size: 28px;
-    position: relative;
-    display: inline-block;
-    color: white;
-  }
-
-  .category-header h1:after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 0;
-    width: 80px;
-    height: 3px;
-    background-color: #ffffff;
-  }
-
-  .category-image {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: contain;
-    background-color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 3px solid #ffffff;
-    padding: 10px;
-  }
-
-  .breadcrumb {
-    background-color: transparent;
-    padding-left: 0;
-  }
-
-  .breadcrumb a {
-    color: rgba(255,255,255,0.8);
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: white;
-  }
-
-  .breadcrumb-item.active {
-    color: white;
-  }
-
-  /* 📝 СОВРЕМЕННЫЕ стили для описания категории */
-  .category-description {
-    margin-top: 40px;
-    margin-bottom: 50px;
-    border-radius: 12px;
-    padding: 30px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    position: relative;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(23, 162, 184, 0.1);
-  }
-
-  .category-description-text {
-    font-size: 16px;
-    line-height: 1.7;
-    color: #495057;
-    text-align: justify;
-    transition: all 0.4s ease;
-  }
-
-  .category-description.collapsed .category-description-text {
-    max-height: 160px;
-    overflow: hidden;
-  }
-
-  .category-description.expanded .category-description-text {
-    max-height: none;
-    overflow: visible;
-  }
-
-  .category-description h3 {
-    margin-bottom: 20px;
-    font-size: 24px;
-    color: #2c3e50;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .category-description h3:before {
-    content: "📖";
-    font-size: 20px;
-  }
-
-  /* ✨ ЭЛЕГАНТНАЯ кнопка toggle */
-  .read-more-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    background: transparent !important;
-    color: #17a2b8 !important;
-    border: 2px solid #17a2b8 !important;
-    border-radius: 25px !important;
-    padding: 10px 24px !important;
-    margin: 20px auto 0 auto !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    text-align: center !important;
-    position: relative !important;
-    z-index: 10 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    letter-spacing: 0.5px !important;
-    text-transform: uppercase !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    display: block !important;
-    width: fit-content !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  .read-more-btn:hover {
-    background: #17a2b8 !important;
-    color: white !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.25) !important;
-    border-color: #17a2b8 !important;
-  }
-
-  .read-more-btn:active {
-    transform: translateY(0) !important;
-  }
-
-  .read-more-btn .arrow {
-    transition: transform 0.3s ease !important;
-    font-size: 12px !important;
-  }
-
-  .read-more-btn.expanded .arrow {
-    transform: rotate(180deg) !important;
-  }
-
-  /* 🌊 Элегантный градиентный оверлей */
-  .read-more-overlay {
-    position: absolute;
-    bottom: 70px;
-    left: 30px;
-    right: 30px;
-    height: 40px;
-    background: linear-gradient(to bottom,
-      rgba(248, 249, 250, 0) 0%,
-      rgba(248, 249, 250, 0.7) 50%,
-      rgba(255, 255, 255, 1) 100%);
-    z-index: 5;
-    pointer-events: none;
-    transition: opacity 0.4s ease;
-    border-radius: 0 0 12px 12px;
-  }
-
-  .category-description.expanded .read-more-overlay {
-    opacity: 0;
-  }
-
-  .category-description.collapsed .read-more-overlay {
-    opacity: 1;
-  }
-
-  /* 📊 Стильная информационная строка */
-  .content-info {
-    display: flex;
-    gap: 20px;
-    font-size: 13px;
-    color: #6c757d;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(23, 162, 184, 0.1);
-  }
-
-  .content-info span {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(23, 162, 184, 0.1);
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-weight: 500;
-  }
-
-  /* 📱 Мобильная адаптация */
-  @media (max-width: 768px) {
-    .category-description {
-      padding: 20px;
-      margin-top: 30px;
-    }
-
-    .category-description.collapsed .category-description-text {
-      max-height: 120px;
-    }
-
-    .content-info {
-      gap: 10px;
-      font-size: 12px;
-    }
-
-    .content-info span {
-      padding: 3px 10px;
-    }
-
-    .read-more-btn {
-      font-size: 13px !important;
-      padding: 8px 20px !important;
-    }
-
-    .category-description h3 {
-      font-size: 20px;
-    }
-  }
-
-  /* ✨ Дополнительные эффекты для текста */
-  .category-description-text p {
-    margin-bottom: 16px;
-  }
-
-  .category-description-text p:last-child {
-    margin-bottom: 0;
-  }
-
-  .category-description-text ul {
-    padding-left: 20px;
-    margin: 16px 0;
-  }
-
-  .category-description-text li {
-    margin-bottom: 8px;
-    position: relative;
-  }
-
-  .category-description-text li:before {
-    content: "🛥️";
-    position: absolute;
-    left: -25px;
-    font-size: 14px;
-  }
-
-  /* 🎨 Стили для WYSIWYG контента */
-  .category-content {
-    line-height: 1.8;
-    font-size: 1.05rem;
-    color: #333;
-  }
-
-  .category-content h1,
-  .category-content h2,
-  .category-content h3,
-  .category-content h4 {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
-    color: #2c3e50;
-    font-weight: 600;
-  }
-
-  .category-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
-</style>
-
-<!-- 🎯 Заголовок категории -->
-<div class="category-header">
-  <div class="container">
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <!-- 🧭 Хлебные крошки -->
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'boats:category_list' %}">Лодки</a></li>
-            <li class="breadcrumb-item active">{{ category.category_name }}</li>
-          </ol>
-        </nav>
-
-        <h1>🛥️ {{ category.category_name }}</h1>
-        <p class="mt-3 text-light">Найдено товаров: <strong>{{ total_products|default:page_obj.paginator.count }}</strong></p>
-      </div>
-      <div class="col-md-4 text-center">
-        {% if category.category_image %}
-        <img src="/media/{{ category.category_image }}" class="category-image" alt="{{ category.category_name }}">
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-  {% include 'base/alert.html' %}
-
-  <!-- 🆕 НОВАЯ панель управления товарами -->
-  <div class="control-panel">
-    <div class="control-row">
-      <!-- 📊 Сортировка -->
-      <div class="control-group">
-        <label for="sortSelect">🔄 Сортировка:</label>
-        <select id="sortSelect" class="control-select" onchange="changeSorting(this.value)">
-          <option value="name"{% if sort_by == 'name' %} selected{% endif %}>По названию</option>
-          <option value="price_asc"{% if sort_by == 'price_asc' %} selected{% endif %}>Сначала дешевые</option>
-          <option value="price_desc"{% if sort_by == 'price_desc' %} selected{% endif %}>Сначала дорогие</option>
-          <option value="newest"{% if sort_by == 'newest' %} selected{% endif %}>Новинки</option>
-        </select>
-      </div>
-
-      <!-- 📈 Показывать по -->
-      <div class="control-group">
-        <label for="perPageSelect">📄 Показывать:</label>
-        <select id="perPageSelect" class="control-select" onchange="changePerPage(this.value)">
-          <option value="12"{% if per_page == '12' or not per_page %} selected{% endif %}>12 товаров</option>
-          <option value="24"{% if per_page == '24' %} selected{% endif %}>24 товара</option>
-          <option value="48"{% if per_page == '48' %} selected{% endif %}>48 товаров</option>
-          <option value="all"{% if per_page == 'all' %} selected{% endif %}>Показать все</option>
-        </select>
-      </div>
-
-      <!-- 📊 Статистика -->
-      <div class="products-stats">
-        <span>📦 Всего товаров:</span>
-        <span class="stats-badge">{{ total_products|default:page_obj.paginator.count }}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🛥️ ТОВАРЫ ЛОДОК -->
-  <div class="row">
-    {% for product in page_obj %}
-    <div class="col-lg-3 col-md-6">
-      <figure class="card card-product-grid">
-        <div class="img-wrap">
-          <a href="{% url 'boats:product_detail' product.slug %}">
-            {% if product.main_image %}
-            <img src="{{ product.main_image.url }}" class="img-fluid" alt="{{ product.product_name }}">
-            {% else %}
-            <img src="{% static 'images/placeholder-product.png' %}" class="img-fluid" alt="{{ product.product_name }}">
-            {% endif %}
-          </a>
-          <a class="btn-overlay" href="{% url 'boats:product_detail' product.slug %}">
-            <i class="fa fa-search-plus"></i> Подробнее
-          </a>
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 🧭 Хлебные крошки -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% for crumb in breadcrumbs %}
+                {% if crumb.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ crumb.url }}">{{ crumb.name }}</a>
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item active">{{ crumb.name }}</li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+
+    <!-- 📂 Заголовок категории -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>🛥️ {{ category.category_name }}</h1>
+            <p>{{ page_description }}</p>
+            
+            <div class="alert alert-info">
+                📊 Найдено товаров: <strong>{{ total_products }}</strong>
+            </div>
         </div>
-        <figcaption class="info-wrap">
-          <div class="fix-height">
-            <a href="{% url 'boats:product_detail' product.slug %}" class="title">{{ product.product_name }}</a>
+    </div>
 
-            <!-- 📐 Размеры лодки -->
-            {% if product.boat_mat_length or product.boat_mat_width %}
-            <div class="boat-dimensions mb-2">
-              <small class="text-muted">
-                📏 Размер:
-                {% if product.boat_mat_length %}{{ product.boat_mat_length }}{% endif %}
-                {% if product.boat_mat_length and product.boat_mat_width %}×{% endif %}
-                {% if product.boat_mat_width %}{{ product.boat_mat_width }}{% endif %}
-                см
-              </small>
+    <!-- 🔍 Поиск и фильтры -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form method="get" class="d-flex">
+                <input type="text" 
+                       name="search" 
+                       class="form-control me-2" 
+                       placeholder="Поиск в категории..." 
+                       value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">🔍</button>
+            </form>
+        </div>
+        <div class="col-md-3">
+            <select name="sort" class="form-control" onchange="this.form.submit()">
+                <option value="-created_at"{% if sort_by == '-created_at' %} selected{% endif %}>Новые</option>
+                <option value="name"{% if sort_by == 'name' %} selected{% endif %}>По названию</option>
+                <option value="price"{% if sort_by == 'price' %} selected{% endif %}>Дешевые</option>
+                <option value="-price"{% if sort_by == '-price' %} selected{% endif %}>Дорогие</option>
+                <option value="size_asc"{% if sort_by == 'size_asc' %} selected{% endif %}>По размеру</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'boats:category_list' %}" class="btn btn-outline-secondary w-100">
+                ← Все категории
+            </a>
+        </div>
+    </div>
+
+    <!-- 🛥️ Товары категории -->
+    <div class="row">
+        {% for product in products %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100">
+                <a href="{% url 'boats:product_detail' product.slug %}">
+                    {% with product.get_main_image as main_image %}
+                        {% if main_image %}
+                            <img src="{{ main_image.image.url }}" class="card-img-top" alt="{{ product.product_name }}" style="height: 250px; object-fit: cover;">
+                        {% else %}
+                            <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 250px; background: #f8f9fa;">
+                                <i class="fas fa-ship fa-4x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </a>
+                
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">
+                        <a href="{% url 'boats:product_detail' product.slug %}" class="text-decoration-none">
+                            {{ product.product_name }}
+                        </a>
+                    </h5>
+                    
+                    <!-- 📐 Размеры лодки -->
+                    {% if product.boat_mat_length or product.boat_mat_width %}
+                    <div class="mb-3">
+                        <span class="badge bg-primary">
+                            📏 {{ product.get_mat_dimensions }}
+                        </span>
+                        {% if product.boat_mat_length and product.boat_mat_width %}
+                            <small class="text-muted d-block">
+                                Площадь: {{ product.get_dimensions_display.area }} м²
+                            </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-auto">
+                        {% if product.price %}
+                            <div class="h4 text-primary mb-3">{{ product.get_display_price }} руб.</div>
+                        {% else %}
+                            <div class="text-muted mb-3">Цена по запросу</div>
+                        {% endif %}
+                        
+                        {% if product.newest_product %}
+                            <span class="badge bg-success mb-2">🆕 Новинка</span>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'boats:product_detail' product.slug %}" class="btn btn-primary">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <h3>🛥️ В категории "{{ category.category_name }}" пока нет товаров</h3>
+            <p>Товары скоро появятся</p>
+            <a href="{% url 'boats:category_list' %}" class="btn btn-primary">← Все категории лодок</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 📄 Пагинация -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Пагинация">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">← Предыдущая</a>
+                </li>
             {% endif %}
-
-            <div class="price-wrap mt-2">
-              <span class="price">{{ product.get_display_price }} руб.</span>
-              {% if product.newest_product %}
-                <span class="badge badge-success ml-1">Новинка</span>
-              {% endif %}
-            </div>
-          </div>
-        </figcaption>
-      </figure>
-    </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-      <h3>🛥️ В данной категории лодок пока нет товаров</h3>
-      <p>Товары скоро появятся. Попробуйте выбрать другую категорию.</p>
-      <a href="{% url 'boats:category_list' %}" class="btn btn-primary mt-3">К другим категориям</a>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- 📄 ИСПРАВЛЕННАЯ Пагинация (только если НЕ "показать все") -->
-  {% if per_page != 'all' and page_obj.paginator.num_pages > 1 %}
-  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center mb-4">
-      {% if page_obj.has_previous %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" aria-label="Previous">
-          <span aria-hidden="true">&laquo; Предыдущая</span>
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <a class="page-link">Предыдущая</a>
-      </li>
-      {% endif %}
-
-      {% for num in page_obj.paginator.page_range %}
-      <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-        <a class="page-link" href="?page={{ num }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}">{{ num }}</a>
-      </li>
-      {% endfor %}
-
-      {% if page_obj.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" aria-label="Next">
-          <span aria-hidden="true">Следующая &raquo;</span>
-        </a>
-      </li>
-      {% else %}
-      <li class="page-item disabled">
-        <a class="page-link">Следующая</a>
-      </li>
-      {% endif %}
-    </ul>
-  </nav>
-  {% endif %}
-
-  <!-- ✨ СВОРАЧИВАЮЩЕЕСЯ ОПИСАНИЕ КАТЕГОРИИ - ТОЛЬКО ИЗ АДМИНКИ -->
-  {% if category.description %}
-  <div class="category-description collapsed" id="category-description">
-    <h3>{{ category.category_name }}</h3>
-
-    <!-- 📊 Информационная строка -->
-    <div class="content-info">
-      <span>📝 {{ category.description|length }} символов</span>
-      <span>⏱️ ~{{ category.description|wordcount|floatformat:0|add:50|div:250|floatformat:0 }} мин. чтения</span>
-    </div>
-
-    <div class="category-description-text" id="category-text-content">
-      {{ category.description|safe }}
-    </div>
-
-    <div class="read-more-overlay" id="read-more-overlay"></div>
-
-    <!-- ✨ КНОПКА ЧИТАТЬ ДАЛЕЕ / СВЕРНУТЬ -->
-    <button class="read-more-btn" id="read-more-btn">
-      <span class="btn-text">Читать далее</span>
-      <span class="arrow">↓</span>
-    </button>
-  </div>
-  {% endif %}
-
+            
+            {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая →</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
-
-<script>
-  // 🔄 Функция изменения сортировки
-  function changeSorting(sortValue) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('sort', sortValue);
-    urlParams.delete('page'); // Сброс страницы при изменении сортировки
-
-    const newUrl = window.location.pathname + (urlParams.toString() ?
-      '?' + urlParams.toString() : '');
-    window.location.href = newUrl;
-  }
-
-  // 📄 Функция изменения количества товаров на странице
-  function changePerPage(perPageValue) {
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('per_page', perPageValue);
-    urlParams.delete('page'); // Сброс страницы при изменении количества
-
-    const newUrl = window.location.pathname + (urlParams.toString() ?
-      '?' + urlParams.toString() : '');
-    window.location.href = newUrl;
-  }
-
-  // ✨ УЛУЧШЕННЫЙ JavaScript для toggle
-  document.addEventListener('DOMContentLoaded', function() {
-    const descriptionBlock = document.getElementById('category-description');
-    const readMoreBtn = document.getElementById('read-more-btn');
-
-    if (!readMoreBtn || !descriptionBlock) {
-      return;
-    }
-
-    let isExpanded = false;
-
-    readMoreBtn.addEventListener('click', function() {
-      isExpanded = !isExpanded;
-
-      const btnText = this.querySelector('.btn-text');
-      const arrow = this.querySelector('.arrow');
-
-      if (isExpanded) {
-        // 📖 Раскрываем
-        descriptionBlock.classList.remove('collapsed');
-        descriptionBlock.classList.add('expanded');
-        readMoreBtn.classList.add('expanded');
-        btnText.textContent = 'Свернуть';
-        arrow.textContent = '↑';
-
-        // 📊 Плавная прокрутка к контенту
-        setTimeout(() => {
-          descriptionBlock.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }, 100);
-      } else {
-        // 📚 Сворачиваем
-        descriptionBlock.classList.remove('expanded');
-        descriptionBlock.classList.add('collapsed');
-        readMoreBtn.classList.remove('expanded');
-        btnText.textContent = 'Читать далее';
-        arrow.textContent = '↓';
-      }
-    });
-  });
-</script>
-
 {% endblock %}
