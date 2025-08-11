@@ -9,6 +9,7 @@ from base.models import BaseModel
 from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django_ckeditor_5.fields import CKEditor5Field
 from django.db.models import Q
 
@@ -355,7 +356,14 @@ class Product(BaseModel):
         return self.product_name
 
     def save(self, *args, **kwargs):
-        """🔄 Автоматическое создание slug из названия товара"""
+        """🔄 Автоматическое создание slug и валидация размеров лодок"""
+        # 🛥️ ВАЛИДАЦИЯ: Проверяем, что у лодок указаны размеры
+        if self.is_boat_product():
+            if not self.boat_mat_length or not self.boat_mat_width:
+                raise ValidationError(
+                    "Для товара типа 'Лодка' необходимо указать длину и ширину коврика."
+                )
+
         if not self.slug and self.product_name:
             self.slug = slugify(self.product_name)
         super(Product, self).save(*args, **kwargs)

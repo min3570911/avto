@@ -27,19 +27,8 @@ urlpatterns = [
 
     # 🛒 КОРЗИНА ДЛЯ ЛОДОК
 
-    # 🛒 Добавление лодочного товара в корзину
-    path('add-to-cart/<uid>/', views.boat_add_to_cart, name='add_to_cart'),
-
-    # 🗑️ Удаление лодочного товара из корзины
-    path('remove-from-cart/<uid>/', views.boat_remove_from_cart, name='remove_from_cart'),
-
-    # 📊 Обновление количества лодочного товара в корзине
-    path('update-cart/<uid>/', views.boat_update_cart_quantity, name='update_cart'),
-
     # ❤️ ИЗБРАННОЕ ДЛЯ ЛОДОК
 
-    # ❤️ Добавление/удаление лодочного товара в/из избранного (toggle)
-    path('add-to-wishlist/<uid>/', views.boat_add_to_wishlist, name='add_to_wishlist'),
 ]
 
 # 🔧 СТРУКТУРА URL ДЛЯ ЛОДОК:
