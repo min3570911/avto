@@ -7,7 +7,8 @@ import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.db import transaction
-from products.models import ProductImage, Category, Color
+from products.models import ProductImage, Category
+from common.models import Color
 from django.utils import timezone
 
 

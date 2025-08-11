@@ -16,11 +16,11 @@ from django.db.models import Q
 from .models import BoatCategory, BoatProduct, BoatProductImage
 
 # 🎨 Общие модели - ИСПРАВЛЕННЫЕ ИМПОРТЫ
-from products.models import Color, Wishlist
+from common.models import Color, ProductReview, Wishlist
 from accounts.models import Cart, CartItem
+from django.contrib.contenttypes.models import ContentType
 
-# 🛒 Временные импорты (до унификации корзины)
-from products.views import add_to_cart, add_to_wishlist
+
 
 
 def boat_category_list(request):
@@ -291,7 +291,6 @@ def boat_product_detail(request, slug):
     ✅ Добавление в корзину/избранное
     ❌ УБРАНО: комплектации, подпятник
     """
-    from products.models import ProductReview
     from products.forms import ReviewForm
 
     # 📦 Получаем товар лодки с оптимизацией
@@ -307,10 +306,12 @@ def boat_product_detail(request, slug):
             content = request.POST.get('content', '').strip()
 
             if stars >= 1 and stars <= 5 and content:
+                content_type = ContentType.objects.get_for_model(product)
                 # Проверяем, есть ли уже отзыв от этого пользователя
                 existing_review = ProductReview.objects.filter(
                     user=request.user,
-                    product=product
+                    content_type=content_type,
+                    object_id=product.pk,
                 ).first()
 
                 if existing_review:
@@ -319,7 +320,7 @@ def boat_product_detail(request, slug):
                     # Создаем новый отзыв
                     ProductReview.objects.create(
                         user=request.user,
-                        product=product,
+                        product=product, # GFK handles this automatically
                         stars=stars,
                         content=content
                     )
@@ -348,14 +349,11 @@ def boat_product_detail(request, slug):
     ).order_by('display_order', 'name')
 
     # 📝 Отзывы товара (ТОЧНАЯ КОПИЯ С PRODUCTS)
-    try:
-        # Пытаемся получить отзывы через связь
-        reviews = product.reviews.all().order_by('-date_added')
-    except AttributeError:
-        # Если связи нет, получаем отзывы напрямую
-        reviews = ProductReview.objects.filter(
-            product=product
-        ).order_by('-date_added')
+    content_type = ContentType.objects.get_for_model(product)
+    reviews = ProductReview.objects.filter(
+        content_type=content_type,
+        object_id=product.pk
+    ).order_by('-date_added')
 
     # 📊 Контекст для шаблона (МАКСИМАЛЬНО ПОЛНЫЙ)
     context = {

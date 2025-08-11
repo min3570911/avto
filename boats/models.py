@@ -105,172 +105,55 @@ class BoatCategory(BaseModel):
         ordering = ['display_order', 'category_name']
 
 
-class BoatProduct(BaseModel):
-    """
-    🛥️ УНИФИЦИРОВАННАЯ модель товаров лодок
+from base.models import BaseProduct
+from django.contrib.contenttypes.fields import GenericRelation
 
-    ✅ ТОЧНАЯ КОПИЯ products.models.Product, НО:
-    - Связь с BoatCategory (вместо Category)
-    - Размеры коврика boat_mat_length/width (вместо комплектаций)
-    - БЕЗ связи с KitVariant
-    - БЕЗ поля has_podpyatnik
-    """
 
-    # 🏷️ ОСНОВНАЯ ИНФОРМАЦИЯ (ИДЕНТИЧНО Product)
-    product_name = models.CharField(
-        max_length=200,
-        verbose_name="Название товара",
-        help_text="Например: Коврик EVA для Yamaha F150"
-    )
-
-    slug = models.SlugField(
-        unique=True,
-        max_length=255,
-        verbose_name="URL-адрес",
-        help_text="Автоматически генерируется из названия"
-    )
-
-    # 📂 КАТЕГОРИЯ (связь с BoatCategory)
+class BoatProduct(BaseProduct):
+    """🛥️ Товар для лодки (наследует общие поля от BaseProduct)"""
     category = models.ForeignKey(
         BoatCategory,
         on_delete=models.CASCADE,
         related_name="products",
-        verbose_name="Категория лодки",
-        help_text="Выберите бренд лодки"
+        verbose_name="Категория лодки"
     )
 
-    # 💰 ЦЕНА (IntegerField как у Product)
-    price = models.IntegerField(
-        verbose_name="Базовая цена",
-        null=True,
-        blank=True,
-        default=0,
-        help_text="Цена в рублях (целое число)"
+    # Уникальные поля для лодок
+    boat_mat_length = models.PositiveIntegerField(null=True, blank=True, verbose_name="Длина коврика (см)")
+    boat_mat_width = models.PositiveIntegerField(null=True, blank=True, verbose_name="Ширина коврика (см)")
+
+    # Связь с универсальными отзывами
+    reviews = GenericRelation(
+        'common.ProductReview',
+        object_id_field='object_id',
+        content_type_field='content_type'
     )
 
-    # 📝 ОПИСАНИЕ (CKEditor5Field как у Product)
-    product_desription = CKEditor5Field(
-        verbose_name="Описание товара",
-        help_text="Подробное описание товара с возможностью форматирования",
-        config_name='default'
+    # Связь с универсальным избранным
+    wishlisted_by = GenericRelation(
+        'common.Wishlist',
+        object_id_field='object_id',
+        content_type_field='content_type'
     )
-
-    # ⭐ УПРАВЛЕНИЕ (как у Product)
-    newest_product = models.BooleanField(
-        default=False,
-        verbose_name="Новый товар"
-    )
-
-    # 🆔 АРТИКУЛ (как у Product)
-    product_sku = models.CharField(
-        max_length=50,
-        unique=True,
-        null=True,
-        blank=True,
-        verbose_name="Артикул товара",
-        help_text="Уникальный код товара для импорта и учета"
-    )
-
-    # 🛥️ РАЗМЕРЫ ЛОДОЧНОГО КОВРИКА (УНИКАЛЬНО ДЛЯ ЛОДОК)
-    boat_mat_length = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name="Длина коврика (см)",
-        help_text="Длина коврика для лодки в сантиметрах"
-    )
-
-    boat_mat_width = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name="Ширина коврика (см)",
-        help_text="Ширина коврика для лодки в сантиметрах"
-    )
-
-    # 🔍 SEO ПОЛЯ (как у Product)
-    page_title = models.CharField(
-        max_length=200,
-        blank=True,
-        null=True,
-        verbose_name="Заголовок страницы (Title)",
-        help_text="SEO заголовок для страницы товара"
-    )
-
-    meta_description = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Meta Description",
-        help_text="SEO описание для поисковых систем"
-    )
-
-    def save(self, *args, **kwargs):
-        """🔧 Автогенерация slug и SKU"""
-        if not self.slug:
-            self.slug = slugify(self.product_name, allow_unicode=True)
-
-        # 🆔 Автогенерация SKU если не указан
-        if not self.product_sku:
-            # Используем первые 3 буквы категории + timestamp
-            category_prefix = self.category.category_name[:3].upper()
-            import time
-            timestamp = str(int(time.time()))[-6:]  # Последние 6 цифр
-            self.product_sku = f"BOAT-{category_prefix}-{timestamp}"
-
-        super().save(*args, **kwargs)
-
-    def get_absolute_url(self):
-        """🌐 URL товара лодки"""
-        return reverse('boats:product_detail', kwargs={'slug': self.slug})
 
     def get_mat_dimensions(self):
         """📏 Получить размеры коврика в формате строки"""
         if self.boat_mat_length and self.boat_mat_width:
             return f"{self.boat_mat_length}×{self.boat_mat_width} см"
-        elif self.boat_mat_length:
-            return f"Длина: {self.boat_mat_length} см"
-        elif self.boat_mat_width:
-            return f"Ширина: {self.boat_mat_width} см"
-        return "Размеры уточняйте"
-
-    def get_dimensions_display(self):
-        """📏 Объект с размерами для шаблонов"""
-        if self.boat_mat_length and self.boat_mat_width:
-            return {
-                'length': self.boat_mat_length,
-                'width': self.boat_mat_width,
-                'formatted': f"{self.boat_mat_length}×{self.boat_mat_width} см",
-                'area': round(self.boat_mat_length * self.boat_mat_width / 10000, 2)  # м²
-            }
         return None
-
-    def get_display_price(self):
-        """💰 Отформатированная цена"""
-        if self.price:
-            return f"{self.price:,}".replace(',', ' ')
-        return "Цена по запросу"
-
-    def get_main_image(self):
-        """🖼️ Получить главное изображение"""
-        main_image = self.images.filter(is_main=True).first()
-        if main_image:
-            return main_image
-        return self.images.first()
 
     def __str__(self):
         """🛥️ Отображение в админке"""
-        dimensions = ""
-        if self.boat_mat_length and self.boat_mat_width:
-            dimensions = f" ({self.boat_mat_length}×{self.boat_mat_width}см)"
-        return f"🛥️ {self.product_name}{dimensions}"
+        dimensions = self.get_mat_dimensions()
+        if dimensions:
+            return f"🛥️ {self.product_name} ({dimensions})"
+        return f"🛥️ {self.product_name}"
 
     class Meta:
         verbose_name = "🛥️ Товар (лодка)"
         verbose_name_plural = "🛥️ Товары (лодки)"
         ordering = ['-created_at', 'product_name']
-        indexes = [
-            models.Index(fields=['category', 'newest_product']),
-            models.Index(fields=['slug']),
-            models.Index(fields=['product_sku']),
-        ]
+        db_table = 'boats_boatproduct'
 
 
 class BoatProductImage(BaseModel):

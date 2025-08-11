@@ -58,12 +58,12 @@
                       </p>
                       <td class="d-flex justify-content-end">
                         <div class="d-sm-flex mr-2">
-                          <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.product.uid %}">
+                          <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.uid %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-primary">В корзину</button>
                           </form>
 
-                          <form method="POST" action="{% url 'remove_from_wishlist' item.product.uid %}?kit={{ item.kit_variant.code }}">
+                          <form method="POST" action="{% url 'remove_from_wishlist' item.uid %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">Удалить</button>
                           </form>
