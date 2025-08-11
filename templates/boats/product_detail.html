@@ -632,7 +632,7 @@ font-weight: bold;
  <div class="form-group d-flex justify-content-start mt-3">
  <div class="d-sm-flex">
  <div class="mb-2 mb-sm-0 mr-0 mr-sm-2">
- <form method="POST" action="{% url 'boats:add_to_wishlist' product.uid %}" id="wishlist-form">
+ <form method="POST" action="{% url 'add_to_wishlist' product.uid %}" id="wishlist-form">
  {% csrf_token %}
  <!-- 🛥️ УБРАНО: kit для лодок -->
  <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="">
@@ -645,7 +645,7 @@ font-weight: bold;
  </form>
  </div>
 
- <form method="POST" action="{% url 'boats:add_to_cart' product.uid %}" id="cart-form">
+ <form method="POST" action="{% url 'add_to_cart' product.uid %}" id="cart-form">
  {% csrf_token %}
  <!-- 🛥️ УБРАНО: kit для лодок -->
  <input type="hidden" name="carpet_color" id="cart-carpet-color" value="">

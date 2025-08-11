@@ -16,11 +16,11 @@ from django.db.models import Q
 from .models import BoatCategory, BoatProduct, BoatProductImage
 
 # 🎨 Общие модели - ИСПРАВЛЕННЫЕ ИМПОРТЫ
-from products.models import Color, Wishlist
+from common.models import Color, ProductReview, Wishlist
 from accounts.models import Cart, CartItem
+from django.contrib.contenttypes.models import ContentType
 
-# 🛒 Временные импорты (до унификации корзины)
-from products.views import add_to_cart, add_to_wishlist
+
 
 
 def boat_category_list(request):
@@ -291,7 +291,6 @@ def boat_product_detail(request, slug):
     ✅ Добавление в корзину/избранное
     ❌ УБРАНО: комплектации, подпятник
     """
-    from products.models import ProductReview
     from products.forms import ReviewForm
 
     # 📦 Получаем товар лодки с оптимизацией
@@ -307,10 +306,12 @@ def boat_product_detail(request, slug):
             content = request.POST.get('content', '').strip()
 
             if stars >= 1 and stars <= 5 and content:
+                content_type = ContentType.objects.get_for_model(product)
                 # Проверяем, есть ли уже отзыв от этого пользователя
                 existing_review = ProductReview.objects.filter(
                     user=request.user,
-                    product=product
+                    content_type=content_type,
+                    object_id=product.pk,
                 ).first()
 
                 if existing_review:
@@ -319,7 +320,7 @@ def boat_product_detail(request, slug):
                     # Создаем новый отзыв
                     ProductReview.objects.create(
                         user=request.user,
-                        product=product,
+                        product=product, # GFK handles this automatically
                         stars=stars,
                         content=content
                     )
@@ -348,14 +349,11 @@ def boat_product_detail(request, slug):
     ).order_by('display_order', 'name')
 
     # 📝 Отзывы товара (ТОЧНАЯ КОПИЯ С PRODUCTS)
-    try:
-        # Пытаемся получить отзывы через связь
-        reviews = product.reviews.all().order_by('-date_added')
-    except AttributeError:
-        # Если связи нет, получаем отзывы напрямую
-        reviews = ProductReview.objects.filter(
-            product=product
-        ).order_by('-date_added')
+    content_type = ContentType.objects.get_for_model(product)
+    reviews = ProductReview.objects.filter(
+        content_type=content_type,
+        object_id=product.pk
+    ).order_by('-date_added')
 
     # 📊 Контекст для шаблона (МАКСИМАЛЬНО ПОЛНЫЙ)
     context = {
@@ -411,199 +409,6 @@ def boat_search(request):
 
 # 🛒 КОРЗИНА ДЛЯ ЛОДОК (АДАПТИРОВАНО С PRODUCTS)
 
-@login_required
-def boat_add_to_cart(request, uid):
-    """
-    🛒 Добавление лодочного товара в корзину (АДАПТИРОВАНО С PRODUCTS)
-
-    Поддерживает:
-    ✅ Выбор цветов коврика и канта
-    ✅ Количество товара
-    ❌ УБРАНО: комплектации, подпятник
-    """
-    if request.method == 'POST':
-        try:
-            # 📦 Получаем товар лодки
-            product = get_object_or_404(BoatProduct, uid=uid)
-
-            # 🎨 Получаем выбранные цвета
-            carpet_color_name = request.POST.get('carpet_color', '')
-            border_color_name = request.POST.get('border_color', '')
-            quantity = int(request.POST.get('quantity', 1))
-
-            # 🔍 Находим объекты цветов
-            carpet_color = None
-            border_color = None
-
-            if carpet_color_name:
-                try:
-                    carpet_color = Color.objects.get(name=carpet_color_name, color_type='carpet')
-                except Color.DoesNotExist:
-                    carpet_color = None
-
-            if border_color_name:
-                try:
-                    border_color = Color.objects.get(name=border_color_name, color_type='border')
-                except Color.DoesNotExist:
-                    border_color = None
-
-            # 🛒 Получаем или создаем корзину
-            cart, created = Cart.objects.get_or_create(user=request.user)
-
-            # 🔍 Проверяем, есть ли уже такая конфигурация в корзине
-            # ДЛЯ ЛОДОК: только цвета, без комплектаций и подпятника
-            existing_item = CartItem.objects.filter(
-                cart=cart,
-                product=product,
-                carpet_color=carpet_color,
-                border_color=border_color,
-                kit_variant__isnull=True,  # Для лодок комплектации всегда null
-                has_podpyatnik=False  # Для лодок подпятник всегда False
-            ).first()
-
-            if existing_item:
-                # 📈 Увеличиваем количество
-                existing_item.quantity += quantity
-                existing_item.save()
-                messages.success(request, f"🛒 Количество увеличено! Теперь в корзине: {existing_item.quantity}")
-            else:
-                # 🆕 Создаем новый элемент корзины
-                CartItem.objects.create(
-                    cart=cart,
-                    product=product,
-                    quantity=quantity,
-                    carpet_color=carpet_color,
-                    border_color=border_color,
-                    kit_variant=None,  # Для лодок всегда None
-                    has_podpyatnik=False  # Для лодок всегда False
-                )
-                messages.success(request, f"🛒 Лодочный коврик добавлен в корзину! Количество: {quantity}")
-
-            # 🔄 Перенаправляем обратно на страницу товара
-            return redirect('boats:product_detail', slug=product.slug)
-
-        except ValueError:
-            messages.error(request, "❌ Некорректное количество товара.")
-        except BoatProduct.DoesNotExist:
-            messages.error(request, "❌ Товар не найден.")
-        except Exception as e:
-            messages.error(request, f"❌ Ошибка добавления в корзину: {str(e)}")
-
-    # 🔄 При ошибке возвращаемся на каталог лодок
-    return redirect('boats:category_list')
-
-
-@login_required
-def boat_add_to_wishlist(request, uid):
-    """
-    ❤️ Добавление лодочного товара в избранное (АДАПТИРОВАНО С PRODUCTS)
-
-    Поддерживает:
-    ✅ Выбор цветов коврика и канта
-    ❌ УБРАНО: комплектации, подпятник
-    """
-    if request.method == 'POST':
-        try:
-            # 📦 Получаем товар лодки
-            product = get_object_or_404(BoatProduct, uid=uid)
-
-            # 🎨 Получаем выбранные цвета (по умолчанию None)
-            carpet_color_name = request.POST.get('carpet_color', '')
-            border_color_name = request.POST.get('border_color', '')
-
-            # 🔍 Находим объекты цветов
-            carpet_color = None
-            border_color = None
-
-            if carpet_color_name:
-                try:
-                    carpet_color = Color.objects.get(name=carpet_color_name, color_type='carpet')
-                except Color.DoesNotExist:
-                    pass
-
-            if border_color_name:
-                try:
-                    border_color = Color.objects.get(name=border_color_name, color_type='border')
-                except Color.DoesNotExist:
-                    pass
-
-            # 🔍 Проверяем, есть ли уже в избранном
-            # ДЛЯ ЛОДОК: только цвета, без комплектаций и подпятника
-            existing_wishlist = Wishlist.objects.filter(
-                user=request.user,
-                product=product,
-                carpet_color=carpet_color,
-                border_color=border_color,
-                kit_variant__isnull=True,  # Для лодок комплектации всегда null
-                has_podpyatnik=False  # Для лодок подпятник всегда False
-            ).first()
-
-            if existing_wishlist:
-                # 🗑️ Удаляем из избранного (toggle)
-                existing_wishlist.delete()
-                messages.info(request, "💔 Лодочный коврик удален из избранного.")
-            else:
-                # ❤️ Добавляем в избранное
-                Wishlist.objects.create(
-                    user=request.user,
-                    product=product,
-                    carpet_color=carpet_color,
-                    border_color=border_color,
-                    kit_variant=None,  # Для лодок всегда None
-                    has_podpyatnik=False  # Для лодок всегда False
-                )
-                messages.success(request, "❤️ Лодочный коврик добавлен в избранное!")
-
-            # 🔄 Перенаправляем обратно на страницу товара
-            return redirect('boats:product_detail', slug=product.slug)
-
-        except BoatProduct.DoesNotExist:
-            messages.error(request, "❌ Товар не найден.")
-        except Exception as e:
-            messages.error(request, f"❌ Ошибка добавления в избранное: {str(e)}")
-
-    # 🔄 При ошибке возвращаемся на каталог лодок
-    return redirect('boats:category_list')
-
-
-# 🔧 ДОПОЛНИТЕЛЬНЫЕ функции для лодок
-
-@login_required
-def boat_remove_from_cart(request, item_uid):
-    """🗑️ Удаление лодочного товара из корзины"""
-    try:
-        cart_item = get_object_or_404(CartItem, uid=item_uid, cart__user=request.user)
-        product_name = cart_item.product.product_name
-        cart_item.delete()
-        messages.success(request, f"🗑️ {product_name} удален из корзины.")
-    except Exception as e:
-        messages.error(request, f"❌ Ошибка удаления: {str(e)}")
-
-    return redirect('cart')
-
-
-@login_required
-def boat_update_cart_quantity(request, item_uid):
-    """📊 Обновление количества лодочного товара в корзине"""
-    if request.method == 'POST':
-        try:
-            cart_item = get_object_or_404(CartItem, uid=item_uid, cart__user=request.user)
-            new_quantity = int(request.POST.get('quantity', 1))
-
-            if new_quantity > 0:
-                cart_item.quantity = new_quantity
-                cart_item.save()
-                messages.success(request, f"📊 Количество обновлено: {new_quantity}")
-            else:
-                cart_item.delete()
-                messages.info(request, "🗑️ Товар удален из корзины.")
-
-        except ValueError:
-            messages.error(request, "❌ Некорректное количество.")
-        except Exception as e:
-            messages.error(request, f"❌ Ошибка обновления: {str(e)}")
-
-    return redirect('cart')
 
 # 🔧 КОММЕНТАРИИ:
 #

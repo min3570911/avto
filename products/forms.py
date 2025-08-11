@@ -9,7 +9,7 @@ import os
 import zipfile
 
 # 📝 Импорт модели для отзывов
-from .models import ProductReview
+from common.models import ProductReview
 
 
 class ReviewForm(forms.ModelForm):

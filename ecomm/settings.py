@@ -45,11 +45,12 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    'base',
+    'common',
     'accounts',
     'products',
     'boats',
     'home',
-    'base',
     'blog',  # Приложение для статей
 ]
 

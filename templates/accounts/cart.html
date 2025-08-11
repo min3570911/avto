@@ -123,16 +123,10 @@
                         <td>
                             <figure class="itemside">
                                 <div class="aside">
-                                    {% if cart_item.kit_variant and cart_item.kit_variant.image %}
-                                    <img src="{{ cart_item.kit_variant.image.url }}" class="img-sm"
-                                        alt="{{ cart_item.kit_variant.name }}" />
-                                    {% else %}
-                                    <img src="/media/{{ cart_item.product.product_images.first.image }}"
-                                        class="img-sm" alt="{{ cart_item.product.product_name }}" />
-                                    {% endif %}
+                                    <img src="{{ cart_item.get_image_url }}" class="img-sm" alt="{{ cart_item.product.product_name }}" />
                                 </div>
                                 <figcaption class="info">
-    <a href="{% url 'get_product' cart_item.product.slug %}" class="title text-dark">
+    <a href="{{ cart_item.get_product_url }}" class="title text-dark">
         {{ cart_item.product.product_name }}
     </a>
     <p class="text-muted small mb-0">
