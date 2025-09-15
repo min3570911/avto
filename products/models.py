@@ -1,7 +1,7 @@
-# 📁 products/models.py - ФИНАЛЬНАЯ ВЕРСИЯ с поддержкой лодок
-# 🛥️ ДОБАВЛЕНО: Поля category_type, parent для Category + boat_mat_length, boat_mat_width для Product
-# ✅ ВКЛЮЧЕНЫ: Все модели без ошибок (Category, Product, ProductImage, Coupon, ProductReview, Color, Wishlist)
-# ✅ ПРОВЕРЕНО: Все импорты, методы, поля корректны
+# 📁 products/models.py - ПОЛНАЯ ВЕРСИЯ БЕЗ дублирующихся моделей
+# ✅ УДАЛЕНО: ProductReview и Wishlist (перенесены в common)
+# 🛥️ СОХРАНЕНО: Все остальные модели с полной функциональностью из оригинала
+# ✅ ВКЛЮЧЕНЫ: Category, Product, ProductImage, Coupon, Color, KitVariant
 
 import re
 from django.db import models
@@ -190,8 +190,7 @@ class Category(BaseModel):
                                         f"Защита дна, выбор цвета, доставка по Беларуси."[:160]
             else:
                 self.meta_description = f"Большой выбор {self.category_name.lower()}. " \
-                                        f"Качественные товары с доставкой по Беларуси. Выгодные цены и быстрая доставка."[
-                                        :160]
+                                        f"Качественные товары с доставкой по Беларуси. Выгодные цены и быстрая доставка."[:160]
 
         if self.additional_content:
             self.additional_content = self.convert_youtube_links(self.additional_content)
@@ -267,9 +266,15 @@ class KitVariant(BaseModel):
     order = models.IntegerField(default=0, verbose_name="Порядок сортировки")
     image = models.ImageField(upload_to='configurations', null=True, blank=True, verbose_name="Изображение схемы")
     is_option = models.BooleanField(default=False, verbose_name="Дополнительная опция")
+    description = models.TextField(
+        blank=True,
+        verbose_name="Описание комплектации"
+    )
 
     def __str__(self) -> str:
-        return self.name
+        price_info = f" (+{self.price_modifier} BYN)" if self.price_modifier > 0 else ""
+        option_mark = " [ОПЦИЯ]" if self.is_option else ""
+        return f"{self.name}{price_info}{option_mark}"
 
     class Meta:
         verbose_name = "Тип комплектации"
@@ -390,17 +395,32 @@ class Product(BaseModel):
 
     display_price.short_description = "Цена"
 
-    # 🔄 МЕТОДЫ ДЛЯ РАБОТЫ С РЕЙТИНГАМИ И ОТЗЫВАМИ
+    # 🔄 МЕТОДЫ ДЛЯ РАБОТЫ С РЕЙТИНГАМИ И ОТЗЫВАМИ (используют common.ProductReview)
     def get_rating(self):
         """⭐ Рассчитывает средний рейтинг товара на основе отзывов"""
-        if self.reviews.count() > 0:
-            total = sum(int(review.stars) for review in self.reviews.all())
-            return total / self.reviews.count()
+        # Импортируем здесь чтобы избежать циклического импорта
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            from common.models import ProductReview
+            ct = ContentType.objects.get_for_model(self)
+            reviews = ProductReview.objects.filter(content_type=ct, object_id=self.uid)
+            if reviews.count() > 0:
+                total = sum(int(review.stars) for review in reviews)
+                return total / reviews.count()
+        except ImportError:
+            pass
         return 0
 
     def get_reviews_count(self):
         """📝 Возвращает количество отзывов"""
-        return self.reviews.count()
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            from common.models import ProductReview
+            ct = ContentType.objects.get_for_model(self)
+            return ProductReview.objects.filter(content_type=ct, object_id=self.uid).count()
+        except ImportError:
+            pass
+        return 0
 
     def is_new(self):
         """🆕 Проверяет, является ли товар новым"""
@@ -508,47 +528,6 @@ class Coupon(BaseModel):
         ordering = ['-created_at']
 
 
-class ProductReview(BaseModel):
-    """📝 Модель отзывов о товарах"""
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE,
-        related_name='reviews', verbose_name="Товар")
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE,
-        related_name='reviews', verbose_name="Пользователь")
-    stars = models.IntegerField(
-        default=3,
-        choices=[(i, i) for i in range(1, 6)],
-        verbose_name="Оценка")
-    content = models.TextField(
-        blank=True, null=True, verbose_name="Содержание отзыва")
-    date_added = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата добавления")
-    likes = models.ManyToManyField(
-        User, related_name="liked_reviews",
-        blank=True, verbose_name="Лайки")
-    dislikes = models.ManyToManyField(
-        User, related_name="disliked_reviews",
-        blank=True, verbose_name="Дизлайки")
-
-    def like_count(self):
-        """👍 Количество лайков"""
-        return self.likes.count()
-
-    def dislike_count(self):
-        """👎 Количество дизлайков"""
-        return self.dislikes.count()
-
-    def __str__(self):
-        return f"Отзыв от {self.user.username} на {self.product.product_name} ({self.stars}⭐)"
-
-    class Meta:
-        verbose_name = "Отзыв"
-        verbose_name_plural = "Отзывы"
-        ordering = ['-date_added']
-        unique_together = ('user', 'product')
-
-
 class Color(BaseModel):
     """🎨 Модель цветов для ковриков и окантовки"""
     name = models.CharField(max_length=50, verbose_name="Название цвета")
@@ -612,9 +591,36 @@ class Color(BaseModel):
             f'border:1px solid #666; border-radius:3px; display:inline-block;"></div>'
         )
 
+    def get_color_preview_html(self):
+        """🎨 HTML превью цвета для админки"""
+        return mark_safe(
+            f'<div style="width: 30px; height: 30px; background-color: {self.hex_code}; '
+            f'border: 1px solid #ccc; border-radius: 3px; display: inline-block;"></div>'
+        )
+
+    def carpet_preview_admin(self):
+        """👁️ Превью коврика для админки"""
+        if self.carpet_image:
+            return mark_safe(
+                f'<img src="{self.carpet_image.url}" '
+                f'style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;" />'
+            )
+        return "Нет изображения"
+
+    def border_preview_admin(self):
+        """👁️ Превью окантовки для админки"""
+        if self.border_image:
+            return mark_safe(
+                f'<img src="{self.border_image.url}" '
+                f'style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;" />'
+            )
+        return "Нет изображения"
+
     carpet_preview.short_description = "Превью коврика"
     border_preview.short_description = "Превью окантовки"
     color_preview_admin.short_description = "Цвет"
+    carpet_preview_admin.short_description = "Превью коврика"
+    border_preview_admin.short_description = "Превью окантовки"
 
     def __str__(self):
         availability = " (недоступен)" if not self.is_available else ""
@@ -624,109 +630,3 @@ class Color(BaseModel):
         verbose_name = "Цвет"
         verbose_name_plural = "Цвета"
         ordering = ['color_type', 'display_order', 'name']
-
-
-class Wishlist(BaseModel):
-    """❤️ Модель списка избранных товаров"""
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE,
-        related_name="wishlist", verbose_name="Пользователь")
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE,
-        related_name="wishlisted_by", verbose_name="Товар")
-    kit_variant = models.ForeignKey(
-        KitVariant, on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name="wishlist_items", verbose_name="Комплектация")
-    carpet_color = models.ForeignKey(
-        Color, on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name="wishlist_carpet_items", verbose_name="Цвет коврика")
-    border_color = models.ForeignKey(
-        Color, on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name="wishlist_border_items", verbose_name="Цвет окантовки")
-    has_podpyatnik = models.BooleanField(
-        default=False, verbose_name="С подпятником")
-    added_on = models.DateTimeField(
-        auto_now_add=True, verbose_name="Добавлено")
-
-    def get_total_price(self):
-        """💰 Рассчитывает общую стоимость товара в избранном"""
-        base_price = self.product.price or 0
-        kit_price = self.kit_variant.price_modifier if self.kit_variant else 0
-        podpyatnik_price = 0
-
-        # 🦶 Добавляем стоимость подпятника если выбран
-        if self.has_podpyatnik:
-            podpyatnik_option = KitVariant.objects.filter(
-                code='podpyatnik', is_option=True
-            ).first()
-            if podpyatnik_option:
-                podpyatnik_price = podpyatnik_option.price_modifier
-
-        return float(base_price + kit_price + podpyatnik_price)
-
-    def get_short_description(self):
-        """📝 Краткое описание конфигурации товара"""
-        parts = []
-        if self.kit_variant:
-            parts.append(f"Комплект: {self.kit_variant.name}")
-        if self.carpet_color:
-            parts.append(f"Коврик: {self.carpet_color.name}")
-        if self.border_color:
-            parts.append(f"Окантовка: {self.border_color.name}")
-        if self.has_podpyatnik:
-            parts.append("С подпятником")
-
-        return " | ".join(parts) if parts else "Стандартная конфигурация"
-
-    def __str__(self):
-        return f"❤️ {self.user.username} → {self.product.product_name}"
-
-    class Meta:
-        verbose_name = "Избранное"
-        verbose_name_plural = "Избранное"
-        unique_together = ('user', 'product', 'kit_variant', 'carpet_color', 'border_color', 'has_podpyatnik')
-        ordering = ['-added_on']
-
-# 🔧 ФИНАЛЬНЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
-#
-# ✅ ДОБАВЛЕНО в Category:
-# - category_type (choices: cars/boats)
-# - parent (ForeignKey для иерархии)
-# - методы get_root_parent(), get_all_children(), is_boat_category()
-# - улучшенные SEO-тексты для лодок
-# - обновленный __str__ с иконками типов
-#
-# ✅ ДОБАВЛЕНО в Product:
-# - boat_mat_length (длина коврика)
-# - boat_mat_width (ширина коврика)
-# - методы is_boat_product(), get_mat_dimensions()
-# - get_display_name_with_dimensions()
-# - обновленный __str__ с размерами
-#
-# ✅ ВКЛЮЧЕНЫ все модели БЕЗ ОШИБОК:
-# - Category - категории с поддержкой лодок
-# - KitVariant - комплектации
-# - Product - товары с поддержкой лодок
-# - ProductImage - изображения товаров
-# - Coupon - купоны (ВОЗВРАЩЕНО)
-# - ProductReview - отзывы
-# - Color - цвета ковриков
-# - Wishlist - избранное
-#
-# ✅ ПРОВЕРЕНЫ:
-# - Все импорты корректны
-# - Все методы полные
-# - Все поля правильно определены
-# - Все Meta классы завершены
-# - Никаких обрезанных строк
-#
-# 🎯 РЕЗУЛЬТАТ:
-# - Поддержка иерархии: Лодки → Hunter, Marlin...
-# - Размеры ковриков для лодок
-# - Разделение авто/лодки по типам
-# - Готовность к импорту лодок
-# - Все импорты в home/views.py работают
-# - Полная обратная совместимость

@@ -51,6 +51,7 @@ LOCAL_APPS = [
     'home',
     'base',
     'blog',  # Приложение для статей
+    'common',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
