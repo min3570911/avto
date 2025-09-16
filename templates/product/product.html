@@ -839,7 +839,8 @@ class="custom-control-input"
  </div>
  <h3 class="title padding-bottom-sm">Отзывы</h3>
 
- {% for review in product.reviews.all %}
+ <!-- ✅ ИСПРАВЛЕНО: Заменено product.reviews.all на reviews -->
+ {% for review in reviews %}
 <div class="card mb-3">
  <div class="card-body" style="background-color: #59ee8d91">
  <div class="d-flex justify-content-between align-items-center">

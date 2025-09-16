@@ -1,6 +1,8 @@
 # accounts/views.py
-# 🛒 Django views для e-commerce с Telegram уведомлениями (УПРОЩЕННАЯ ВЕРСИЯ)
-# 📝 Только корзина и оформление заказов для анонимных пользователей
+# 🛒 Django views для e-commerce с Telegram уведомлениями (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+# ✅ ИСПРАВЛЕНО: Заменен Cart.get_cart() на правильную логику получения корзины
+# ✅ ИСПРАВЛЕНО: Generic FK для CartItem
+# 📝 Корзина и оформление заказов для анонимных пользователей
 
 import os
 import json
@@ -17,23 +19,46 @@ from accounts.models import Cart, CartItem, Order, OrderItem
 from django.views.decorators.http import require_POST
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib.contenttypes.models import ContentType
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
 
 
+def get_cart_for_request(request):
+    """
+    🛒 НОВАЯ ФУНКЦИЯ: Правильное получение корзины для пользователя/сессии
+    ✅ Заменяет несуществующий Cart.get_cart()
+    """
+    if request.user.is_authenticated:
+        # Для авторизованных пользователей
+        cart, created = Cart.objects.get_or_create(
+            user=request.user,
+            is_paid=False,
+            defaults={'session_id': None}
+        )
+        return cart
+    else:
+        # Для анонимных пользователей
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+
+        cart, created = Cart.objects.get_or_create(
+            session_id=session_key,
+            user=None,
+            is_paid=False
+        )
+        return cart
+
+
 def cart(request):
     """🛒 Отображение корзины с формой оформления заказа для анонимных пользователей"""
-    cart_obj = None
+    # ✅ ИСПРАВЛЕНО: Используем новую функцию вместо Cart.get_cart()
+    cart_obj = get_cart_for_request(request)
 
-    try:
-        # Получаем корзину для текущего пользователя/сессии
-        cart_obj = Cart.get_cart(request)
-
-    except Exception as e:
-        messages.warning(request, "Ваша корзина пуста. Пожалуйста, добавьте товар в корзину.")
-        return redirect('/')  # 🔄 Перенаправляем на главную вместо 'index'
-
+    # ✅ ИСПРАВЛЕНО: Убрали try-except который редиректил на главную
     if request.method == 'POST':
         coupon = request.POST.get('coupon')
         coupon_obj = Coupon.objects.filter(coupon_code__exact=coupon).first()
@@ -94,8 +119,8 @@ def update_cart_item(request):
                 "error": "Максимальное количество - 99 штук"
             }, status=400)
 
-        # 🛒 Получаем корзину пользователя/сессии
-        cart = Cart.get_cart(request)
+        # 🛒 ИСПРАВЛЕНО: Используем новую функцию получения корзины
+        cart = get_cart_for_request(request)
 
         # 🔍 Находим элемент корзины (убрали избыточное условие cart__is_paid=False)
         try:
@@ -153,8 +178,8 @@ def update_cart_item(request):
 def remove_cart(request, uid):
     """🗑️ Удаление товара из корзины"""
     try:
-        # Получаем корзину пользователя/сессии
-        cart = Cart.get_cart(request)
+        # 🛒 ИСПРАВЛЕНО: Используем новую функцию получения корзины
+        cart = get_cart_for_request(request)
 
         # Находим и удаляем элемент корзины
         cart_item = CartItem.objects.get(uid=uid, cart=cart)
@@ -171,8 +196,8 @@ def remove_cart(request, uid):
 
 def remove_coupon(request, cart_id):
     """🎫 Удаление купона из корзины"""
-    # Проверяем, что корзина принадлежит текущему пользователю/сессии
-    cart = Cart.get_cart(request)
+    # 🛒 ИСПРАВЛЕНО: Используем новую функцию получения корзины
+    cart = get_cart_for_request(request)
 
     if str(cart.uid) != cart_id:
         messages.warning(request, 'Ошибка доступа к корзине.')
@@ -315,8 +340,8 @@ def place_order(request):
         return redirect('cart')
 
     try:
-        # Получаем корзину пользователя или сессии
-        cart = Cart.get_cart(request)
+        # 🛒 ИСПРАВЛЕНО: Используем новую функцию получения корзины
+        cart = get_cart_for_request(request)
         print(f"🛒 Корзина получена: {cart.uid}")
 
         # Проверяем, есть ли товары в корзине
@@ -473,9 +498,17 @@ def check_cart_item(request, product_id):
     """✅ Проверка наличия товара в корзине (AJAX)"""
     if request.method == 'GET':
         try:
-            cart = Cart.get_cart(request)
+            # 🛒 ИСПРАВЛЕНО: Используем новую функцию получения корзины
+            cart = get_cart_for_request(request)
             product = get_object_or_404(Product, uid=product_id)
-            in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
+
+            # ✅ ИСПРАВЛЕНО: Правильная работа с Generic FK
+            product_content_type = ContentType.objects.get_for_model(Product)
+            in_cart = CartItem.objects.filter(
+                cart=cart,
+                content_type=product_content_type,
+                object_id=product.uid
+            ).exists()
 
             return JsonResponse({'in_cart': in_cart})
         except Exception as e:
