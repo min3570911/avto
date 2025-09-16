@@ -1,6 +1,6 @@
-# 📁 ecomm/urls.py - ОБНОВЛЕНО для CKEditor 5
+# 📁 ecomm/urls.py - ОБНОВЛЕНО для поддержки common приложения
 # 🏠 Основные URL-паттерны проекта
-# ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
+# ✅ ДОБАВЛЕНО: подключение common/urls.py для AJAX функций
 
 from django.contrib import admin
 from django.urls import path, include
@@ -12,7 +12,7 @@ urlpatterns = [
     # 🔧 Админка Django
     path('admin/', admin.site.urls),
 
-    # ✅ НОВОЕ: CKEditor 5 URLs (для загрузки файлов)
+    # ✅ CKEditor 5 URLs (для загрузки файлов)
     path('ckeditor5/', include('django_ckeditor_5.urls')),
 
     # 🛒 Корзина и заказы
@@ -21,10 +21,14 @@ urlpatterns = [
     # 🛍️ Товары и каталог
     path('products/', include('products.urls')),
 
+    # 🛥️ Лодки
     path('boats/', include('boats.urls')),
 
     # 📝 Блог - статьи
     path('blog/', include('blog.urls')),
+
+    # ✅ ДОБАВЛЕНО: Общие функции (отзывы, избранное) - AJAX API
+    path('common/', include('common.urls')),
 
     # 🏠 Главная страница и статические страницы
     path('', include('home.urls')),
@@ -35,7 +39,12 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-# 🔧 ИЗМЕНЕНИЯ:
-# ❌ УДАЛЕНО: path('ckeditor/', include('ckeditor_uploader.urls'))
-# ✅ ДОБАВЛЕНО: path('ckeditor5/', include('django_ckeditor_5.urls'))
-# ✅ СОВРЕМЕННО: Поддержка загрузки файлов в CKEditor 5
+# 🔧 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ:
+# ✅ ДОБАВЛЕНО: path('common/', include('common.urls'))
+#
+# 🎯 ТЕПЕРЬ ДОСТУПНЫ:
+# POST /common/wishlist/add/ - добавление в избранное
+# POST /common/wishlist/remove/ - удаление из избранного
+# POST /common/reviews/add/ - добавление отзыва
+# GET /common/reviews/ - список всех отзывов
+# GET /common/wishlist/ - список избранного пользователя
