@@ -1,7 +1,5 @@
-# 📁 common/admin.py — ПРАВИЛЬНАЯ АДМИНКА БЕЗ КОНФЛИКТОВ
-# 🤝 Универсальные админки для общих моделей с Generic Foreign Key
-# ✅ ИСПРАВЛЕНО: Убран конфликт fieldsets и fields
-# 🔧 ДОБАВЛЕНО: Специальная обработка Generic FK для отзывов и избранного
+# common/admin.py
+# Админка с системой модерации отзывов и улучшенным интерфейсом
 
 from django.contrib import admin
 from django.utils.html import format_html
@@ -11,20 +9,39 @@ from django.utils.safestring import mark_safe
 from .models import ProductReview, Wishlist
 
 
+def approve_reviews(modeladmin, request, queryset):
+    """Массовое одобрение отзывов"""
+    updated = queryset.update(is_approved=True)
+    modeladmin.message_user(request, f'Одобрено {updated} отзывов.')
+
+
+approve_reviews.short_description = "✅ Одобрить выбранные отзывы"
+
+
+def reject_reviews(modeladmin, request, queryset):
+    """Массовое отклонение отзывов"""
+    updated = queryset.update(is_approved=False)
+    modeladmin.message_user(request, f'Отклонено {updated} отзывов.')
+
+
+reject_reviews.short_description = "❌ Отклонить выбранные отзывы"
+
+
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
-    """📝 Админка для универсальных отзывов товаров"""
+    """📝 Админка для универсальных отзывов товаров с модерацией"""
 
     list_display = (
+        'get_approval_status',
         'get_user_info',
         'get_product_info',
-        'stars',
         'get_rating_stars',
         'get_likes_dislikes',
         'date_added'
     )
 
     list_filter = (
+        'is_approved',
         'stars',
         'date_added',
         'content_type'
@@ -49,10 +66,15 @@ class ProductReviewAdmin(admin.ModelAdmin):
     ordering = ('-date_added',)
     date_hierarchy = 'date_added'
 
-    # ✅ ИСПРАВЛЕНО: Используем только fieldsets (убрали fields)
+    actions = [approve_reviews, reject_reviews]
+
     fieldsets = (
         ('📝 Отзыв', {
             'fields': ('user', 'get_product_link', 'stars', 'get_rating_stars', 'content')
+        }),
+        ('✅ Модерация', {
+            'fields': ('is_approved',),
+            'description': 'Только одобренные отзывы видят пользователи'
         }),
         ('👍👎 Реакции', {
             'fields': ('get_likes_dislikes',),
@@ -63,6 +85,20 @@ class ProductReviewAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+    def get_approval_status(self, obj):
+        """✅ Статус модерации с цветовой индикацией"""
+        if obj.is_approved:
+            return format_html(
+                '<span style="color: green; font-weight: bold;">✅ Одобрен</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">⏳ На модерации</span>'
+            )
+
+    get_approval_status.short_description = "Статус"
+    get_approval_status.admin_order_field = 'is_approved'
 
     def get_user_info(self, obj):
         """👤 Информация о пользователе"""
@@ -115,6 +151,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
         return format_html('<span style="font-size: 16px;">{}</span>', stars)
 
     get_rating_stars.short_description = "Рейтинг"
+    get_rating_stars.admin_order_field = 'stars'
 
     def get_likes_dislikes(self, obj):
         """👍👎 Лайки и дизлайки"""
@@ -134,7 +171,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
-        """✏️ Разрешить только просмотр (можно изменить при необходимости)"""
+        """✏️ Разрешить редактирование для модерации"""
         return True
 
     def has_delete_permission(self, request, obj=None):
@@ -176,7 +213,6 @@ class WishlistAdmin(admin.ModelAdmin):
     ordering = ('-added_on',)
     date_hierarchy = 'added_on'
 
-    # ✅ ИСПРАВЛЕНО: Используем только fieldsets (убрали fields)
     fieldsets = (
         ('❤️ Избранное', {
             'fields': ('user', 'get_product_link', 'added_on')
@@ -291,32 +327,3 @@ class WishlistAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """🗑️ Разрешить удаление записей избранного"""
         return True
-
-# 🔧 КЛЮЧЕВЫЕ ИСПРАВЛЕНИЯ В ЭТОМ ФАЙЛЕ:
-#
-# ✅ ИСПРАВЛЕНО: Убран конфликт fieldsets и fields
-#    - Используем только fieldsets в обеих админках
-#    - Убрали все определения fields
-#
-# ✅ ДОБАВЛЕНО: Специальная обработка Generic FK
-#    - get_product_info() - определяет тип товара (автомобиль/лодка)
-#    - get_product_link() - ссылка на редактирование товара
-#    - Правильное отображение связанных объектов
-#
-# ✅ УЛУЧШЕНО: Пользовательский интерфейс админки
-#    - Визуальные иконки для типов товаров
-#    - Звездочки для рейтинга отзывов
-#    - Цветные лайки/дизлайки
-#    - Подробная информация о конфигурации
-#
-# ✅ БЕЗОПАСНОСТЬ: Ограниченные права
-#    - Запрет создания через админку (только через сайт)
-#    - Возможность просмотра и удаления
-#    - Readonly поля для технической информации
-#
-# 🎯 РЕЗУЛЬТАТ:
-# - Больше нет ошибки "Both 'fieldsets' and 'fields' are specified"
-# - Правильная работа с Generic FK
-# - Удобная админка для управления отзывами и избранным
-# - Полная совместимость с архитектурой проекта
-# - Готовность к продакшену
