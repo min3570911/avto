@@ -1,6 +1,7 @@
 # 📁 ecomm/settings.py
 # 🔧 Полная конфигурация Django проекта с CKEditor 5
 # ✅ СОВРЕМЕННО: Переход на django-ckeditor-5
+# 🛡️ ДОБАВЛЕНО: Минимальная анти-спам конфигурация
 
 import os
 import sys
@@ -42,6 +43,8 @@ THIRD_PARTY_APPS = [
     'crispy_bootstrap4',
     # ✅ НОВОЕ: CKEditor 5 для современного WYSIWYG редактирования
     'django_ckeditor_5',
+    # 🛡️ НОВОЕ: reCAPTCHA защита (django-ratelimit добавим позже)
+    'captcha',
 ]
 
 LOCAL_APPS = [
@@ -149,6 +152,11 @@ LOGGING = {
             'format': '[{levelname}] {asctime} {module}: {message}',
             'style': '{',
         },
+        # 🛡️ НОВОЕ: Форматтер для анти-спам логов
+        'spam_formatter': {
+            'format': '[SPAM] {asctime} - {levelname} - {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'file': {
@@ -172,6 +180,14 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
+        # 🛡️ НОВОЕ: Обработчик для анти-спам логов
+        'spam_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'spam_detection.log',
+            'formatter': 'spam_formatter',
+            'encoding': 'utf-8',
+        },
     },
     'loggers': {
         'django': {
@@ -187,6 +203,18 @@ LOGGING = {
         # 🆕 Отдельный логгер только для Telegram
         'telegram': {
             'handlers': ['telegram_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # 🛡️ НОВОЕ: Логгер для спам-детекции
+        'spam_detection': {
+            'handlers': ['spam_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # 🔧 Логгер для анти-спам утилит
+        'common.utils': {
+            'handlers': ['spam_file', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -542,6 +570,63 @@ CKEDITOR_5_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 # 🔒 Ограничения загрузки
 CKEDITOR_5_ALLOW_ALL_FILE_TYPES = False
 CKEDITOR_5_UPLOAD_FILE_TYPES = ['jpeg', 'jpg', 'png', 'gif', 'webp']
+
+# ================================
+# 🛡️ АНТИ-СПАМ НАСТРОЙКИ - НОВЫЙ БЛОК
+# ================================
+
+# 🔐 reCAPTCHA v3 настройки
+RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_PUBLIC_KEY', default='your_site_key_here')
+RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_PRIVATE_KEY', default='your_secret_key_here')
+RECAPTCHA_REQUIRED_SCORE = config('RECAPTCHA_REQUIRED_SCORE', default=0.85, cast=float)
+
+# Дополнительные настройки reCAPTCHA
+RECAPTCHA_DOMAIN = 'www.google.com'
+RECAPTCHA_USE_SSL = True
+
+# 🛡️ Конфигурация анти-спам системы
+SPAM_DETECTION = {
+    # 📝 Настройки текста отзывов
+    'MIN_REVIEW_LENGTH': config('MIN_REVIEW_LENGTH', default=10, cast=int),
+    'MAX_REVIEW_LENGTH': config('MAX_REVIEW_LENGTH', default=1000, cast=int),
+
+    # ⏱️ Rate limiting настройки (пока без django-ratelimit)
+    'RATE_LIMIT_PER_IP': config('RATE_LIMIT_PER_IP', default=3, cast=int),  # отзывов в час
+    'RATE_LIMIT_WINDOW': config('RATE_LIMIT_WINDOW', default=3600, cast=int),  # секунд (1 час)
+
+    # ⏰ Временные ограничения
+    'MIN_FORM_SUBMIT_TIME': config('MIN_FORM_SUBMIT_TIME', default=3, cast=int),  # секунд
+    'MAX_FORM_SUBMIT_TIME': config('MAX_FORM_SUBMIT_TIME', default=1800, cast=int),  # 30 минут
+
+    # 📧 Блокированные email домены
+    'BLOCKED_EMAIL_DOMAINS': [
+        '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
+        'yopmail.com', 'temp-mail.org', 'throwaway.email',
+        'getnada.com', 'tempmail.co', 'maildrop.cc'
+    ],
+
+    # 🚫 Спам-слова для проверки контента
+    'SPAM_WORDS': [
+        'купить дешево', 'скидка 90%', 'кликайте здесь', 'реклама',
+        'лучший товар', 'акция только сегодня', 'звоните срочно',
+        'бесплатно получить', 'выгодное предложение', 'супер цена'
+    ],
+
+    # 🎯 Настройки детекции спама
+    'SPAM_SCORE_THRESHOLD': config('SPAM_SCORE_THRESHOLD', default=70.0, cast=float),
+    'SIMILARITY_THRESHOLD': config('SIMILARITY_THRESHOLD', default=0.8, cast=float),
+
+    # 🔍 IP-репутация (локальные проверки)
+    'CHECK_IP_REPUTATION': config('CHECK_IP_REPUTATION', default=True, cast=bool),
+    'BLOCKED_IP_RANGES': [
+        # Примеры диапазонов для блокировки (можно расширить)
+        # '192.168.1.0/24',  # Пример локальной сети
+    ],
+
+    # 📊 Статистика и логирование
+    'ENABLE_SPAM_LOGGING': config('ENABLE_SPAM_LOGGING', default=True, cast=bool),
+    'LOG_ALL_SUBMISSIONS': config('LOG_ALL_SUBMISSIONS', default=DEBUG, cast=bool),
+}
 
 # 🎯 ПРЕИМУЩЕСТВА CKEDITOR 5:
 # ✅ Современный интерфейс - отзывчивый и мобильный

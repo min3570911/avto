@@ -1,5 +1,5 @@
 {% extends "base/base.html"%}
-{% block title %}{{product.product_name}} {% endblock %}
+{% block title %}{{ product.product_name }}{% endblock %}
 {% block start %} {% load crispy_forms_tags %}
 
 <!-- ⭐ ПОДКЛЮЧЕНИЕ CSS И JS ДЛЯ ЗВЕЗДОЧЕК -->
@@ -14,770 +14,226 @@
     transition: transform 0.25s ease;
     cursor: zoom-in;
 }
-
-.zoomed-in {
-    transform: scale(2);
-    cursor: zoom-out;
-}
+.zoomed-in { transform: scale(2); cursor: zoom-out; }
 
 /* 👍 Стили для кнопок лайков/дизлайков */
 .like-btn {
-    background-color: #59ee8d;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 0.4rem 1rem;
-    transition: all 0.3s ease;
-    font-weight: bold;
+    background-color: #59ee8d; color: #fff; border: none; border-radius: 20px;
+    padding: 0.4rem 1rem; transition: all 0.3s ease; font-weight: bold;
 }
-
 .like-btn:hover {
-    background-color: #45c16b;
-    transform: scale(1.1);
+    background-color: #45c16b; transform: scale(1.1);
     box-shadow: 0 0 10px rgba(89, 238, 141, 0.5);
 }
-
 .dislike-btn {
-    background-color: #ff7675;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 0.4rem 1rem;
-    transition: all 0.3s ease;
-    font-weight: bold;
+    background-color: #ff7675; color: #fff; border: none; border-radius: 20px;
+    padding: 0.4rem 1rem; transition: all 0.3s ease; font-weight: bold;
 }
-
 .dislike-btn:hover {
-    background-color: #d65a5a;
-    transform: scale(1.1);
+    background-color: #d65a5a; transform: scale(1.1);
     box-shadow: 0 0 10px rgba(255, 118, 117, 0.5);
 }
-
-/* 📱 Адаптивность кнопок */
-@media (max-width: 768px) {
-    .like-btn,
-    .dislike-btn {
-        padding: 0.3rem 0.8rem;
-        font-size: 0.9rem;
-    }
-}
+@media (max-width: 768px) { .like-btn, .dislike-btn { padding: 0.3rem 0.8rem; font-size: 0.9rem; } }
 
 /* 📏 Уменьшенные отступы между блоками */
-.content-body > div,
-.content-body > form {
-    margin-bottom: 10px;
-}
-
-.content-body label {
-    margin-bottom: 5px;
-}
-
-.kit-options {
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
-.kit-option-label {
-    margin-bottom: 5px;
-    padding: 5px 10px;
-}
-
-.form-group {
-    margin-bottom: 10px;
-}
-
-hr {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
+.content-body > div, .content-body > form { margin-bottom: 10px; }
+.content-body label { margin-bottom: 5px; }
+.kit-options { gap: 5px; margin-bottom: 10px; }
+.kit-option-label { margin-bottom: 5px; padding: 5px 10px; }
+.form-group { margin-bottom: 10px; }
+hr { margin-top: 10px; margin-bottom: 10px; }
 
 /* 🎨 Стили для визуализатора ковриков */
 .product-visualizer {
-    position: relative;
-    width: 100%;
-    max-width: 380px;
-    margin: 10px auto;
-    min-height: 220px;
+    position: relative; width: 100%; max-width: 380px; margin: 10px auto; min-height: 220px;
 }
-
 .product-visualizer img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    transition: all 0.3s ease;
+    position: absolute; top: 0; left: 0; width: 100%; height: auto; transition: all 0.3s ease;
 }
-
-.kit-base-image {
-    z-index: 1;
-    border: none !important;
-}
-
-.matcolor {
-    z-index: 2;
-}
-
-.bordercolor {
-    z-index: 3;
-}
-
-.podpicon {
-    z-index: 4;
-}
+.kit-base-image { z-index: 1; border: none !important; }
+.matcolor { z-index: 2; }
+.bordercolor { z-index: 3; }
+.podpicon { z-index: 4; }
 
 /* 🔧 Стили для комплектаций */
-.kit-options-container {
-    display: flex;
-}
-
-.kit-options {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 10px;
-}
-
+.kit-options-container { display: flex; }
+.kit-options { flex: 1; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
 .kit-option-label {
-    cursor: pointer;
-    padding: 5px 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    transition: all 0.2s ease;
-    flex: 1 0 100%;
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
-    position: relative;
+    cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; border-radius: 5px;
+    transition: all 0.2s ease; flex: 1 0 100%; display: flex; align-items: center;
+    margin-bottom: 5px; position: relative;
 }
-
-.kit-option-label:hover {
-    border-color: #999;
-    background-color: #f8f8f8;
-}
-
-.kit-option-label.active {
-    border-color: #007bff;
-    background-color: #e6f2ff;
-}
-
-.kit-option-label input {
-    margin-right: 8px;
-}
-
+.kit-option-label:hover { border-color: #999; background-color: #f8f8f8; }
+.kit-option-label.active { border-color: #007bff; background-color: #e6f2ff; }
+.kit-option-label input { margin-right: 8px; }
 .kit-option-label.active::after {
-    content: "✓";
-    position: absolute;
-    right: 10px;
-    color: #007bff;
-    font-weight: bold;
+    content: "✓"; position: absolute; right: 10px; color: #007bff; font-weight: bold;
 }
 
 /* 🎨 Стили для выбора цветов */
-.color-wrapper {
-    position: relative;
-    margin-bottom: 8px;
-}
-
-.color-picker {
-    display: flex;
-    flex-wrap: nowrap;
-    margin-bottom: 5px;
-}
-
-@media (min-width: 768px) {
-    .color-picker {
-        flex-wrap: wrap;
-    }
-    .scroll-indicator {
-        display: none;
-    }
-}
-
+.color-wrapper { position: relative; margin-bottom: 8px; }
+.color-picker { display: flex; flex-wrap: nowrap; margin-bottom: 5px; }
+@media (min-width: 768px) { .color-picker { flex-wrap: wrap; } .scroll-indicator { display: none; } }
 @media (max-width: 767px) {
-    .color-wrapper {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .color-picker {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 5px 3px;
-        margin: -5px -3px 0;
-        scrollbar-width: none;
-    }
-
-    .color-picker::-webkit-scrollbar {
-        display: none;
-    }
-
-    .scroll-indicator {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: #666;
-        margin-top: 3px;
-    }
-
-    .scroll-indicator i {
-        margin: 0 3px;
-    }
-
-    .kit-option-label {
-        padding: 6px;
-        font-size: 1em;
-        margin-bottom: 5px;
-    }
+  .color-wrapper { position: relative; overflow: hidden; }
+  .color-picker {
+      overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 5px 3px;
+      margin: -5px -3px 0; scrollbar-width: none;
+  }
+  .color-picker::-webkit-scrollbar { display: none; }
+  .scroll-indicator {
+      display: flex; align-items: center; justify-content: center; font-size: 12px; color: #666; margin-top: 3px;
+  }
+  .scroll-indicator i { margin: 0 3px; }
+  .kit-option-label { padding: 6px; font-size: 1em; margin-bottom: 5px; }
 }
-
-.color-selection {
-    flex: 0 0 auto;
-    margin: 0 2px;
-    text-align: center;
-}
-
-@media (min-width: 768px) {
-    .color-selection {
-        margin: 0 6px 5px 0;
-    }
-}
-
+.color-selection { flex: 0 0 auto; margin: 0 2px; text-align: center; }
+@media (min-width: 768px) { .color-selection { margin: 0 6px 5px 0; } }
 .color-item {
-    display: inline-block;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #ccc;
-    transition: all 0.2s ease;
-    margin: 0 auto;
+    display: inline-block; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2px solid #ccc; transition: all 0.2s ease; margin: 0 auto;
 }
-
-.color-item:hover {
-    transform: scale(1.1);
-    border-color: #999;
-}
-
-.color-item.active {
-    border: 2px solid #FFEB3B;
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-
-.color-name {
-    font-size: 10px;
-    margin-top: 2px;
-    text-align: center;
-    min-width: 50px;
-}
-
+.color-item:hover { transform: scale(1.1); border-color: #999; }
+.color-item.active { border: 2px solid #FFEB3B; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+.color-name { font-size: 10px; margin-top: 2px; text-align: center; min-width: 50px; }
 @media (max-width: 767px) {
-    .color-item {
-        width: 32px;
-        height: 32px;
-    }
-
-    .color-name {
-        font-size: 11px;
-        min-width: 50px;
-    }
+  .color-item { width: 32px; height: 32px; }
+  .color-name { font-size: 11px; min-width: 50px; }
 }
 
 /* 🖼️ Стили для галереи товара */
-.img-big-wrap {
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.carousel-item {
-    display: none;
-}
-
-.carousel-item.active {
-    display: block;
-}
-
-.carousel-inner {
-    position: relative;
-}
-
-.thumbs-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 8px;
-}
-
-.item-thumb {
-    margin: 0 3px;
-    cursor: pointer;
-}
-
+.img-big-wrap { margin-bottom: 10px; text-align: center; }
+.carousel-item { display: none; }
+.carousel-item.active { display: block; }
+.carousel-inner { position: relative; }
+.thumbs-wrap { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.item-thumb { margin: 0 3px; cursor: pointer; }
 .item-thumb img {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    width: 50px; height: 50px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; transition: all 0.2s ease;
 }
-
-.item-thumb img:hover {
-    border-color: #007bff;
-    transform: scale(1.05);
-}
-
-/* 📱 Скрыть галерею на мобильных устройствах */
-@media (max-width: 767px) {
-    .gallery-wrap {
-        display: none;
-    }
-}
+.item-thumb img:hover { border-color: #007bff; transform: scale(1.05); }
+@media (max-width: 767px) { .gallery-wrap { display: none; } }
 
 /* 📝 Стили для блока описания */
 .product-description-block {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 15px 0;
+    background-color: #f9f9f9; border-radius: 8px; padding: 15px; margin: 15px 0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
 .product-description-block h4 {
-    color: #333;
-    border-bottom: 2px solid #2a41e8;
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-    font-weight: 600;
+    color: #333; border-bottom: 2px solid #2a41e8; padding-bottom: 8px; margin-bottom: 15px; font-weight: 600;
 }
 
 /* 💰 Стили для блока количества и цены */
-.quantity-price-block {
-    border-top: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-    padding: 8px 0;
-    margin: 8px 0;
-    background-color: #f8f8f8;
-    border-radius: 5px;
-}
-
-/* 🖼️ Стили для изображения комплектации */
-.kit-configuration-image {
-    max-width: 300px;
-    width: 100%;
-    height: auto;
-    margin: 5px auto;
-    border: 1px solid #eee;
-    border-radius: 5px;
-}
+.quantity-price-block { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px 0; margin: 8px 0; background-color: #f8f8f8; border-radius: 5px; }
+.kit-configuration-image { max-width: 300px; width: 100%; height: auto; margin: 5px auto; border: 1px solid #eee; border-radius: 5px; }
 
 /* 🔢 Стили для нового расположения количества и цены */
-.quantity-and-price {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-}
-
-.quantity-selector {
-    display: flex;
-    align-items: center;
-}
-
-.quantity-selector button {
-    border: none;
-    background-color: #f0f0f0;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 3px;
-}
-
-.quantity-selector button:hover {
-    background-color: #e0e0e0;
-}
-
-.quantity-selector input {
-    width: 50px;
-    text-align: center;
-    border: 1px solid #ccc;
-    margin: 0 5px;
-    padding: 5px;
-    border-radius: 3px;
-}
-
-.final-price {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #2a41e8;
-}
+.quantity-and-price { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
+.quantity-selector { display: flex; align-items: center; }
+.quantity-selector button { border: none; background-color: #f0f0f0; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+.quantity-selector button:hover { background-color: #e0e0e0; }
+.quantity-selector input { width: 50px; text-align: center; border: 1px solid #ccc; margin: 0 5px; padding: 5px; border-radius: 3px; }
+.final-price { font-size: 1.2em; font-weight: bold; color: #2a41e8; }
 
 /* 🛥️ Стили для размеров лодок */
 .boat-dimensions {
     background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
-    border: 2px solid #2196f3;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px 0;
-    text-align: center;
+    border: 2px solid #2196f3; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;
 }
-
-.boat-dimensions h6 {
-    color: #1976d2;
-    font-weight: 600;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-}
-
+.boat-dimensions h6 { color: #1976d2; font-weight: 600; margin-bottom: 15px; font-size: 1.1rem; }
 .boat-dimensions ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
+    list-style: none; padding: 0; margin: 0; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;
 }
-
 .boat-dimensions li {
-    background: rgba(33, 150, 243, 0.1);
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-weight: 500;
-    color: #1565c0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    background: rgba(33, 150, 243, 0.1); padding: 10px 20px; border-radius: 25px; font-weight: 500; color: #1565c0;
+    display: flex; align-items: center; gap: 8px;
 }
-
-.boat-dimensions li::before {
-    content: "📏";
-    font-size: 1.2rem;
-}
-
-/* 📱 Адаптивность для лодок */
-@media (max-width: 768px) {
-    .boat-dimensions ul {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .boat-dimensions li {
-        justify-content: center;
-    }
-}
+.boat-dimensions li::before { content: "📏"; font-size: 1.2rem; }
+@media (max-width: 768px) { .boat-dimensions ul { flex-direction: column; gap: 15px; } .boat-dimensions li { justify-content: center; } }
 
 /* ✅ СТИЛИ ДЛЯ WYSIWYG КОНТЕНТА */
-.wysiwyg-content {
-    line-height: 1.8;
-    font-size: 1.05rem;
-    color: #333;
+.wysiwyg-content { line-height: 1.8; font-size: 1.05rem; color: #333; }
+.wysiwyg-content h1, .wysiwyg-content h2, .wysiwyg-content h3, .wysiwyg-content h4, .wysiwyg-content h5, .wysiwyg-content h6 {
+    margin-top: 1.5rem; margin-bottom: 1rem; color: #2c3e50; font-weight: 600;
 }
-
-.wysiwyg-content h1,
-.wysiwyg-content h2,
-.wysiwyg-content h3,
-.wysiwyg-content h4,
-.wysiwyg-content h5,
-.wysiwyg-content h6 {
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
-    color: #2c3e50;
-    font-weight: 600;
-}
-
-.wysiwyg-content p {
-    margin-bottom: 1rem;
-    text-align: justify;
-}
-
-.wysiwyg-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.wysiwyg-content ul,
-.wysiwyg-content ol {
-    margin: 1rem 0;
-    padding-left: 2rem;
-}
-
-.wysiwyg-content li {
-    margin-bottom: 0.5rem;
-}
-
+.wysiwyg-content p { margin-bottom: 1rem; text-align: justify; }
+.wysiwyg-content img { max-width: 100%; height: auto; margin: 1rem 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.wysiwyg-content ul, .wysiwyg-content ol { margin: 1rem 0; padding-left: 2rem; }
+.wysiwyg-content li { margin-bottom: 0.5rem; }
 .wysiwyg-content blockquote {
-    border-left: 4px solid #2a41e8;
-    padding-left: 1rem;
-    margin: 1rem 0;
-    color: #666;
-    font-style: italic;
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0 8px 8px 0;
+    border-left: 4px solid #2a41e8; padding-left: 1rem; margin: 1rem 0; color: #666; font-style: italic;
+    background-color: #f8f9fa; padding: 1rem; border-radius: 0 8px 8px 0;
 }
-
-.wysiwyg-content code {
-    background-color: #f4f4f4;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: 'Courier New', monospace;
-    color: #e74c3c;
-}
-
-.wysiwyg-content a {
-    color: #2a41e8;
-    text-decoration: none;
-    border-bottom: 1px dotted #2a41e8;
-}
-
-.wysiwyg-content a:hover {
-    border-bottom-style: solid;
-}
-
-.wysiwyg-content table {
-    width: 100%;
-    margin: 1rem 0;
-    border-collapse: collapse;
-    border: 1px solid #ddd;
-}
-
-.wysiwyg-content table td,
-.wysiwyg-content table th {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.wysiwyg-content table th {
-    background-color: #f5f5f5;
-    font-weight: bold;
-}
+.wysiwyg-content code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; color: #e74c3c; }
+.wysiwyg-content a { color: #2a41e8; text-decoration: none; border-bottom: 1px dotted #2a41e8; }
+.wysiwyg-content a:hover { border-bottom-style: solid; }
+.wysiwyg-content table { width: 100%; margin: 1rem 0; border-collapse: collapse; border: 1px solid #ddd; }
+.wysiwyg-content table td, .wysiwyg-content table th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+.wysiwyg-content table th { background-color: #f5f5f5; font-weight: bold; }
 
 /* ⭐ СТИЛИ ДЛЯ ИНТЕРАКТИВНЫХ ЗВЕЗДОЧЕК */
-.star-rating-widget {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin: 10px 0;
-    padding: 10px 0;
-}
-
-.star-rating-widget .star {
-    font-size: 1.8rem;
-    color: #ddd;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    display: inline-block;
-    padding: 2px;
-}
-
-.star-rating-widget .star:hover {
-    transform: scale(1.1);
-    color: #ffc107;
-}
-
-.star-rating-widget .star.active {
-    color: #ffc107;
-    text-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
-}
-
-.star-rating-widget .star.hover {
-    color: #ffc107;
-}
+.star-rating-widget { display: flex; align-items: center; gap: 5px; margin: 10px 0; padding: 10px 0; }
+.star-rating-widget .star { font-size: 1.8rem; color: #ddd; cursor: pointer; transition: all 0.2s ease; position: relative; display: inline-block; padding: 2px; }
+.star-rating-widget .star:hover { transform: scale(1.1); color: #ffc107; }
+.star-rating-widget .star.active { color: #ffc107; text-shadow: 0 0 5px rgba(255, 193, 7, 0.3); }
+.star-rating-widget .star.hover { color: #ffc107; }
 
 /* 🎨 Стили для отображения рейтинга в отзывах */
-.review-stars {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    margin-right: 10px;
-}
-
-.review-stars .star {
-    font-size: 1rem;
-    color: #ffc107;
-}
-
-.review-stars .star.empty {
-    color: #ddd;
-}
+.review-stars { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; }
+.review-stars .star { font-size: 1rem; color: #ffc107; }
+.review-stars .star.empty { color: #ddd; }
 
 /* 📱 Адаптивные стили */
 @media (max-width: 768px) {
-    .star-rating-widget .star {
-        font-size: 1.6rem;
-        gap: 3px;
-    }
-
-    .review-stars .star {
-        font-size: 0.9rem;
-    }
+    .star-rating-widget .star { font-size: 1.6rem; gap: 3px; }
+    .review-stars .star { font-size: 0.9rem; }
 }
 
 /* 🎯 Стили для формы отзыва */
-.review-form-container {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 20px 0;
-    border: 1px solid #e9ecef;
-}
-
-.review-form-container h5 {
-    color: #495057;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-.review-form-group {
-    margin-bottom: 20px;
-}
-
-.review-form-group label {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 8px;
-    display: block;
-}
-
-.review-content-textarea {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    padding: 12px;
-    font-size: 1rem;
-    resize: vertical;
-    min-height: 100px;
-}
-
-.review-content-textarea:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    outline: 0;
-}
-
+.review-form-container { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e9ecef; }
+.review-form-container h5 { color: #495057; margin-bottom: 15px; font-weight: 600; }
+.review-form-group { margin-bottom: 20px; }
+.review-form-group label { font-weight: 600; color: #495057; margin-bottom: 8px; display: block; }
+.review-content-textarea { border-radius: 8px; border: 1px solid #ced4da; padding: 12px; font-size: 1rem; resize: vertical; min-height: 100px; }
+.review-content-textarea:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); outline: 0; }
 .review-submit-btn {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    border: none;
-    padding: 12px 30px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    background: linear-gradient(45deg, #007bff, #0056b3); border: none; padding: 12px 30px; border-radius: 8px;
+    color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
 }
-
-.review-submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
+.review-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); }
 
 /* ✅ Стили для уведомлений */
-.review-success-message {
-    background: #d4edda;
-    color: #155724;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid #c3e6cb;
-    margin: 15px 0;
-}
-
-.review-error-message {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid #f5c6cb;
-    margin: 15px 0;
-}
+.review-success-message { background: #d4edda; color: #155724; padding: 12px 16px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 15px 0; }
+.review-error-message { background: #f8d7da; color: #721c24; padding: 12px 16px; border-radius: 8px; border: 1px solid #f5c6cb; margin: 15px 0; }
 
 /* 🔒 Стили для ожидания модерации */
 .pending-review {
-    background: #fff3cd;
-    color: #856404;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border: 1px solid #ffeaa7;
-    margin: 15px 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    background: #fff3cd; color: #856404; padding: 12px 16px; border-radius: 8px; border: 1px solid #ffeaa7;
+    margin: 15px 0; display: flex; align-items: center; gap: 10px;
 }
-
-.pending-review i {
-    font-size: 1.2rem;
-    color: #f39c12;
-}
+.pending-review i { font-size: 1.2rem; color: #f39c12; }
 
 /* 📱 Дополнительные стили для отзывов */
-.review-card {
-    transition: all 0.3s ease;
-    border-left: 4px solid #59ee8d;
-}
-
-.review-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
+.review-card { transition: all 0.3s ease; border-left: 4px solid #59ee8d; }
+.review-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .like-btn-static, .dislike-btn-static {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: none;
-    border-radius: 20px;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.9rem;
-    cursor: not-allowed;
+    background-color: #f8f9fa; color: #6c757d; border: none; border-radius: 20px;
+    padding: 0.3rem 0.8rem; font-size: 0.9rem; cursor: not-allowed;
 }
-
-.moderation-status {
-    border-top: 1px solid rgba(255, 193, 7, 0.3);
-    padding-top: 8px;
-}
-
+.moderation-status { border-top: 1px solid rgba(255, 193, 7, 0.3); padding-top: 8px; }
 .auth-required-message {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 30px;
-    border: 2px dashed #dee2e6;
+    background: #f8f9fa; border-radius: 12px; padding: 30px; border: 2px dashed #dee2e6;
 }
-
-.no-reviews-message {
-    background: #f8f9fa;
-    border-radius: 12px;
-    margin: 20px 0;
-}
+.no-reviews-message { background: #f8f9fa; border-radius: 12px; margin: 20px 0; }
 
 @media (max-width: 768px) {
-    .review-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-
-    .review-actions .btn {
-        justify-content: center;
-        width: 100%;
-    }
+    .review-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+    .review-actions .btn { justify-content: center; width: 100%; }
 }
 
 /* 📊 Счетчик символов */
-.character-counter {
-    font-size: 0.85rem;
-    color: #6c757d;
-    text-align: right;
-    margin-top: 5px;
-}
-
-.character-counter.near-limit {
-    color: #e74c3c;
-    font-weight: 600;
-}
+.character-counter { font-size: 0.85rem; color: #6c757d; text-align: right; margin-top: 5px; }
+.character-counter.near-limit { color: #e74c3c; font-weight: 600; }
 </style>
 
 <section class="section-content padding-y">
@@ -797,11 +253,7 @@ hr {
                             <div class="carousel-inner">
                                 {% for image in product.product_images.all %}
                                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    <img
-                                        id="mainImage"
-                                        src="/media/{{ image.image }}"
-                                        alt="{{ product.product_name }}"
-                                    />
+                                    <img id="mainImage" src="/media/{{ image.image }}" alt="{{ product.product_name }}" />
                                 </div>
                                 {% endfor %}
                             </div>
@@ -809,11 +261,7 @@ hr {
                             <div class="form-row thumbs-wrap mt-5 d-flex justify-content-center">
                                 {% for image in product.product_images.all %}
                                 <p class="item-thumb mx-2">
-                                    <img
-                                        src="/media/{{image.image}}"
-                                        class="img-thumbnail"
-                                        onclick="updateMainImage(this.src)"
-                                    />
+                                    <img src="/media/{{ image.image }}" class="img-thumbnail" onclick="updateMainImage(this.src)" />
                                 </p>
                                 {% endfor %}
                             </div>
@@ -831,7 +279,7 @@ hr {
                                 {{ product.product_name }}
                             {% endif %}
                         </h2>
-                        <h6 class="text-muted">{{product.category}}</h6>
+                        <h6 class="text-muted">{{ product.category }}</h6>
 
                         <!-- 🛥️ Блок размеров ТОЛЬКО для лодок -->
                         {% if is_boat_product and product.boat_mat_length and product.boat_mat_width %}
@@ -855,16 +303,16 @@ hr {
                                     {% for color in carpet_colors %}
                                     <div class="color-selection">
                                         <div class="color-item {% if color.uid == initial_carpet_color.uid %}active{% endif %}"
-                                            data-color-uuid="{{ color.uid }}"
-                                            data-image-url="{{ color.get_image_url }}"
-                                            data-is-available="{{ color.is_available|yesno:'true,false' }}"
-                                            title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
-                                            style="background-color: {{ color.hex_code }};
-                                                {% if color.uid == initial_carpet_color.uid %}border: 2px solid #FFEB3B;{% endif %}
-                                                {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
-                                            {% if color.is_available %}onclick="activateColor(this, 'carpet');"{% endif %}>
+                                             data-color-uuid="{{ color.uid }}"
+                                             data-image-url="{{ color.get_image_url }}"
+                                             data-is-available="{{ color.is_available|yesno:'true,false' }}"
+                                             title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+                                             style="background-color: {{ color.hex_code }};
+                                                    {% if color.uid == initial_carpet_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+                                                    {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+                                             {% if color.is_available %}onclick="activateColor(this, 'carpet');"{% endif %}>
                                             {% if not color.is_available %}
-                                            <div class="unavailable-overlay">✕</div>
+                                                <div class="unavailable-overlay">✕</div>
                                             {% endif %}
                                         </div>
                                         <div class="color-name {% if not color.is_available %}text-muted{% endif %}">{{ color.name }}</div>
@@ -890,16 +338,16 @@ hr {
                                     {% for color in border_colors %}
                                     <div class="color-selection">
                                         <div class="color-item {% if color.uid == initial_border_color.uid %}active{% endif %}"
-                                            data-color-uuid="{{ color.uid }}"
-                                            data-image-url="{{ color.get_image_url }}"
-                                            data-is-available="{{ color.is_available|yesno:'true,false' }}"
-                                            title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
-                                            style="background-color: {{ color.hex_code }};
-                                                {% if color.uid == initial_border_color.uid %}border: 2px solid #FFEB3B;{% endif %}
-                                                {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
-                                            {% if color.is_available %}onclick="activateColor(this, 'border');"{% endif %}>
+                                             data-color-uuid="{{ color.uid }}"
+                                             data-image-url="{{ color.get_image_url }}"
+                                             data-is-available="{{ color.is_available|yesno:'true,false' }}"
+                                             title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+                                             style="background-color: {{ color.hex_code }};
+                                                    {% if color.uid == initial_border_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+                                                    {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+                                             {% if color.is_available %}onclick="activateColor(this, 'border');"{% endif %}>
                                             {% if not color.is_available %}
-                                            <div class="unavailable-overlay">✕</div>
+                                                <div class="unavailable-overlay">✕</div>
                                             {% endif %}
                                         </div>
                                         <div class="color-name {% if not color.is_available %}text-muted{% endif %}">{{ color.name }}</div>
@@ -926,21 +374,14 @@ hr {
                                     <div class="kit-options">
                                         {% for kit in sorted_kit_variants %}
                                         <label class="kit-option-label {% if forloop.first %}active{% endif %}" for="kit-{{ kit.code }}">
-                                            <input
-                                                type="radio"
-                                                name="selected_kit"
-                                                value="{{ kit.code }}"
-                                                id="kit-{{ kit.code }}"
-                                                {% if forloop.first %}checked{% endif %}
-                                                class="custom-control-input"
-                                            />
+                                            <input type="radio" name="selected_kit" value="{{ kit.code }}" id="kit-{{ kit.code }}"
+                                                   {% if forloop.first %}checked{% endif %} class="custom-control-input" />
                                             {{ kit.name }} ({{ kit.price_modifier }} руб.)
                                         </label>
                                         {% endfor %}
 
                                         <div class="form-check mt-3">
-                                            <input class="form-check-input" type="checkbox" id="podp_check"
-                                                data-attr-id="7" data-attr-value="1">
+                                            <input class="form-check-input" type="checkbox" id="podp_check" data-attr-id="7" data-attr-value="1">
                                             <label class="form-check-label" for="podp_check">
                                                 Подпятник ({{ podpyatnik_option.price_modifier }} руб.)
                                             </label>
@@ -1014,7 +455,7 @@ hr {
             </div>
         </div>
 
-        <!-- ⭐ НОВЫЙ БЛОК ОТЗЫВОВ С ЗВЕЗДОЧКАМИ И МОДЕРАЦИЕЙ -->
+        <!-- ⭐ НОВЫЙ БЛОК ОТЗЫВОВ С ЗВЕЗДОЧКАМИ И МОДЕРАЦИЕЙ (ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ) -->
         <div class="reviews-section mt-4">
             <h3 class="title padding-bottom-sm d-flex align-items-center">
                 <i class="fas fa-comments me-2"></i>
@@ -1044,7 +485,7 @@ hr {
                 {% endfor %}
             {% endif %}
 
-            <!-- ✅ ОТЗЫВЫ ПОЛЬЗОВАТЕЛЕЙ -->
+            <!-- ✅ ОТЗЫВЫ ПОЛЬЗОВАТЕЛЕЙ (показываем подготовленный qs) -->
             {% for review in reviews %}
             <div class="card mb-3 review-card">
                 <div class="card-body" style="background-color: #59ee8d91">
@@ -1052,7 +493,15 @@ hr {
                         <div class="review-content flex-grow-1">
                             <div class="review-header mb-2">
                                 <div class="d-flex align-items-center mb-2">
-                                    <strong class="me-3">{{ review.user.get_full_name }}</strong>
+                                    <!-- 👤 Автор: пользователь или гость -->
+                                    <strong class="me-3">
+                                        {% if review.user %}
+                                            {{ review.user.get_full_name|default:review.user.username }}
+                                        {% else %}
+                                            {{ review.reviewer_name|default:"Анонимный пользователь" }}
+                                        {% endif %}
+                                    </strong>
+
                                     <div class="review-stars me-2">
                                         {% for star in "12345" %}
                                             {% if forloop.counter <= review.stars %}
@@ -1074,22 +523,17 @@ hr {
                         <!-- 👍👎 КНОПКИ ЛАЙК/ДИЗЛАЙК И ДЕЙСТВИЯ -->
                         <div class="review-actions d-flex flex-wrap align-items-center gap-2">
                             {% if request.user.is_authenticated %}
-                            <button
-                                class="btn like-btn d-flex align-items-center"
-                                onclick="toggleLike('{{ review.uid }}')"
-                                title="Нравится">
+                            <button class="btn like-btn d-flex align-items-center" onclick="toggleLike('{{ review.uid }}')" title="Нравится">
                                 <i class="fas fa-thumbs-up me-1"></i>
                                 <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
                             </button>
 
-                            <button
-                                class="btn dislike-btn d-flex align-items-center"
-                                onclick="toggleDislike('{{ review.uid }}')"
-                                title="Не нравится">
+                            <button class="btn dislike-btn d-flex align-items-center" onclick="toggleDislike('{{ review.uid }}')" title="Не нравится">
                                 <i class="fas fa-thumbs-down me-1"></i>
                                 <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
                             </button>
                             {% else %}
+                            <!-- Для гостей — только счетчики -->
                             <span class="like-btn-static d-flex align-items-center" title="Войдите для оценки">
                                 <i class="fas fa-thumbs-up me-1"></i>
                                 <span>{{ review.like_count }}</span>
@@ -1100,33 +544,25 @@ hr {
                             </span>
                             {% endif %}
 
-                            <!-- 🗑️ КНОПКА УДАЛЕНИЯ ДЛЯ АВТОРА -->
+                            <!-- 🗑️ Кнопка удаления только для автора -->
                             {% if review.user == request.user %}
-                            <button
-                                class="btn btn-outline-danger btn-sm"
-                                title="Удалить отзыв"
-                                data-bs-toggle="modal"
-                                data-bs-target="#deleteReviewModal"
-                                onclick="setDeleteAction('{% url 'delete_review' product.slug review.uid %}')">
+                            <button class="btn btn-outline-danger btn-sm"
+                                    title="Удалить отзыв"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteReviewModal"
+                                    onclick="setDeleteAction('{% url 'delete_review' product.slug review.uid %}')">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                             {% endif %}
 
-                            <!-- 👨‍💼 КНОПКИ МОДЕРАЦИИ ДЛЯ АДМИНИСТРАТОРОВ -->
+                            <!-- 👨‍💼 Кнопки модерации для администраторов -->
                             {% if request.user.is_staff %}
                                 {% if not review.is_approved %}
-                                <button
-                                    class="btn btn-success btn-sm"
-                                    onclick="moderateReview('{{ review.uid }}', 'approve')"
-                                    title="Одобрить отзыв">
+                                <button class="btn btn-success btn-sm" onclick="moderateReview('{{ review.uid }}', 'approve')" title="Одобрить отзыв">
                                     <i class="fas fa-check"></i> Одобрить
                                 </button>
                                 {% endif %}
-
-                                <button
-                                    class="btn btn-warning btn-sm"
-                                    onclick="moderateReview('{{ review.uid }}', 'reject')"
-                                    title="Отклонить отзыв">
+                                <button class="btn btn-warning btn-sm" onclick="moderateReview('{{ review.uid }}', 'reject')" title="Отклонить отзыв">
                                     <i class="fas fa-times"></i> Отклонить
                                 </button>
                             {% endif %}
@@ -1141,8 +577,7 @@ hr {
             </div>
             {% endfor %}
 
-            <!-- ✍️ ФОРМА ДОБАВЛЕНИЯ ОТЗЫВА С ИНТЕРАКТИВНЫМИ ЗВЕЗДОЧКАМИ -->
-            {% if request.user.is_authenticated %}
+            <!-- ✍️ УНИВЕРСАЛЬНАЯ ФОРМА ДОБАВЛЕНИЯ ОТЗЫВА (ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ) -->
             <div class="review-form-container">
                 <h5>
                     <i class="fas fa-edit me-2"></i>
@@ -1156,74 +591,99 @@ hr {
                 <form method="POST" action="{% url 'get_product' product.slug %}" class="review-form" id="reviewForm">
                     {% csrf_token %}
 
-                    <!-- ⭐ ИНТЕРАКТИВНЫЕ ЗВЕЗДОЧКИ -->
-                    <div class="review-form-group">
-                        <label>
-                            Ваша оценка
-                            <span class="text-danger">*</span>
-                        </label>
+                    {% if not request.user.is_authenticated %}
+                    <!-- 🍯 Honeypot -->
+                    <input type="text" name="website" style="display:none;" tabindex="-1" autocomplete="off">
+                    <!-- ⏱️ Временная метка -->
+                    <input type="hidden" name="form_timestamp" value="{{ form_timestamp }}">
+                    {% endif %}
 
+                    {% if not request.user.is_authenticated %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="review-form-group">
+                                <label for="id_reviewer_name">Ваше имя <span class="text-danger">*</span></label>
+                                <input type="text" name="reviewer_name" id="id_reviewer_name" class="form-control"
+                                       placeholder="Как к вам обращаться?" required maxlength="100"
+                                       value="{% if anonymous_review_form.reviewer_name.value %}{{ anonymous_review_form.reviewer_name.value }}{% endif %}">
+                                {% if anonymous_review_form.reviewer_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in anonymous_review_form.reviewer_name.errors %}
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="review-form-group">
+                                <label for="id_reviewer_email">Email <span class="text-muted">(необязательно, не публикуется)</span></label>
+                                <input type="email" name="reviewer_email" id="id_reviewer_email" class="form-control"
+                                       placeholder="для связи (не показывается)" maxlength="254"
+                                       value="{% if anonymous_review_form.reviewer_email.value %}{{ anonymous_review_form.reviewer_email.value }}{% endif %}">
+                                <small class="form-text text-muted"><i class="fas fa-lock me-1"></i>Email не публикуется и используется только для связи</small>
+                                {% if anonymous_review_form.reviewer_email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in anonymous_review_form.reviewer_email.errors %}
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ⭐ Оценка -->
+                    <div class="review-form-group">
+                        <label>Ваша оценка <span class="text-danger">*</span></label>
                         <div class="star-rating-widget" data-field-name="stars">
-                            <input type="hidden" name="stars" value="{% if user_existing_review %}{{ user_existing_review.stars }}{% else %}0{% endif %}" id="id_stars">
+                            <input type="hidden" name="stars"
+                                   value="{% if user_existing_review %}{{ user_existing_review.stars }}{% elif anonymous_review_form.stars.value %}{{ anonymous_review_form.stars.value }}{% else %}0{% endif %}"
+                                   id="id_stars">
                             {% for i in "12345" %}
-                            <span class="star {% if user_existing_review and forloop.counter <= user_existing_review.stars %}active{% endif %}"
+                            <span class="star
+                                {% if user_existing_review and forloop.counter <= user_existing_review.stars %}active{% elif anonymous_review_form.stars.value and forloop.counter <= anonymous_review_form.stars.value %}active{% endif %}"
                                   data-value="{{ forloop.counter }}"
                                   title="{{ forloop.counter }} звезд{% if forloop.counter == 1 %}а{% elif forloop.counter <= 4 %}ы{% endif %}">
                                 <i class="fas fa-star"></i>
                             </span>
                             {% endfor %}
                         </div>
-
                         <small class="form-text text-muted">Кликните на звездочки для выбора оценки</small>
 
-                        {% if review_form.stars.errors %}
+                        {% if review_form.stars.errors or anonymous_review_form.stars.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in review_form.stars.errors %}
-                                <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
-                            {% endfor %}
+                            {% for error in review_form.stars.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
+                            {% for error in anonymous_review_form.stars.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- 📝 ПОЛЕ КОММЕНТАРИЯ -->
+                    <!-- 📝 Комментарий -->
                     <div class="review-form-group">
-                        <label for="{{ review_form.content.id_for_label }}">
-                            Комментарий
-                            <span class="text-danger">*</span>
-                        </label>
-
-                        <textarea name="content"
-                                  id="{{ review_form.content.id_for_label }}"
-                                  class="form-control review-content-textarea"
-                                  rows="4"
-                                  placeholder="Поделитесь вашим мнением о товаре..."
-                                  maxlength="1000"
-                                  required>{% if user_existing_review %}{{ user_existing_review.content }}{% endif %}</textarea>
-
+                        <label for="id_content">Комментарий <span class="text-danger">*</span></label>
+                        <textarea name="content" id="id_content" class="form-control review-content-textarea" rows="4"
+                                  placeholder="Поделитесь вашим мнением о товаре..." maxlength="1000" required>{% if user_existing_review %}{{ user_existing_review.content }}{% elif anonymous_review_form.content.value %}{{ anonymous_review_form.content.value }}{% endif %}</textarea>
                         <small class="form-text text-muted">Минимум 10 символов, максимум 1000</small>
 
-                        {% if review_form.content.errors %}
+                        {% if review_form.content.errors or anonymous_review_form.content.errors %}
                         <div class="invalid-feedback d-block">
-                            {% for error in review_form.content.errors %}
-                                <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
-                            {% endfor %}
+                            {% for error in review_form.content.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
+                            {% for error in anonymous_review_form.content.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- 🚀 КНОПКА ОТПРАВКИ -->
+                    <!-- 🚀 Отправка -->
                     <div class="text-end">
                         <button type="submit" class="review-submit-btn">
                             <i class="fas fa-paper-plane me-2"></i>
-                            {% if user_existing_review %}
-                                Обновить отзыв
-                            {% else %}
-                                Отправить отзыв
-                            {% endif %}
+                            {% if user_existing_review %}Обновить отзыв{% else %}Отправить отзыв{% endif %}
                         </button>
                     </div>
 
-                    <!-- 💡 ИНФОРМАЦИЯ О МОДЕРАЦИИ -->
+                    <!-- 💡 Инфо о модерации -->
                     <div class="moderation-info mt-3">
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
@@ -1231,33 +691,41 @@ hr {
                             {% if user_existing_review and not user_existing_review.is_approved %}
                                 Ваш текущий отзыв ожидает проверки.
                             {% endif %}
+                            {% if not request.user.is_authenticated %}
+                                Для возможности удаления отзыва в будущем сохраните эту страницу.
+                            {% endif %}
                         </small>
                     </div>
                 </form>
             </div>
-            {% else %}
-            <!-- 🔐 СООБЩЕНИЕ ДЛЯ НЕАВТОРИЗОВАННЫХ -->
-            <div class="auth-required-message text-center py-4">
-                <i class="fas fa-user-lock fa-2x text-muted mb-3"></i>
-                <p class="text-muted mb-3">Чтобы оставить отзыв, необходимо войти в аккаунт</p>
-                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary me-2">
-                    <i class="fas fa-sign-in-alt me-1"></i>Войти
-                </a>
-                <a href="{% url 'register' %}?next={{ request.path }}" class="btn btn-outline-primary">
-                    <i class="fas fa-user-plus me-1"></i>Регистрация
-                </a>
+
+            {% if not request.user.is_authenticated %}
+            <div class="anonymous-user-info mt-3 p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user-circle fa-2x text-muted me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Оставляете отзыв как гость</h6>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>Ваш email не публикуется. Все отзывы модерируются.
+                        </small>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Есть аккаунт? <a href="{% url 'admin:login' %}" class="text-primary">Войти в админку</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
 
-        <!-- 🗑️ МОДАЛЬНОЕ ОКНО УДАЛЕНИЯ ОТЗЫВА -->
+        <!-- 🗑️ МОДАЛЬНОЕ ОКНО УДАЛЕНИЯ ОТЗЫВА (для авторизованных) -->
         <div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-labelledby="deleteReviewModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="deleteReviewModalLabel">
-                            <i class="fas fa-trash me-2"></i>
-                            Подтверждение удаления
+                            <i class="fas fa-trash me-2"></i>Подтверждение удаления
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -1296,78 +764,51 @@ hr {
         data-kit-price="{{ kit.price_modifier }}"
     ></div>
     {% endfor %}
-    <div
-        data-option-code="podpyatnik"
-        data-option-price="{{ podpyatnik_option.price_modifier }}"
-    ></div>
+    <div data-option-code="podpyatnik" data-option-price="{{ podpyatnik_option.price_modifier }}"></div>
 </div>
 
 <!-- 🛥️ Передача типа товара в JavaScript -->
-<script>
-    window.isBoatProduct = {{ is_boat_product|yesno:"true,false" }};
-</script>
+<script>window.isBoatProduct = {{ is_boat_product|yesno:"true,false" }};</script>
 
 <!-- ⭐ JAVASCRIPT ДЛЯ ИНТЕРАКТИВНЫХ ЗВЕЗДОЧЕК -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 🌟 Инициализация звездочек
     initializeStarRatingWidgets();
-
-    // 📝 Инициализация счетчика символов
     initializeCharacterCounter();
 });
 
 function initializeStarRatingWidgets() {
     const widgets = document.querySelectorAll('.star-rating-widget');
-
     widgets.forEach(widget => {
         const stars = widget.querySelectorAll('.star');
         const hiddenInput = widget.querySelector('input[type="hidden"]');
-
         if (!hiddenInput) return;
 
-        stars.forEach((star, index) => {
+        stars.forEach(star => {
             const starValue = parseInt(star.getAttribute('data-value'));
-
-            // Клик - установка рейтинга
             star.addEventListener('click', function() {
                 setRating(widget, starValue, hiddenInput);
                 clearHoverEffect(stars);
             });
-
-            // Hover - предпросмотр рейтинга
-            star.addEventListener('mouseenter', function() {
-                showHoverEffect(stars, starValue);
-            });
-
-            // Mouse leave - убираем hover
+            star.addEventListener('mouseenter', function() { showHoverEffect(stars, starValue); });
             star.addEventListener('mouseleave', function() {
                 clearHoverEffect(stars);
                 restoreCurrentRating(widget, hiddenInput);
             });
         });
 
-        // Восстанавливаем текущий рейтинг
         restoreCurrentRating(widget, hiddenInput);
     });
 }
 
 function setRating(widget, rating, hiddenInput) {
     hiddenInput.value = rating;
-
     const stars = widget.querySelectorAll('.star');
-
-    stars.forEach((star, index) => {
+    stars.forEach(star => {
         const starValue = parseInt(star.getAttribute('data-value'));
-
-        if (starValue <= rating) {
-            star.classList.add('active');
-            star.classList.remove('hover');
-        } else {
-            star.classList.remove('active', 'hover');
-        }
+        if (starValue <= rating) { star.classList.add('active'); star.classList.remove('hover'); }
+        else { star.classList.remove('active', 'hover'); }
     });
-
     showRatingConfirmation(widget, rating);
     clearValidationErrors(widget);
 }
@@ -1375,213 +816,100 @@ function setRating(widget, rating, hiddenInput) {
 function showHoverEffect(stars, hoverRating) {
     stars.forEach(star => {
         const starValue = parseInt(star.getAttribute('data-value'));
-
-        if (starValue <= hoverRating) {
-            star.classList.add('hover');
-        } else {
-            star.classList.remove('hover');
-        }
+        if (starValue <= hoverRating) star.classList.add('hover');
+        else star.classList.remove('hover');
     });
 }
-
-function clearHoverEffect(stars) {
-    stars.forEach(star => {
-        star.classList.remove('hover');
-    });
-}
+function clearHoverEffect(stars) { stars.forEach(star => star.classList.remove('hover')); }
 
 function restoreCurrentRating(widget, hiddenInput) {
     const currentRating = parseInt(hiddenInput.value) || 0;
     const stars = widget.querySelectorAll('.star');
-
     stars.forEach(star => {
         const starValue = parseInt(star.getAttribute('data-value'));
-
-        if (starValue <= currentRating) {
-            star.classList.add('active');
-        } else {
-            star.classList.remove('active');
-        }
+        if (starValue <= currentRating) star.classList.add('active'); else star.classList.remove('active');
         star.classList.remove('hover');
     });
 }
 
 function showRatingConfirmation(widget, rating) {
-    const existingConfirmation = widget.querySelector('.rating-confirmation');
-    if (existingConfirmation) {
-        existingConfirmation.remove();
-    }
-
-    const confirmation = document.createElement('div');
-    confirmation.className = 'rating-confirmation';
-    confirmation.style.cssText = `
-        color: #28a745;
-        font-size: 0.9rem;
-        font-weight: 600;
-        margin-left: 15px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-
-    const ratingText = getRatingText(rating);
-    confirmation.innerHTML = `<i class="fas fa-check-circle"></i> ${ratingText}`;
-
-    widget.appendChild(confirmation);
-
-    setTimeout(() => {
-        confirmation.style.opacity = '1';
-    }, 100);
-
-    setTimeout(() => {
-        if (confirmation.parentNode) {
-            confirmation.style.opacity = '0';
-            setTimeout(() => {
-                if (confirmation.parentNode) {
-                    confirmation.remove();
-                }
-            }, 300);
-        }
-    }, 3000);
+    const existing = widget.querySelector('.rating-confirmation'); if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'rating-confirmation';
+    el.style.cssText = 'color:#28a745;font-size:.9rem;font-weight:600;margin-left:15px;opacity:0;transition:opacity .3s ease;';
+    el.innerHTML = '<i class="fas fa-check-circle"></i> ' + getRatingText(rating);
+    widget.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='1'; },100);
+    setTimeout(()=>{ if(el.parentNode){ el.style.opacity='0'; setTimeout(()=>{ if(el.parentNode){ el.remove(); } },300); } },3000);
+}
+function getRatingText(rating){
+    const t={1:'Очень плохо',2:'Плохо',3:'Нормально',4:'Хорошо',5:'Отлично'}; return t[rating] || 'Оценка выбрана';
+}
+function clearValidationErrors(widget){
+    const errs = widget.parentNode.querySelectorAll('.invalid-feedback, .error-message');
+    errs.forEach(e=>e.style.display='none');
+    const group = widget.closest('.form-group, .review-form-group');
+    if (group) group.classList.remove('has-error','is-invalid');
 }
 
-function getRatingText(rating) {
-    const ratingTexts = {
-        1: 'Очень плохо',
-        2: 'Плохо',
-        3: 'Нормально',
-        4: 'Хорошо',
-        5: 'Отлично'
-    };
-
-    return ratingTexts[rating] || 'Оценка выбрана';
-}
-
-function clearValidationErrors(widget) {
-    const errorMessages = widget.parentNode.querySelectorAll('.invalid-feedback, .error-message');
-    errorMessages.forEach(error => {
-        error.style.display = 'none';
-    });
-
-    const formGroup = widget.closest('.form-group, .review-form-group');
-    if (formGroup) {
-        formGroup.classList.remove('has-error', 'is-invalid');
-    }
-}
-
-function initializeCharacterCounter() {
-    const textareas = document.querySelectorAll('.review-content-textarea');
-
-    textareas.forEach(textarea => {
-        const maxLength = parseInt(textarea.getAttribute('maxlength')) || 1000;
-
-        const counter = document.createElement('div');
-        counter.className = 'character-counter';
-        counter.textContent = `0 / ${maxLength}`;
-
+function initializeCharacterCounter(){
+    const textareas=document.querySelectorAll('.review-content-textarea');
+    textareas.forEach(textarea=>{
+        const maxLength=parseInt(textarea.getAttribute('maxlength'))||1000;
+        const counter=document.createElement('div');
+        counter.className='character-counter';
+        counter.textContent=`0 / ${maxLength}`;
         textarea.parentNode.insertBefore(counter, textarea.nextSibling);
-
-        textarea.addEventListener('input', function() {
-            const currentLength = this.value.length;
-            counter.textContent = `${currentLength} / ${maxLength}`;
-
-            if (currentLength > maxLength * 0.9) {
-                counter.classList.add('near-limit');
-            } else {
-                counter.classList.remove('near-limit');
-            }
+        textarea.addEventListener('input', function(){
+            const n=this.value.length;
+            counter.textContent=`${n} / ${maxLength}`;
+            if(n>maxLength*0.9){counter.classList.add('near-limit');}else{counter.classList.remove('near-limit');}
         });
-
         textarea.dispatchEvent(new Event('input'));
     });
 }
 
-// 🗑️ Функция для установки действия удаления
-function setDeleteAction(url) {
-    document.getElementById('deleteReviewForm').action = url;
-}
+// 🗑️ Удаление
+function setDeleteAction(url) { document.getElementById('deleteReviewForm').action = url; }
 
-// 👨‍💼 Функция модерации отзывов (для администраторов)
+// 👨‍💼 Модерация
 function moderateReview(reviewUid, action) {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
     fetch(`/products/moderate-review/${reviewUid}/${action}/`, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            action: action,
-            review_uid: reviewUid
-        })
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, review_uid: reviewUid })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
-        }
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.success){ location.reload(); }
+        else{ alert('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
     })
-    .catch(error => {
-        console.error('Ошибка модерации:', error);
-        alert('Произошла ошибка при модерации отзыва');
-    });
+    .catch(err=>{ console.error('Ошибка модерации:', err); alert('Произошла ошибка при модерации отзыва'); });
 }
 
-// 👍👎 ФУНКЦИИ ЛАЙКОВ И ДИЗЛАЙКОВ
-function toggleLike(reviewUid) {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    fetch(`/products/toggle-like/${reviewUid}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(`like-count-${reviewUid}`).textContent = data.likes;
-            document.getElementById(`dislike-count-${reviewUid}`).textContent = data.dislikes;
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка лайка:', error);
-    });
+// 👍👎 Лайк/дизлайк
+function toggleLike(reviewUid){
+    const csrfToken=document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(`/products/toggle-like/${reviewUid}/`, { method:'POST', headers:{'X-CSRFToken':csrfToken,'Content-Type':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{ if(d.success){ document.getElementById(`like-count-${reviewUid}`).textContent=d.likes; document.getElementById(`dislike-count-${reviewUid}`).textContent=d.dislikes; } })
+    .catch(e=>console.error('Ошибка лайка:', e));
 }
-
-function toggleDislike(reviewUid) {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    fetch(`/products/toggle-dislike/${reviewUid}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': csrfToken,
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(`like-count-${reviewUid}`).textContent = data.likes;
-            document.getElementById(`dislike-count-${reviewUid}`).textContent = data.dislikes;
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка дизлайка:', error);
-    });
+function toggleDislike(reviewUid){
+    const csrfToken=document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(`/products/toggle-dislike/${reviewUid}/`, { method:'POST', headers:{'X-CSRFToken':csrfToken,'Content-Type':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{ if(d.success){ document.getElementById(`like-count-${reviewUid}`).textContent=d.likes; document.getElementById(`dislike-count-${reviewUid}`).textContent=d.dislikes; } })
+    .catch(e=>console.error('Ошибка дизлайка:', e));
 }
 
 // 📝 Автофокус на форму при ошибках
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function(){
     const hasFormErrors = document.querySelector('.invalid-feedback');
     if (hasFormErrors) {
         const reviewForm = document.getElementById('reviewForm');
-        if (reviewForm) {
-            reviewForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (reviewForm) reviewForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 });
 </script>
@@ -1590,3 +918,4 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="/media/js/product.js" type="text/javascript"></script>
 
 {% endblock %}
+```
