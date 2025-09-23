@@ -1,58 +1,55 @@
-# 🎯 Зависимости для интернет-магазина автоковриков с CKEditor 5
-# 📅 Обновлено: 2025-09-17
-# ✅ СОВРЕМЕННО: Переход на django-ckeditor-5 для максимальной безопасности
-# 🛡️ ДОБАВЛЕНО: Анти-спам защита для анонимных отзывов
+# Dependencies for auto-carpet e-commerce with CKEditor 5
+# Updated: 2025-09-17
+# Modern: Transition to django-ckeditor-5 for maximum security
+# Added: Anti-spam protection for anonymous reviews
 
-# 🌐 Основной веб-фреймворк
+# Main web framework
 Django==5.1.12
 asgiref==3.8.1
 sqlparse==0.5.3
 tzdata==2024.2
 
-# 🎨 UI и формы (для красивых форм в админке)
+# UI and forms (for beautiful admin forms)
 django-crispy-forms==2.3
 crispy-bootstrap4==2024.10
 
-# 🖼️ Обработка изображений товаров
+# Image processing for products
 pillow==11.1.0
 
-# ✅ НОВОЕ: Современный и безопасный CKEditor 5
+# Modern and secure CKEditor 5
 django-ckeditor-5==0.2.15
 
-# 🛡️ АНТИ-СПАМ ЗАЩИТА - НОВЫЕ ЗАВИСИМОСТИ
-django-recaptcha==3.0.0           # 🔐 Google reCAPTCHA v3 для защиты форм
-django-ratelimit==4.1.0           # ⏱️ Rate limiting по IP адресам
+# Anti-spam protection - new dependencies
+django-recaptcha==3.0.0
+django-ratelimit==4.1.0
 
-# 🔧 Управление настройками
+# Settings management
 python-decouple==3.8
 
-# 🤖 HTTP-запросы (ОБЯЗАТЕЛЬНО для Telegram уведомлений и IP-репутации!)
+# HTTP requests (required for Telegram notifications and IP reputation)
 requests==2.32.3
 urllib3==2.3.0
 certifi==2024.12.14
 
-# 🗜️ Сжатие (для оптимизации статических файлов)
+# Compression (for static files optimization)
 Brotli==1.1.0
 
-# 🔧 Базовые утилиты
+# Basic utilities
 colorama==0.4.6
 packaging==24.2
 six==1.17.0
 typing_extensions==4.12.2
 
-# 🕒 Временные зоны
+# Time zones
 tzlocal==5.2
 
-# 📝 Парсинг (базовый, если используется)
+# Parsing (basic, if used)
 chardet==5.2.0
 charset-normalizer==3.4.1
 idna==3.10
 
-# ⚡ Кеширование (базовое)
+# Caching (basic)
 cachetools==5.5.0
 
-# 📊 Для работы с Excel файлами
+# For working with Excel files
 openpyxl==3.1.2
-
-# 🔍 Для логирования (если нет)
-python-decouple==3.8

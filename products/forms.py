@@ -68,11 +68,24 @@ class StarRatingWidget(forms.Widget):
 
 
 class ReviewForm(forms.ModelForm):
-    """📝 ОБНОВЛЕННАЯ форма для отзывов с интерактивными звездочками"""
+    """📝 УПРОЩЕННАЯ форма для анонимных отзывов с интерактивными звездочками"""
+
+    # 👤 ПОЛЕ ИМЕНИ (обязательное для анонимных)
+    reviewer_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Введите ваше имя',
+            'id': 'id_reviewer_name'
+        }),
+        label="Ваше имя",
+        help_text="Обязательное поле"
+    )
 
     class Meta:
         model = ProductReview
-        fields = ['stars', 'content']
+        fields = ['reviewer_name', 'stars', 'content']
         widgets = {
             "stars": StarRatingWidget(attrs={
                 "class": "star-rating-input",
@@ -88,6 +101,7 @@ class ReviewForm(forms.ModelForm):
             ),
         }
         labels = {
+            "reviewer_name": "Ваше имя",
             "stars": "Ваша оценка",
             "content": "Комментарий"
         }
@@ -97,10 +111,12 @@ class ReviewForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # 🎯 Настройка полей
+        self.fields['reviewer_name'].required = True
         self.fields['stars'].required = True
         self.fields['content'].required = True
 
         # 💡 Подсказки для пользователей
+        self.fields['reviewer_name'].help_text = "Укажите ваше имя"
         self.fields['stars'].help_text = "Кликните на звездочки для выбора оценки"
         self.fields['content'].help_text = "Минимум 10 символов, максимум 1000"
 
@@ -115,6 +131,23 @@ class ReviewForm(forms.ModelForm):
             raise ValidationError("Максимальная оценка - 5 звезд")
 
         return stars
+
+    def clean_reviewer_name(self):
+        """✅ Валидация имени автора"""
+        reviewer_name = self.cleaned_data.get('reviewer_name', '').strip()
+
+        if not reviewer_name:
+            raise ValidationError("Пожалуйста, укажите ваше имя.")
+
+        if len(reviewer_name) < 2:
+            raise ValidationError("Имя должно содержать минимум 2 символа.")
+
+        # Проверяем на подозрительные символы
+        import re
+        if re.search(r'[<>{}"\'\\/]', reviewer_name):
+            raise ValidationError("Имя содержит недопустимые символы.")
+
+        return reviewer_name
 
     def clean_content(self):
         """✅ Валидация комментария"""
@@ -140,10 +173,13 @@ class ReviewForm(forms.ModelForm):
         return content
 
     def save(self, commit=True):
-        """💾 Сохранение с модерацией"""
+        """💾 Сохранение анонимного отзыва с модерацией"""
         instance = super().save(commit=False)
 
-        # 🔒 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Новые отзывы требуют модерации
+        # 👤 Всегда анонимный пользователь
+        instance.user = None
+
+        # 🔒 Новые отзывы требуют модерации
         if not instance.pk:  # Новый отзыв
             instance.is_approved = False
 

@@ -50,8 +50,8 @@ class ProductReviewAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        'user__username',
-        'user__email',
+        'reviewer_name',
+        'reviewer_email',
         'content'
     )
 
@@ -59,6 +59,8 @@ class ProductReviewAdmin(admin.ModelAdmin):
         'content_type',
         'object_id',
         'user',
+        'reviewer_name',
+        'reviewer_email',
         'date_added',
         'get_product_link',
         'get_likes_dislikes',
@@ -72,7 +74,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('📝 Отзыв', {
-            'fields': ('user', 'get_product_link', 'stars', 'get_rating_stars', 'content')
+            'fields': ('reviewer_name', 'reviewer_email', 'get_product_link', 'stars', 'get_rating_stars', 'content')
         }),
         ('✅ Модерация', {
             'fields': ('is_approved',),
@@ -103,16 +105,25 @@ class ProductReviewAdmin(admin.ModelAdmin):
     get_approval_status.admin_order_field = 'is_approved'
 
     def get_user_info(self, obj):
-        """👤 Информация о пользователе"""
-        if obj.user:
+        """👤 Информация об авторе отзыва"""
+        # Для анонимных отзывов показываем reviewer_name и reviewer_email
+        if obj.reviewer_name:
+            email_display = obj.reviewer_email if hasattr(obj, 'reviewer_email') and obj.reviewer_email else 'Email не указан'
+            return format_html(
+                '<strong>{}</strong><br><small>{}</small>',
+                obj.reviewer_name,
+                email_display
+            )
+        # Если есть пользователь (для совместимости со старыми отзывами)
+        elif obj.user:
             return format_html(
                 '<strong>{}</strong><br><small>{}</small>',
                 obj.user.username,
                 obj.user.email or 'Нет email'
             )
-        return "❌ Пользователь удален"
+        return "❌ Автор неизвестен"
 
-    get_user_info.short_description = "Пользователь"
+    get_user_info.short_description = "Автор отзыва"
 
     def get_product_info(self, obj):
         """📦 Информация о товаре"""

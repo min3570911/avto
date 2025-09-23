@@ -18,12 +18,15 @@ from products.models import Color, KitVariant
 class ProductReview(BaseModel):
     """📝 Универсальные отзывы для любых товаров с полной системой модерации и анти-спам защитой"""
 
+    # Явно указываем, что id не нужен - используем uid как primary key
+    id = None  # Отключаем автоматическое создание поля id
+
     # 🔗 Generic FK для UUID primary keys
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
     product = GenericForeignKey('content_type', 'object_id')
 
-    # 👤 Пользователь и автор отзыва (ИЗМЕНЕНО: теперь опциональное для анонимных)
+    # 👤 Пользователь (всегда None для анонимных отзывов)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -31,16 +34,27 @@ class ProductReview(BaseModel):
         null=True,
         blank=True,
         verbose_name="Пользователь",
-        help_text="Пустое для анонимных отзывов"
+        help_text="Всегда пустое - только анонимные отзывы"
     )
 
-    # 🆕 НОВЫЕ ПОЛЯ для анонимных отзывов
+    # 👤 Имя автора (обязательное для анонимных отзывов)
     reviewer_name = models.CharField(
         max_length=100,
         blank=True,
         null=True,
+        default="",
         verbose_name="Имя автора",
-        help_text="Имя для анонимных отзывов"
+        help_text="Имя автора анонимного отзыва"
+    )
+
+    # 📧 Email автора (обязательное для анонимных отзывов)
+    reviewer_email = models.EmailField(
+        max_length=254,
+        blank=True,
+        null=True,
+        default="",
+        verbose_name="Email автора",
+        help_text="Email автора анонимного отзыва"
     )
 
     # 📊 Содержание отзыва
@@ -109,27 +123,16 @@ class ProductReview(BaseModel):
     # ==================== НОВЫЕ МЕТОДЫ ДЛЯ АНОНИМНЫХ ОТЗЫВОВ ====================
 
     def get_author_name(self):
-        """👤 Получение имени автора (зарегистрированного или анонимного)"""
-        if self.user:
-            # Предпочитаем полное имя, если есть
-            if self.user.first_name:
-                return f"{self.user.first_name} {self.user.last_name}".strip()
-            return self.user.username
-        elif self.reviewer_name:
-            return self.reviewer_name
-        else:
-            return "Аноним"
+        """👤 Получение имени автора (всегда анонимного)"""
+        return self.reviewer_name or "Аноним"
 
     def is_anonymous_review(self):
-        """🔍 Проверка является ли отзыв анонимным"""
-        return self.user is None
+        """🔍 Проверка является ли отзыв анонимным (всегда True)"""
+        return True
 
     def get_author_type(self):
-        """🏷️ Тип автора отзыва"""
-        if self.user:
-            return "Зарегистрированный пользователь"
-        else:
-            return "Анонимный пользователь"
+        """🏷️ Тип автора отзыва (всегда анонимный)"""
+        return "Анонимный пользователь"
 
     # ==================== АНТИ-СПАМ МЕТОДЫ ====================
 
@@ -388,7 +391,7 @@ class ProductReview(BaseModel):
         spam_flag = " [СПАМ]" if self.is_suspicious else ""
         author = self.get_author_name()
         product_name = self.get_product_name()
-        return f"Отзыв от {author} на {product_name} ({self.stars}⭐){status}{spam_flag}"
+        return f"Анонимный отзыв от {author} на {product_name} ({self.stars}⭐){status}{spam_flag}"
 
     class Meta:
         verbose_name = "Отзыв"

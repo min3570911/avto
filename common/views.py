@@ -144,12 +144,23 @@ def add_review(request):
             })
 
         # ✅ Создаем новый отзыв
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR')
+        if ip_address:
+            ip_address = ip_address.split(',')[0].strip()
+        else:
+            ip_address = request.META.get('REMOTE_ADDR') or '127.0.0.1'
+
+        user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+
         review = ProductReview.objects.create(
             user=request.user,
             content_type_id=content_type_id,
             object_id=object_id,
             stars=stars,
-            content=content
+            content=content,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            is_approved=False
         )
 
         return JsonResponse({

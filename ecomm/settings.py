@@ -44,7 +44,7 @@ THIRD_PARTY_APPS = [
     # ✅ НОВОЕ: CKEditor 5 для современного WYSIWYG редактирования
     'django_ckeditor_5',
     # 🛡️ НОВОЕ: reCAPTCHA защита (django-ratelimit добавим позже)
-    'captcha',
+    # 'captcha',
 ]
 
 LOCAL_APPS = [
@@ -365,7 +365,7 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-LOGIN_URL = "/accounts/login/"
+LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
@@ -627,7 +627,74 @@ SPAM_DETECTION = {
     'ENABLE_SPAM_LOGGING': config('ENABLE_SPAM_LOGGING', default=True, cast=bool),
     'LOG_ALL_SUBMISSIONS': config('LOG_ALL_SUBMISSIONS', default=DEBUG, cast=bool),
 }
+# 📁 ecomm/settings.py - ДОБАВИТЬ В КОНЕЦ ФАЙЛА
+# 🔍 ДЕТАЛЬНОЕ ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ОТЗЫВОВ
 
+import os
+
+# 📊 Настройка логирования
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'detailed': {
+            'format': '[{levelname}] {asctime} {name}: {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'detailed',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'debug_reviews.log',
+            'formatter': 'detailed',
+        },
+    },
+    'loggers': {
+        # 🔍 ДЕТАЛЬНЫЕ ЛОГИ ДЛЯ ОТЗЫВОВ
+        'products.views': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'common.models': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'common.forms': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # 🛡️ АНТИ-СПАМ ЛОГИ
+        'django.core.cache': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+
+# 🎯 ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ ДЛЯ РАЗРАБОТКИ
+if DEBUG:
+    # Показывать все SQL запросы
+    LOGGING['loggers']['django.db.backends'] = {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+        'propagate': False,
+    }
 # 🎯 ПРЕИМУЩЕСТВА CKEDITOR 5:
 # ✅ Современный интерфейс - отзывчивый и мобильный
 # ✅ Лучшая безопасность - последние патчи безопасности

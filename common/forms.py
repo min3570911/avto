@@ -1,7 +1,7 @@
 # 📁 common/forms.py
-# 📝 УНИВЕРСАЛЬНАЯ ФОРМА ОТЗЫВОВ для анонимных и авторизованных пользователей
+# 📝 ФОРМА ОТЗЫВОВ для анонимных пользователей
 # 🛡️ ВСТРОЕННАЯ АНТИ-СПАМ ЗАЩИТА: honeypot, время заполнения, валидация
-# ✅ СОВМЕСТИМОСТЬ: работает с обновленной моделью ProductReview
+# ✅ УПРОЩЕННАЯ ВЕРСИЯ: только для анонимных отзывов
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -13,29 +13,44 @@ import re
 from .models import ProductReview
 
 
-class AnonymousReviewForm(forms.ModelForm):
+class UniversalReviewForm(forms.ModelForm):
     """
-    📝 Универсальная форма отзывов для ВСЕХ пользователей
+    📝 Универсальная форма отзывов для всех типов пользователей
 
     🎯 ОСОБЕННОСТИ:
-    - Поддерживает авторизованных и анонимных пользователей
+    - Поддержка анонимных и зарегистрированных пользователей
+    - Автозаполнение данных из профиля для залогиненных
+    - Автоодобрение отзывов для админов
     - Встроенная анти-спам защита
     - Honeypot поля для ловли ботов
     - Валидация времени заполнения формы
     - Интерактивные звездочки
     """
 
-    # 🆕 ПОЛЕ ДЛЯ АНОНИМНЫХ ПОЛЬЗОВАТЕЛЕЙ
+    # 👤 ПОЛЕ ИМЕНИ (всегда обязательное)
     reviewer_name = forms.CharField(
         max_length=100,
-        required=False,  # Будет обязательным только для анонимов
+        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Введите ваше имя',
             'id': 'id_reviewer_name'
         }),
         label="Ваше имя",
-        help_text="Обязательно для анонимных пользователей"
+        help_text="Обязательное поле"
+    )
+
+    # 📧 ПОЛЕ EMAIL (обязательное)
+    reviewer_email = forms.EmailField(
+        max_length=254,
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Введите ваш email',
+            'id': 'id_reviewer_email'
+        }),
+        label="Ваш email",
+        help_text="Обязательное поле (не публикуется)"
     )
 
     # ⭐ ЗВЕЗДОЧКИ (интерактивные через JavaScript)
@@ -89,66 +104,84 @@ class AnonymousReviewForm(forms.ModelForm):
         required=False
     )
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
-        🔧 Инициализация формы
-
-        Args:
-            user: Текущий пользователь (None для анонимных)
+        🔧 Инициализация формы для анонимных и зарегистрированных пользователей
         """
-        self.user = user
+        # Извлекаем пользователя из kwargs
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
-        # 👤 Для авторизованных пользователей скрываем поле имени
-        if user and user.is_authenticated:
-            self.fields['reviewer_name'].widget = forms.HiddenInput()
+        # Если пользователь зарегистрирован, делаем поля имени и email не обязательными
+        if self.user and self.user.is_authenticated:
             self.fields['reviewer_name'].required = False
-
-            # Автозаполняем имя зарегистрированного пользователя
-            if not self.instance.pk:  # Только для новых отзывов
-                full_name = user.get_full_name()
-                if full_name:
-                    self.fields['reviewer_name'].initial = full_name
-                else:
-                    self.fields['reviewer_name'].initial = user.username
-        else:
-            # 🕵️ Для анонимных пользователей поле имени обязательно
-            self.fields['reviewer_name'].required = True
+            self.fields['reviewer_email'].required = False
+            self.fields['reviewer_name'].help_text = "Оставьте пустым для использования данных профиля"
+            self.fields['reviewer_email'].help_text = "Оставьте пустым для использования email профиля"
 
     def clean_reviewer_name(self):
         """✅ Валидация имени автора"""
         reviewer_name = self.cleaned_data.get('reviewer_name', '').strip()
 
-        # Для анонимных пользователей имя обязательно
-        if not self.user or not self.user.is_authenticated:
-            if not reviewer_name:
-                raise ValidationError("Пожалуйста, укажите ваше имя.")
+        # Для зарегистрированных пользователей имя не обязательно
+        if not reviewer_name and (not self.user or not self.user.is_authenticated):
+            raise ValidationError("Пожалуйста, укажите ваше имя.")
 
-            if len(reviewer_name) < 2:
-                raise ValidationError("Имя должно содержать минимум 2 символа.")
+        # Если имя не указано, но пользователь залогинен - пропускаем валидацию
+        if not reviewer_name and self.user and self.user.is_authenticated:
+            return reviewer_name
 
-            # Проверяем на подозрительные символы
-            if re.search(r'[<>{}"\'\\/]', reviewer_name):
-                raise ValidationError("Имя содержит недопустимые символы.")
+        if len(reviewer_name) < 2:
+            raise ValidationError("Имя должно содержать минимум 2 символа.")
 
-            # Проверяем на спам-слова в имени
-            spam_patterns = [
-                r'admin',
-                r'moderator',
-                r'test',
-                r'spam',
-                r'bot',
-                r'www\.',
-                r'http',
-                r'\.com',
-                r'\.ru'
-            ]
+        # Проверяем на подозрительные символы
+        if re.search(r'[<>{}"\'\\/]', reviewer_name):
+            raise ValidationError("Имя содержит недопустимые символы.")
 
-            for pattern in spam_patterns:
-                if re.search(pattern, reviewer_name.lower()):
-                    raise ValidationError("Пожалуйста, укажите ваше настоящее имя.")
+        # Проверяем на спам-слова в имени
+        spam_patterns = [
+            r'admin',
+            r'moderator',
+            r'test',
+            r'spam',
+            r'bot',
+            r'www\.',
+            r'http',
+            r'\.com',
+            r'\.ru'
+        ]
+
+        for pattern in spam_patterns:
+            if re.search(pattern, reviewer_name.lower()):
+                raise ValidationError("Пожалуйста, укажите ваше настоящее имя.")
 
         return reviewer_name
+
+    def clean_reviewer_email(self):
+        """✅ Валидация email автора"""
+        reviewer_email = self.cleaned_data.get('reviewer_email', '').strip()
+
+        # Для зарегистрированных пользователей email не обязательно
+        if not reviewer_email and (not self.user or not self.user.is_authenticated):
+            raise ValidationError("Пожалуйста, укажите ваш email.")
+
+        # Если email не указан, но пользователь залогинен - пропускаем валидацию
+        if not reviewer_email and self.user and self.user.is_authenticated:
+            return reviewer_email
+
+        # Базовая валидация email уже выполняется EmailField
+        # Дополнительные проверки на подозрительные домены
+        suspicious_domains = [
+            'tempmail', 'guerrillamail', '10minutemail', 'mailinator',
+            'throwaway', 'temp-mail', 'fakeemail', 'spambox'
+        ]
+
+        email_lower = reviewer_email.lower()
+        for domain in suspicious_domains:
+            if domain in email_lower:
+                raise ValidationError("Пожалуйста, используйте постоянный email адрес.")
+
+        return reviewer_email
 
     def clean_content(self):
         """✅ Валидация содержания отзыва"""
@@ -235,22 +268,28 @@ class AnonymousReviewForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        """💾 Сохранение отзыва с анти-спам данными"""
+        """💾 Сохранение отзыва с поддержкой анонимных и зарегистрированных пользователей"""
         review = super().save(commit=False)
 
-        # 👤 Устанавливаем пользователя, если авторизован
+        # 👤 Обрабатываем пользователя
         if self.user and self.user.is_authenticated:
+            # Для зарегистрированных пользователей
             review.user = self.user
-            # Для авторизованных пользователей используем их данные
+
+            # Заполняем имя и email из профиля, если не указаны
             if not review.reviewer_name:
-                full_name = self.user.get_full_name()
-                review.reviewer_name = full_name if full_name else self.user.username
+                review.reviewer_name = self.user.get_full_name() or self.user.username
+            if not review.reviewer_email:
+                review.reviewer_email = self.user.email or ""
         else:
-            # Для анонимных пользователей user остается None
+            # Для анонимных пользователей
             review.user = None
 
-        # 🔒 Все новые отзывы требуют модерации
-        review.is_approved = False
+        # 🔒 Модерация: админы получают автоодобрение, остальные требуют модерации
+        if self.user and self.user.is_authenticated and (self.user.is_staff or self.user.is_superuser):
+            review.is_approved = True  # Админы получают автоодобрение
+        else:
+            review.is_approved = False  # Остальные требуют модерации
 
         if commit:
             review.save()
@@ -259,7 +298,7 @@ class AnonymousReviewForm(forms.ModelForm):
 
     class Meta:
         model = ProductReview
-        fields = ['reviewer_name', 'stars', 'content']
+        fields = ['reviewer_name', 'reviewer_email', 'stars', 'content']
 
         # Скрываем служебные поля из Meta
         exclude = [
@@ -267,6 +306,10 @@ class AnonymousReviewForm(forms.ModelForm):
             'is_approved', 'ip_address', 'user_agent', 'form_submit_time',
             'is_suspicious', 'spam_score', 'moderated_by', 'moderated_at'
         ]
+
+
+# 🔄 Алиас для совместимости со старым кодом
+AnonymousReviewForm = UniversalReviewForm
 
 
 class ReviewModerationForm(forms.ModelForm):

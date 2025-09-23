@@ -605,10 +605,10 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                                 <label for="id_reviewer_name">Ваше имя <span class="text-danger">*</span></label>
                                 <input type="text" name="reviewer_name" id="id_reviewer_name" class="form-control"
                                        placeholder="Как к вам обращаться?" required maxlength="100"
-                                       value="{% if anonymous_review_form.reviewer_name.value %}{{ anonymous_review_form.reviewer_name.value }}{% endif %}">
-                                {% if anonymous_review_form.reviewer_name.errors %}
+                                       value="{% if review_form.reviewer_name.value %}{{ review_form.reviewer_name.value }}{% endif %}">
+                                {% if review_form.reviewer_name.errors %}
                                 <div class="invalid-feedback d-block">
-                                    {% for error in anonymous_review_form.reviewer_name.errors %}
+                                    {% for error in review_form.reviewer_name.errors %}
                                         <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
                                     {% endfor %}
                                 </div>
@@ -620,11 +620,11 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                                 <label for="id_reviewer_email">Email <span class="text-muted">(необязательно, не публикуется)</span></label>
                                 <input type="email" name="reviewer_email" id="id_reviewer_email" class="form-control"
                                        placeholder="для связи (не показывается)" maxlength="254"
-                                       value="{% if anonymous_review_form.reviewer_email.value %}{{ anonymous_review_form.reviewer_email.value }}{% endif %}">
+                                       value="{% if review_form.reviewer_email.value %}{{ review_form.reviewer_email.value }}{% endif %}">
                                 <small class="form-text text-muted"><i class="fas fa-lock me-1"></i>Email не публикуется и используется только для связи</small>
-                                {% if anonymous_review_form.reviewer_email.errors %}
+                                {% if review_form.reviewer_email.errors %}
                                 <div class="invalid-feedback d-block">
-                                    {% for error in anonymous_review_form.reviewer_email.errors %}
+                                    {% for error in review_form.reviewer_email.errors %}
                                         <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
                                     {% endfor %}
                                 </div>
@@ -639,11 +639,11 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                         <label>Ваша оценка <span class="text-danger">*</span></label>
                         <div class="star-rating-widget" data-field-name="stars">
                             <input type="hidden" name="stars"
-                                   value="{% if user_existing_review %}{{ user_existing_review.stars }}{% elif anonymous_review_form.stars.value %}{{ anonymous_review_form.stars.value }}{% else %}0{% endif %}"
+                                   value="{% if user_existing_review %}{{ user_existing_review.stars }}{% elif review_form.stars.value %}{{ review_form.stars.value }}{% else %}0{% endif %}"
                                    id="id_stars">
                             {% for i in "12345" %}
                             <span class="star
-                                {% if user_existing_review and forloop.counter <= user_existing_review.stars %}active{% elif anonymous_review_form.stars.value and forloop.counter <= anonymous_review_form.stars.value %}active{% endif %}"
+                                {% if user_existing_review and forloop.counter <= user_existing_review.stars %}active{% elif review_form.stars.value and forloop.counter <= review_form.stars.value %}active{% endif %}"
                                   data-value="{{ forloop.counter }}"
                                   title="{{ forloop.counter }} звезд{% if forloop.counter == 1 %}а{% elif forloop.counter <= 4 %}ы{% endif %}">
                                 <i class="fas fa-star"></i>
@@ -652,10 +652,9 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                         </div>
                         <small class="form-text text-muted">Кликните на звездочки для выбора оценки</small>
 
-                        {% if review_form.stars.errors or anonymous_review_form.stars.errors %}
+                        {% if review_form.stars.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in review_form.stars.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
-                            {% for error in anonymous_review_form.stars.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
                         </div>
                         {% endif %}
                     </div>
@@ -664,20 +663,19 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                     <div class="review-form-group">
                         <label for="id_content">Комментарий <span class="text-danger">*</span></label>
                         <textarea name="content" id="id_content" class="form-control review-content-textarea" rows="4"
-                                  placeholder="Поделитесь вашим мнением о товаре..." maxlength="1000" required>{% if user_existing_review %}{{ user_existing_review.content }}{% elif anonymous_review_form.content.value %}{{ anonymous_review_form.content.value }}{% endif %}</textarea>
+                                  placeholder="Поделитесь вашим мнением о товаре..." maxlength="1000" required>{% if user_existing_review %}{{ user_existing_review.content }}{% elif review_form.content.value %}{{ review_form.content.value }}{% endif %}</textarea>
                         <small class="form-text text-muted">Минимум 10 символов, максимум 1000</small>
 
-                        {% if review_form.content.errors or anonymous_review_form.content.errors %}
+                        {% if review_form.content.errors %}
                         <div class="invalid-feedback d-block">
                             {% for error in review_form.content.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
-                            {% for error in anonymous_review_form.content.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
                         </div>
                         {% endif %}
                     </div>
 
                     <!-- 🚀 Отправка -->
                     <div class="text-end">
-                        <button type="submit" class="review-submit-btn">
+                        <button type="submit" name="review_submit" class="review-submit-btn">
                             <i class="fas fa-paper-plane me-2"></i>
                             {% if user_existing_review %}Обновить отзыв{% else %}Отправить отзыв{% endif %}
                         </button>
@@ -918,4 +916,4 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="/media/js/product.js" type="text/javascript"></script>
 
 {% endblock %}
-```
+

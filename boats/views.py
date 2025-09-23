@@ -411,8 +411,7 @@ def boat_product_detail(request, slug):
     else:
         # Для анонимных используем расширенную форму
         review_form = AnonymousReviewForm(
-            request.POST or None,
-            user=None
+            request.POST or None
         )
 
     # 🔒 ⭐ ОБРАБОТКА ОТЗЫВОВ ДЛЯ ЛОДОК: Универсальная для всех типов пользователей

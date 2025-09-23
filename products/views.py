@@ -235,14 +235,7 @@ def products_by_category(request, slug):
 def get_product(request, slug):
     """
     🛍️ ⭐ ПОЛНАЯ СИСТЕМА ОТЗЫВОВ: Модерация + Анонимные отзывы + Анти-спам
-
-    🔧 ФУНКЦИОНАЛЬНОСТЬ:
-    - Поддержка анонимных и авторизованных пользователей
-    - Система модерации всех отзывов
-    - Анти-спам защита с rate limiting
-    - IP и User-Agent трекинг
-    - Интерактивные звездочки
-    - Полная валидация данных
+    ✅ ИСПРАВЛЕНО: Добавлены все отсутствующие return statements
     """
 
     product = get_object_or_404(
@@ -339,130 +332,173 @@ def get_product(request, slug):
         ).order_by('-date_added')
         has_reviews = reviews.exists()
 
-    # 📝 Проверяем существующий отзыв пользователя (авторизованного)
+    # 📝 УНИВЕРСАЛЬНАЯ СИСТЕМА ОТЗЫВОВ - поддержка анонимных и зарегистрированных пользователей
     user_existing_review = None
     user_has_pending_review = False
 
-    if request.user.is_authenticated:
-        try:
-            product_content_type = ContentType.objects.get_for_model(Product)
-            user_existing_review = ProductReview.objects.filter(
-                content_type=product_content_type,
-                object_id=product.uid,
-                user=request.user
-            ).first()
-
-            # Проверяем статус модерации
-            user_has_pending_review = user_existing_review and not user_existing_review.is_approved
-        except Exception as e:
-            logger.warning(f"Ошибка при получении отзыва пользователя: {e}")
-            user_existing_review = None
-
-    # 📝 ⭐ УНИВЕРСАЛЬНАЯ ФОРМА: Поддерживает и анонимных, и авторизованных
-    if request.user.is_authenticated:
-        # Для авторизованных используем стандартную форму
-        review_form = ReviewForm(
-            request.POST or None,
-            instance=user_existing_review
-        )
-    else:
-        # Для анонимных используем расширенную форму
-        review_form = AnonymousReviewForm(
-            request.POST or None,
-            user=None
-        )
+    # 📝 ⭐ ВСЕ ПОЛЬЗОВАТЕЛИ ИСПОЛЬЗУЮТ УНИВЕРСАЛЬНУЮ ФОРМУ
+    review_form = AnonymousReviewForm(
+        request.POST or None,
+        user=request.user  # Передаем пользователя в форму
+    )
 
     # 🔒 ⭐ ОБРАБОТКА ОТЗЫВОВ: Универсальная для всех типов пользователей
-    if request.method == 'POST' and 'review_submit' in request.POST:
+    if request.method == 'POST':
+        logger.info("=" * 60)
+        logger.info("ПОЛУЧЕН POST ЗАПРОС")
+        logger.info(f"Все POST данные: {dict(request.POST)}")
+        logger.info(f"Пользователь: {request.user} (authenticated: {request.user.is_authenticated})")
 
-        # 🛡️ АНТИ-СПАМ: Проверка rate limiting
-        client_ip = get_client_ip(request)
+        # Проверяем наличие кнопки отправки отзыва
+        has_review_submit = 'review_submit' in request.POST
+        logger.info(f"Есть кнопка review_submit: {has_review_submit}")
 
-        if not check_review_rate_limit(client_ip, request.user):
-            if request.user.is_authenticated:
-                messages.error(request,
-                               "⚠️ Вы превысили лимит отзывов. Попробуйте позже (максимум 5 отзывов в час).")
-            else:
-                messages.error(request,
-                               "⚠️ Превышен лимит анонимных отзывов с вашего IP. "
-                               "Попробуйте позже (максимум 3 отзыва в час).")
-            return redirect('get_product', slug=slug)
+        if has_review_submit:
+            logger.info("✅ ОБРАБОТКА ОТЗЫВА НАЧАТА")
 
-        if review_form.is_valid():
-            try:
-                if user_existing_review:
-                    # ✏️ ОБНОВЛЕНИЕ существующего отзыва авторизованного пользователя
-                    user_existing_review.stars = review_form.cleaned_data['stars']
-                    user_existing_review.content = review_form.cleaned_data['content']
+            # 🛡️ АНТИ-СПАМ: Проверка rate limiting
+            client_ip = get_client_ip(request)
+            logger.info(f"🌐 IP адрес: {client_ip}")
 
-                    # 📝 Обновляем имя рецензента если это поле есть
-                    if hasattr(review_form.cleaned_data, 'reviewer_name') and review_form.cleaned_data.get(
-                            'reviewer_name'):
-                        user_existing_review.reviewer_name = review_form.cleaned_data['reviewer_name']
+            rate_limit_check = check_review_rate_limit(client_ip, request.user)
+            logger.info(f"🛡️ Rate limit проверка: {'✅ ОК' if rate_limit_check else '❌ БЛОКИРОВКА'}")
 
-                    user_existing_review.is_approved = False  # Повторная модерация
-
-                    # 🛡️ Обновляем анти-спам данные
-                    user_existing_review.ip_address = client_ip
-                    user_existing_review.user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
-
-                    user_existing_review.save()
-
-                    messages.info(request,
-                                  "✅ Ваш отзыв обновлен и отправлен на модерацию. "
-                                  "После проверки он появится на сайте.")
-
-                    logger.info(f"Обновлен отзыв пользователя {request.user.username} для товара {product.slug}")
-
+            if not rate_limit_check:
+                logger.warning("❌ ОТЗЫВ ЗАБЛОКИРОВАН RATE LIMITING")
+                if request.user.is_authenticated:
+                    messages.error(request,
+                                   "⚠️ Вы превысили лимит отзывов. Попробуйте позже (максимум 5 отзывов в час).")
                 else:
-                    # ➕ СОЗДАНИЕ нового отзыва (анонимного или авторизованного)
-                    review = review_form.save(commit=False)
-
-                    # 👤 Устанавливаем пользователя если авторизован
-                    if request.user.is_authenticated:
-                        review.user = request.user
-                        # Если у авторизованного нет имени, используем username
-                        if not hasattr(review, 'reviewer_name') or not review.reviewer_name:
-                            review.reviewer_name = request.user.get_full_name() or request.user.username
-                    else:
-                        # Для анонимных пользователей user остается None
-                        review.user = None
-
-                    # 🔗 Устанавливаем связь с товаром через Generic FK
-                    product_content_type = ContentType.objects.get_for_model(Product)
-                    review.content_type = product_content_type
-                    review.object_id = product.uid
-
-                    # 🛡️ Заполняем данные для анти-спам защиты
-                    review.ip_address = client_ip
-                    review.user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
-
-                    # 🔒 ВСЕ новые отзывы требуют модерации
-                    review.is_approved = False
-
-                    review.save()
-
-                    # 📢 Разные сообщения для разных типов пользователей
-                    if request.user.is_authenticated:
-                        messages.success(request,
-                                         "✅ Спасибо за отзыв! Он отправлен на модерацию и скоро появится на сайте.")
-                        logger.info(f"Создан отзыв от пользователя {request.user.username} для товара {product.slug}")
-                    else:
-                        reviewer_name = review_form.cleaned_data.get('reviewer_name', 'Гость')
-                        messages.success(request,
-                                         f"✅ Спасибо за отзыв, {reviewer_name}! "
-                                         f"Он отправлен на модерацию и скоро появится на сайте.")
-                        logger.info(f"Создан анонимный отзыв от {reviewer_name} для товара {product.slug}")
-
+                    messages.error(request,
+                                   "⚠️ Превышен лимит анонимных отзывов с вашего IP. Попробуйте позже (максимум 3 отзыва в час).")
+                logger.info("🔄 РЕДИРЕКТ из-за rate limiting")
                 return redirect('get_product', slug=slug)
 
-            except Exception as e:
-                error_msg = f"Ошибка при сохранении отзыва: {str(e)}"
-                messages.error(request, f"❌ {error_msg}")
-                logger.error(f"Ошибка сохранения отзыва: {e}", exc_info=True)
+            # 📝 Логируем тип формы
+            logger.info(f"📝 Тип формы: UniversalReviewForm (пользователь: {'авторизован' if request.user.is_authenticated else 'анонимный'})")
+            logger.info(f"📝 Форма инициализирована: {review_form is not None}")
+
+            # 📝 Проверяем и обрабатываем форму только если она валидна
+            if review_form and review_form.is_valid():
+                try:
+                    logger.info("💾 НАЧИНАЕМ СОХРАНЕНИЕ ОТЗЫВА...")
+
+                    if user_existing_review:
+                        logger.info("✏️ ОБНОВЛЕНИЕ существующего отзыва")
+                        logger.info(f"   Существующий отзыв UID: {user_existing_review.uid}")
+
+                        # Обновление логика
+                        user_existing_review.stars = review_form.cleaned_data['stars']
+                        user_existing_review.content = review_form.cleaned_data['content']
+
+                        # 📝 Обновляем имя рецензента если это поле есть
+                        if 'reviewer_name' in review_form.cleaned_data and review_form.cleaned_data.get(
+                                'reviewer_name'):
+                            user_existing_review.reviewer_name = review_form.cleaned_data['reviewer_name']
+
+                        user_existing_review.is_approved = False  # Повторная модерация
+                        user_existing_review.ip_address = client_ip
+                        user_existing_review.user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+
+                        logger.info("💾 СОХРАНЯЕМ ОБНОВЛЕННЫЙ ОТЗЫВ...")
+                        user_existing_review.save()
+                        logger.info(f"✅ Отзыв обновлен! UID: {user_existing_review.uid}")
+
+                        messages.info(request,
+                                      "✅ Ваш отзыв обновлен и отправлен на модерацию. После проверки он появится на сайте.")
+                        logger.info(
+                            f"Обновлен отзыв пользователя {request.user.username} для товара {product.slug}")
+
+                    else:
+                        logger.info("➕ СОЗДАНИЕ нового отзыва")
+
+                        # ➕ СОЗДАНИЕ нового отзыва (анонимного или авторизованного)
+                        logger.info("📝 Вызываем review_form.save(commit=False)...")
+                        review = review_form.save(commit=False)
+                        logger.info(f"✅ Объект отзыва создан в памяти: {type(review)}")
+
+                        # 👤 УНИВЕРСАЛЬНАЯ СИСТЕМА: форма сама устанавливает user правильно
+                        # review.user уже установлен правильно в форме
+                        if review.user:
+                            reviewer_name = review.reviewer_name or review.user.get_full_name() or review.user.username
+                            logger.info(f"👤 Отзыв от зарегистрированного пользователя: {reviewer_name}")
+                        else:
+                            reviewer_name = review.reviewer_name or 'Аноним'
+                            logger.info(f"👤 Анонимный отзыв от: {reviewer_name}")
+
+                        # 🔗 Устанавливаем связь с товаром через Generic FK (для ВСЕХ отзывов)
+                        product_content_type = ContentType.objects.get_for_model(Product)
+                        review.content_type = product_content_type
+                        review.object_id = product.uid
+                        logger.info(
+                            f"🔗 Generic FK: content_type_id={product_content_type.id}, object_id={product.uid}")
+
+                        # 🛡️ Заполняем данные для анти-спам защиты (для ВСЕХ отзывов)
+                        review.ip_address = client_ip
+                        review.user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+                        logger.info(f"🛡️ Анти-спам: IP={client_ip}, UA={review.user_agent[:30]}...")
+
+                        # 🔒 Статус модерации уже установлен правильно в форме
+                        # (админы получают автоодобрение, остальные требуют модерации)
+                        logger.info(f"🔒 Статус модерации: is_approved={review.is_approved}")
+
+                        # 💾 СОХРАНЯЕМ В БАЗУ!
+                        logger.info("💾 СОХРАНЯЕМ ОТЗЫВ В БАЗУ ДАННЫХ...")
+                        review.save()
+                        logger.info(f"✅ ОТЗЫВ СОХРАНЕН! UID: {review.uid}")
+
+                        # 🔍 ПРОВЕРЯЕМ что отзыв действительно в базе
+                        check_review = ProductReview.objects.filter(uid=review.uid).first()
+                        if check_review:
+                            logger.info(f"✅ ПОДТВЕРЖДЕНИЕ: Отзыв найден в базе")
+                            logger.info(f"   UID: {check_review.uid}")
+                            logger.info(f"   User: {check_review.user}")
+                            logger.info(f"   Stars: {check_review.stars}")
+                            logger.info(f"   Content: {check_review.content[:50]}...")
+                            logger.info(f"   Approved: {check_review.is_approved}")
+                            logger.info(f"   Date: {check_review.date_added}")
+                        else:
+                            logger.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Отзыв НЕ найден в базе после сохранения!")
+
+                        # 📢 Сообщение для пользователя
+                        if review.user:
+                            # Для зарегистрированных пользователей
+                            if review.is_approved:
+                                messages.success(request,
+                                                f"✅ Спасибо за отзыв! Он опубликован на сайте.")
+                            else:
+                                messages.success(request,
+                                                f"✅ Спасибо за отзыв! Он отправлен на модерацию и скоро появится на сайте.")
+                            logger.info(f"Создан отзыв от пользователя {review.user.username} для товара {product.slug}")
+                        else:
+                            # Для анонимных пользователей
+                            reviewer_name = review.reviewer_name or 'Гость'
+                            messages.success(request,
+                                           f"✅ Спасибо за отзыв, {reviewer_name}! Он отправлен на модерацию и скоро появится на сайте.")
+                            logger.info(f"Создан анонимный отзыв от {reviewer_name} для товара {product.slug}")
+
+                    logger.info("🔄 РЕДИРЕКТ после успешного сохранения")
+                    logger.info("=" * 60)
+                    return redirect('get_product', slug=slug)
+
+                except Exception as e:
+                    error_msg = f"Ошибка при сохранении отзыва: {str(e)}"
+                    logger.error(f"❌ КРИТИЧЕСКАЯ ОШИБКА: {error_msg}", exc_info=True)
+                    messages.error(request, f"❌ {error_msg}")
+                    # НЕ делаем return - показываем форму с ошибками
+            else:
+                # Форма не валидна - показываем ошибки только если это POST запрос
+                logger.warning("❌ Форма не прошла валидацию, показываем ошибки пользователю")
+                logger.warning(f"Ошибки формы: {review_form.errors}")
+                messages.error(request, "❌ Пожалуйста, исправьте ошибки в форме.")
         else:
-            messages.error(request, "❌ Пожалуйста, исправьте ошибки в форме.")
-            logger.warning(f"Невалидная форма отзыва: {review_form.errors}")
+            logger.info("POST запрос НЕ содержит review_submit - пропускаем обработку отзыва")
+            logger.info(f"Доступные POST ключи: {list(request.POST.keys())}")
+
+        logger.info("=" * 60)
+    # Конец блока POST обработки
+
+    # ================== 🔄 ПОДГОТОВКА КОНТЕКСТА (ВСЕГДА ВЫПОЛНЯЕТСЯ) ==================
 
     # 🔄 Похожие товары с оптимизацией
     similar_products = Product.objects.filter(
@@ -525,6 +561,8 @@ def get_product(request, slug):
     }
 
     return render(request, 'product/product.html', context)
+
+
 
 
 def add_to_cart(request, uid):
@@ -742,7 +780,6 @@ def edit_review(request, review_uid):
 
 # ==================== ❤️ ФУНКЦИИ ИЗБРАННОГО ====================
 
-@login_required
 def add_to_wishlist(request, uid):
     """❤️ Добавление товара в избранное"""
     kit_code = request.POST.get('kit') or request.GET.get('kit')
@@ -810,7 +847,6 @@ def add_to_wishlist(request, uid):
     return redirect(reverse('wishlist'))
 
 
-@login_required
 def remove_from_wishlist(request, uid):
     """🗑️ Удаление товара из избранного"""
     product = get_object_or_404(Product, uid=uid)
@@ -842,7 +878,6 @@ def remove_from_wishlist(request, uid):
     return redirect(reverse('wishlist'))
 
 
-@login_required
 def wishlist_view(request):
     """❤️ Отображение списка избранных товаров"""
     wishlist_items = Wishlist.objects.filter(
@@ -1176,6 +1211,36 @@ def dislike_review(request, review_uid):
     return toggle_dislike(request, review_uid)
 
 
+def moderate_review(request, review_uid, action):
+    """👨‍💼 AJAX модерация отзывов (только для админов)"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Необходима авторизация'}, status=401)
+
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'Недостаточно прав доступа'}, status=403)
+
+    review = get_object_or_404(ProductReview, uid=review_uid)
+
+    try:
+        if action == 'approve':
+            review.is_approved = True
+            review.is_suspicious = False  # Убираем флаг подозрительности при одобрении
+            review.save()
+            message = f"Отзыв от {review.get_author_name()} одобрен"
+        elif action == 'reject':
+            review.delete()
+            message = f"Отзыв от {review.get_author_name()} удален"
+        else:
+            return JsonResponse({'success': False, 'error': 'Неизвестное действие'}, status=400)
+
+        logger.info(f"Модератор {request.user.username}: {message}")
+        return JsonResponse({'success': True, 'message': message})
+
+    except Exception as e:
+        logger.error(f"Ошибка модерации отзыва {review_uid}: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Ошибка при модерации отзыва'}, status=500)
+
+
 # ==================== 🚨 ДОПОЛНИТЕЛЬНЫЕ АДМИНИСТРАТИВНЫЕ ФУНКЦИИ ==================
 
 @staff_member_required
@@ -1226,6 +1291,10 @@ def reviews_statistics(request):
     }
 
     return render(request, 'admin/reviews_statistics.html', context)
+
+
+
+
 
 # 🔧 ОСНОВНЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:
 #
