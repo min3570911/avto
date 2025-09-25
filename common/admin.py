@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone  # ✅ ИСПРАВЛЕНО: Добавлен отсутствующий импорт
-from .models import ProductReview, Wishlist
+from .models import ProductReview, Wishlist, AdminReply
 
 
 def approve_reviews(modeladmin, request, queryset):
@@ -29,6 +29,20 @@ def reject_reviews(modeladmin, request, queryset):
 reject_reviews.short_description = "❌ Отклонить выбранные отзывы"
 
 
+class AdminReplyInline(admin.TabularInline):
+    """💬 Inline для ответов администраторов"""
+    model = AdminReply
+    extra = 1
+    fields = ('reply_text', 'admin_user', 'is_published', 'reply_date')
+    readonly_fields = ('reply_date',)
+
+    def save_model(self, request, obj, form, change):
+        """Автоматически назначить текущего пользователя как админа"""
+        if not obj.admin_user_id:
+            obj.admin_user = request.user
+        super().save_model(request, obj, form, change)
+
+
 @admin.register(ProductReview)
 class ProductReviewAdmin(admin.ModelAdmin):
     """📝 Админка для универсальных отзывов товаров с модерацией"""
@@ -38,7 +52,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
         'get_user_info',
         'get_product_info',
         'get_rating_stars',
-        'get_likes_dislikes',
+        'get_replies_count',
         'date_added'
     )
 
@@ -63,7 +77,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
         'reviewer_email',
         'date_added',
         'get_product_link',
-        'get_likes_dislikes',
+        'get_replies_count',
         'get_rating_stars'
     )
 
@@ -71,6 +85,7 @@ class ProductReviewAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_added'
 
     actions = [approve_reviews, reject_reviews]
+    inlines = [AdminReplyInline]
 
     fieldsets = (
         ('📝 Отзыв', {
@@ -80,8 +95,8 @@ class ProductReviewAdmin(admin.ModelAdmin):
             'fields': ('is_approved',),
             'description': 'Только одобренные отзывы видят пользователи'
         }),
-        ('👍👎 Реакции', {
-            'fields': ('get_likes_dislikes',),
+        ('💬 Ответы администраторов', {
+            'fields': ('get_replies_count',),
             'classes': ('collapse',)
         }),
         ('🔗 Техническая информация', {
@@ -166,18 +181,17 @@ class ProductReviewAdmin(admin.ModelAdmin):
     get_rating_stars.short_description = "Рейтинг"
     get_rating_stars.admin_order_field = 'stars'
 
-    def get_likes_dislikes(self, obj):
-        """👍👎 Лайки и дизлайки"""
-        likes_count = obj.like_count()
-        dislikes_count = obj.dislike_count()
+    def get_replies_count(self, obj):
+        """💬 Количество ответов администраторов"""
+        replies_count = obj.admin_replies.count()
+        if replies_count > 0:
+            return format_html(
+                '<span style="color: blue;">💬 {} ответов</span>',
+                replies_count
+            )
+        return format_html('<span style="color: gray;">Нет ответов</span>')
 
-        return format_html(
-            '<span style="color: green;">👍 {}</span> / <span style="color: red;">👎 {}</span>',
-            likes_count,
-            dislikes_count
-        )
-
-    get_likes_dislikes.short_description = "Лайки / Дизлайки"
+    get_replies_count.short_description = "Ответы админов"
 
     def has_add_permission(self, request):
         """🚫 Запретить создание отзывов через админку"""
@@ -340,6 +354,98 @@ class WishlistAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """🗑️ Разрешить удаление записей избранного"""
         return True
+
+
+@admin.register(AdminReply)
+class AdminReplyAdmin(admin.ModelAdmin):
+    """💬 Админка для ответов администраторов"""
+
+    list_display = (
+        'get_review_info',
+        'get_admin_info',
+        'get_reply_preview',
+        'is_published',
+        'reply_date'
+    )
+
+    list_filter = (
+        'is_published',
+        'reply_date',
+        'admin_user'
+    )
+
+    search_fields = (
+        'reply_text',
+        'review__reviewer_name',
+        'review__content',
+        'admin_user__username'
+    )
+
+    readonly_fields = (
+        'reply_date',
+        'get_review_link'
+    )
+
+    ordering = ('-reply_date',)
+    date_hierarchy = 'reply_date'
+
+    fieldsets = (
+        ('💬 Ответ администратора', {
+            'fields': ('get_review_link', 'reply_text', 'admin_user', 'is_published')
+        }),
+        ('📅 Информация', {
+            'fields': ('reply_date',),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        """Автоматически назначить текущего пользователя как админа при создании"""
+        if not obj.pk:  # Только при создании
+            obj.admin_user = request.user
+        super().save_model(request, obj, form, change)
+
+    def get_review_info(self, obj):
+        """📝 Информация об отзыве"""
+        if obj.review:
+            return format_html(
+                'Отзыв от <strong>{}</strong><br><small>⭐ {} звезд</small>',
+                obj.review.get_author_name(),
+                obj.review.stars
+            )
+        return "❌ Отзыв удален"
+
+    get_review_info.short_description = "Отзыв"
+
+    def get_admin_info(self, obj):
+        """👤 Информация об администраторе"""
+        if obj.admin_user:
+            return format_html(
+                '<strong>{}</strong><br><small>{}</small>',
+                obj.get_admin_name(),
+                obj.admin_user.email or 'Нет email'
+            )
+        return "❌ Администратор не указан"
+
+    get_admin_info.short_description = "Администратор"
+
+    def get_reply_preview(self, obj):
+        """📝 Предпросмотр ответа"""
+        preview = obj.reply_text[:100] + '...' if len(obj.reply_text) > 100 else obj.reply_text
+        return format_html('<div style="max-width: 300px;">{}</div>', preview)
+
+    get_reply_preview.short_description = "Текст ответа"
+
+    def get_review_link(self, obj):
+        """🔗 Ссылка на отзыв"""
+        if obj.review:
+            return format_html(
+                '<a href="{}" target="_blank">Перейти к отзыву в админке</a>',
+                f'/admin/common/productreview/{obj.review.uid}/change/'
+            )
+        return "❌ Отзыв недоступен"
+
+    get_review_link.short_description = "Ссылка на отзыв"
 
 
 # 🔧 КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ В ЭТОМ ФАЙЛЕ:

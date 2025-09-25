@@ -106,19 +106,6 @@ class ProductReview(BaseModel):
     # 📅 ПОЛЯ АУДИТА БУДУТ ДОБАВЛЕНЫ ЧЕРЕЗ МИГРАЦИЮ
     # moderated_by и moderated_at добавим позже через отдельную миграцию
 
-    # 👍👎 Реакции пользователей
-    likes = models.ManyToManyField(
-        User,
-        related_name="liked_reviews",
-        blank=True,
-        verbose_name="Лайки"
-    )
-    dislikes = models.ManyToManyField(
-        User,
-        related_name="disliked_reviews",
-        blank=True,
-        verbose_name="Дизлайки"
-    )
 
     # ==================== НОВЫЕ МЕТОДЫ ДЛЯ АНОНИМНЫХ ОТЗЫВОВ ====================
 
@@ -199,15 +186,6 @@ class ProductReview(BaseModel):
         else:
             return "success"  # Зеленый
 
-    # ==================== СЧЕТЧИКИ ====================
-
-    def like_count(self):
-        """👍 Количество лайков"""
-        return self.likes.count()
-
-    def dislike_count(self):
-        """👎 Количество дизлайков"""
-        return self.dislikes.count()
 
     # ==================== МЕТОДЫ МОДЕРАЦИИ ====================
 
@@ -407,6 +385,62 @@ class ProductReview(BaseModel):
             # TODO: Добавить после миграции полей аудита:
             # models.Index(fields=["moderated_by", "moderated_at"]),
         ]
+
+
+class AdminReply(BaseModel):
+    """💬 Ответы администраторов на отзывы"""
+
+    # 🔗 Связь с отзывом
+    review = models.ForeignKey(
+        ProductReview,
+        on_delete=models.CASCADE,
+        related_name='admin_replies',
+        verbose_name='Отзыв'
+    )
+
+    # 👤 Администратор, который отвечает
+    admin_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Администратор',
+        help_text='Администратор, оставивший ответ'
+    )
+
+    # 📝 Текст ответа
+    reply_text = models.TextField(
+        verbose_name='Ответ администратора',
+        help_text='Ответ на отзыв пользователя'
+    )
+
+    # 📅 Дата ответа
+    reply_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата ответа'
+    )
+
+    # ✅ Опубликован ли ответ
+    is_published = models.BooleanField(
+        default=True,
+        verbose_name='Опубликован',
+        help_text='Показывать ответ на сайте'
+    )
+
+    def get_admin_name(self):
+        """👤 Получить имя администратора"""
+        if self.admin_user.first_name and self.admin_user.last_name:
+            return f"{self.admin_user.first_name} {self.admin_user.last_name}"
+        elif self.admin_user.first_name:
+            return self.admin_user.first_name
+        else:
+            return self.admin_user.username
+
+    def __str__(self):
+        return f"Ответ от {self.get_admin_name()} на отзыв {self.review.uid}"
+
+    class Meta:
+        verbose_name = "Ответ администратора"
+        verbose_name_plural = "Ответы администраторов"
+        ordering = ['-reply_date']
 
 
 class Wishlist(BaseModel):

@@ -809,29 +809,26 @@ title="{{ color.name }}{% if not color.is_available %} (Нет в наличии
                             </div>
                         </div>
 
-                        <!-- 👍👎 КНОПКИ ЛАЙК/ДИЗЛАЙК И ДЕЙСТВИЯ -->
-                        <div class="review-actions d-flex flex-wrap align-items-center gap-2">
-                            {% if request.user.is_authenticated %}
-                            <button class="btn like-btn d-flex align-items-center" onclick="toggleLike('{{ review.uid }}')" title="Нравится">
-                                <i class="fas fa-thumbs-up me-1"></i>
-                                <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
-                            </button>
-
-                            <button class="btn dislike-btn d-flex align-items-center" onclick="toggleDislike('{{ review.uid }}')" title="Не нравится">
-                                <i class="fas fa-thumbs-down me-1"></i>
-                                <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
-                            </button>
-                            {% else %}
-                            <!-- Для гостей — только счетчики -->
-                            <span class="like-btn-static d-flex align-items-center" title="Войдите для оценки">
-                                <i class="fas fa-thumbs-up me-1"></i>
-                                <span>{{ review.like_count }}</span>
-                            </span>
-                            <span class="dislike-btn-static d-flex align-items-center" title="Войдите для оценки">
-                                <i class="fas fa-thumbs-down me-1"></i>
-                                <span>{{ review.dislike_count }}</span>
-                            </span>
+                        <!-- 💬 Ответы администраторов -->
+                        {% if review.admin_replies.exists %}
+                        <div class="admin-replies mt-3">
+                            {% for reply in review.admin_replies.all %}
+                            {% if reply.is_published %}
+                            <div class="admin-reply p-3 bg-light rounded mb-2">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-user-shield text-primary me-2"></i>
+                                    <strong class="text-primary">{{ reply.get_admin_name }}</strong>
+                                    <small class="text-muted ms-auto">{{ reply.reply_date|date:"d.m.Y в H:i" }}</small>
+                                </div>
+                                <p class="mb-0">{{ reply.reply_text }}</p>
+                            </div>
                             {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- 🗑️ ДЕЙСТВИЯ -->
+                        <div class="review-actions d-flex flex-wrap align-items-center gap-2 mt-3">
 
                             <!-- 🗑️ Кнопка удаления только для автора -->
                             {% if review.user == request.user %}

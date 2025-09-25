@@ -50,12 +50,6 @@ urlpatterns = [
     # 📝 Отзывы
     path('product-reviews/', product_reviews, name='product_reviews'),
     path('product-reviews/edit/<uuid:review_uid>/', views.edit_review, name='edit_review'),
-    path('like-review/<review_uid>/', like_review, name='like_review'),
-    path('dislike-review/<review_uid>/', dislike_review, name='dislike_review'),
-
-    # 👍👎 AJAX лайки/дизлайки
-    path('toggle-like/<review_uid>/', toggle_like, name='toggle_like'),
-    path('toggle-dislike/<review_uid>/', toggle_dislike, name='toggle_dislike'),
 
     # 👨‍💼 AJAX модерация отзывов
     path('moderate-review/<review_uid>/<action>/', moderate_review, name='moderate_review'),

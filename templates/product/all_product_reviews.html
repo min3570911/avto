@@ -156,33 +156,26 @@
                                         <p class="mb-3">{{ review.content }}</p>
                                         {% endif %}
 
-                                        <!-- Лайки и ссылка на товар -->
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="d-flex gap-3">
-                                                {% if user.is_authenticated %}
-                                                <button class="btn btn-outline-success btn-sm like-btn"
-                                                        data-review-id="{{ review.uid }}"
-                                                        data-action="like">
-                                                    <i class="fas fa-thumbs-up me-1"></i>
-                                                    <span class="like-count">{{ review.like_count }}</span>
-                                                </button>
-                                                <button class="btn btn-outline-danger btn-sm dislike-btn"
-                                                        data-review-id="{{ review.uid }}"
-                                                        data-action="dislike">
-                                                    <i class="fas fa-thumbs-down me-1"></i>
-                                                    <span class="dislike-count">{{ review.dislike_count }}</span>
-                                                </button>
-                                                {% else %}
-                                                <span class="text-muted small">
-                                                    <i class="fas fa-thumbs-up me-1 text-success"></i>
-                                                    {{ review.like_count }}
-                                                </span>
-                                                <span class="text-muted small">
-                                                    <i class="fas fa-thumbs-down me-1 text-danger"></i>
-                                                    {{ review.dislike_count }}
-                                                </span>
-                                                {% endif %}
+                                        <!-- 💬 Ответы администраторов -->
+                                        {% if review.admin_replies.exists %}
+                                        <div class="admin-replies mt-3">
+                                            {% for reply in review.admin_replies.all %}
+                                            {% if reply.is_published %}
+                                            <div class="admin-reply p-3 bg-light rounded mb-2">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas fa-user-shield text-primary me-2"></i>
+                                                    <strong class="text-primary">{{ reply.get_admin_name }}</strong>
+                                                    <small class="text-muted ms-auto">{{ reply.reply_date|date:"d.m.Y в H:i" }}</small>
+                                                </div>
+                                                <p class="mb-0">{{ reply.reply_text }}</p>
                                             </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+
+                                        <!-- Ссылка на товар -->
+                                        <div class="d-flex justify-content-end align-items-center">
 
                                             {% if review.cached_product and review.cached_product.slug %}
                                             <a href="{% if review.product_type == 'product' %}/products/{{ review.cached_product.slug }}/{% elif review.product_type == 'boat' %}/boats/product/{{ review.cached_product.slug }}/{% else %}#{% endif %}"
@@ -281,45 +274,4 @@
 }
 </style>
 
-<!-- 📱 JavaScript для лайков -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 👍👎 Обработка лайков/дизлайков
-    document.querySelectorAll('.like-btn, .dislike-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const reviewId = this.getAttribute('data-review-id');
-            const action = this.getAttribute('data-action');
-
-            // ✅ Используем правильные URL из products/urls.py
-            const url = action === 'like'
-                ? `/products/toggle-like/${reviewId}/`
-                : `/products/toggle-dislike/${reviewId}/`;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Обновляем счетчики - ищем в родительском контейнере всех кнопок
-                    const buttonsContainer = this.closest('.d-flex');
-                    const likeCount = buttonsContainer.querySelector('.like-btn .like-count');
-                    const dislikeCount = buttonsContainer.querySelector('.dislike-btn .dislike-count');
-
-                    if (likeCount) likeCount.textContent = data.likes;
-                    if (dislikeCount) dislikeCount.textContent = data.dislikes;
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка:', error);
-                alert('Произошла ошибка. Попробуйте еще раз.');
-            });
-        });
-    });
-});
-</script>
 {% endblock %}
