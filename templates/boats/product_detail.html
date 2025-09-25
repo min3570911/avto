@@ -7,6 +7,9 @@
 {% block title %}{{product.product_name}} {% endblock %}
 {% block start %} {% load crispy_forms_tags %}
 
+<!-- ⭐ ПОДКЛЮЧЕНИЕ CSS И JS ДЛЯ ЗВЕЗДОЧЕК -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <style>
 /* Стили для зума изображений */
 #mainImage {
@@ -324,18 +327,11 @@ display: none;
 
 /* Стили для блока описания */
 .product-description-block {
-background-color: #f9f9f9;
-border-radius: 8px;
-padding: 10px;
-margin: 10px 0;
-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9; border-radius: 8px; padding: 15px; margin: 15px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
 .product-description-block h4 {
-color: #333;
-border-bottom: 1px solid #ddd;
-padding-bottom: 5px;
-margin-bottom: 8px;
+    color: #333; border-bottom: 2px solid #2a41e8; padding-bottom: 8px; margin-bottom: 15px; font-weight: 600;
 }
 
 /* Стили для блока количества и цены */
@@ -475,6 +471,67 @@ background-color: #f5f5f5;
 font-weight: bold;
 }
 
+/* ⭐ СТИЛИ ДЛЯ ИНТЕРАКТИВНЫХ ЗВЕЗДОЧЕК */
+.star-rating-widget { display: flex; align-items: center; gap: 5px; margin: 10px 0; padding: 10px 0; }
+.star-rating-widget .star { font-size: 1.8rem; color: #ddd; cursor: pointer; transition: all 0.2s ease; position: relative; display: inline-block; padding: 2px; }
+.star-rating-widget .star:hover { transform: scale(1.1); color: #ffc107; }
+.star-rating-widget .star.active { color: #ffc107; text-shadow: 0 0 5px rgba(255, 193, 7, 0.3); }
+.star-rating-widget .star.hover { color: #ffc107; }
+
+/* 🎨 Стили для отображения рейтинга в отзывах */
+.review-stars { display: inline-flex; align-items: center; gap: 2px; margin-right: 10px; }
+.review-stars .star { font-size: 1rem; color: #ffc107; }
+.review-stars .star.empty { color: #ddd; }
+
+/* 🎯 Стили для формы отзыва */
+.review-form-container { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #e9ecef; }
+.review-form-container h5 { color: #495057; margin-bottom: 15px; font-weight: 600; }
+.review-form-group { margin-bottom: 20px; }
+.review-form-group label { font-weight: 600; color: #495057; margin-bottom: 8px; display: block; }
+.review-content-textarea { border-radius: 8px; border: 1px solid #ced4da; padding: 12px; font-size: 1rem; resize: vertical; min-height: 100px; }
+.review-content-textarea:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); outline: 0; }
+.review-submit-btn {
+    background: linear-gradient(45deg, #007bff, #0056b3); border: none; padding: 12px 30px; border-radius: 8px;
+    color: white; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+}
+.review-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3); }
+
+/* ✅ Стили для уведомлений */
+.review-success-message { background: #d4edda; color: #155724; padding: 12px 16px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 15px 0; }
+.review-error-message { background: #f8d7da; color: #721c24; padding: 12px 16px; border-radius: 8px; border: 1px solid #f5c6cb; margin: 15px 0; }
+
+/* 🔒 Стили для ожидания модерации */
+.pending-review {
+    background: #fff3cd; color: #856404; padding: 12px 16px; border-radius: 8px; border: 1px solid #ffeaa7;
+    margin: 15px 0; display: flex; align-items: center; gap: 10px;
+}
+.pending-review i { font-size: 1.2rem; color: #f39c12; }
+
+/* 📱 Дополнительные стили для отзывов */
+.review-card { transition: all 0.3s ease; border-left: 4px solid #59ee8d; }
+.review-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.like-btn-static, .dislike-btn-static {
+    background-color: #f8f9fa; color: #6c757d; border: none; border-radius: 20px;
+    padding: 0.3rem 0.8rem; font-size: 0.9rem; cursor: not-allowed;
+}
+.moderation-status { border-top: 1px solid rgba(255, 193, 7, 0.3); padding-top: 8px; }
+.auth-required-message {
+    background: #f8f9fa; border-radius: 12px; padding: 30px; border: 2px dashed #dee2e6;
+}
+.no-reviews-message { background: #f8f9fa; border-radius: 12px; margin: 20px 0; }
+
+/* 📊 Счетчик символов */
+.character-counter { font-size: 0.85rem; color: #6c757d; text-align: right; margin-top: 5px; }
+.character-counter.near-limit { color: #e74c3c; font-weight: 600; }
+
+/* 📱 Адаптивные стили */
+@media (max-width: 768px) {
+    .star-rating-widget .star { font-size: 1.6rem; gap: 3px; }
+    .review-stars .star { font-size: 0.9rem; }
+    .review-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+    .review-actions .btn { justify-content: center; width: 100%; }
+}
+
 </style>
 
 <section class="section-content padding-y">
@@ -553,26 +610,30 @@ font-weight: bold;
  </div>
  {% endif %}
 
- <p>Цена: <span class="price h4" id="price">{{product.price|default:product.get_product_price_by_kit}}.00 руб.</span></p>
+ <p>Цена: <span class="price h4" id="price">{{ product.price|default:"0" }}.00 руб.</span></p>
 
  <!-- 🛥️ УБРАНО: Блок выбора комплектации (КОМПЛЕКТАЦИЯ) -->
 
  <hr>
 
  <!-- Выбор цвета коврика -->
- {% if colors_carpet %}
+ {% if carpet_colors %}
  <div class="form-group">
  <h6>Цвет коврика:</h6>
  <div class="color-wrapper">
- <div class="color-picker" id="carpet-color-picker">
- {% for color in colors_carpet %}
+ <div class="color-picker" data-color-type="carpet">
+ {% for color in carpet_colors %}
  <div class="color-selection">
  <div
  class="color-item"
- style="background-color: {{ color.hex_code }};"
- data-color="{{ color.uid }}"
- data-name="{{ color.name }}"
- onclick="selectColor(this, 'carpet')"
+ style="background-color: {{ color.hex_code }};
+            {% if color.uid == initial_carpet_color.uid or color.uid == initial_border_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+            {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+ data-color-uuid="{{ color.uid }}"
+ data-image-url="{{ color.get_image_url }}"
+data-is-available="{{ color.is_available|yesno:'true,false' }}"
+title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+ {% if color.is_available %}onclick="console.log('Carpet click:', this); activateColor(this, 'carpet');"{% endif %}
  ></div>
  <div class="color-name">{{ color.name }}</div>
  </div>
@@ -588,19 +649,23 @@ font-weight: bold;
  {% endif %}
 
  <!-- Выбор цвета окантовки -->
- {% if colors_border %}
+ {% if border_colors %}
  <div class="form-group">
  <h6>Цвет окантовки:</h6>
  <div class="color-wrapper">
- <div class="color-picker" id="border-color-picker">
- {% for color in colors_border %}
+ <div class="color-picker" data-color-type="border">
+ {% for color in border_colors %}
  <div class="color-selection">
  <div
  class="color-item"
- style="background-color: {{ color.hex_code }};"
- data-color="{{ color.uid }}"
- data-name="{{ color.name }}"
- onclick="selectColor(this, 'border')"
+ style="background-color: {{ color.hex_code }};
+            {% if color.uid == initial_carpet_color.uid or color.uid == initial_border_color.uid %}border: 2px solid #FFEB3B;{% endif %}
+            {% if not color.is_available %}opacity: 0.5; cursor: not-allowed;{% endif %}"
+ data-color-uuid="{{ color.uid }}"
+ data-image-url="{{ color.get_image_url }}"
+data-is-available="{{ color.is_available|yesno:'true,false' }}"
+title="{{ color.name }}{% if not color.is_available %} (Нет в наличии){% endif %}"
+ {% if color.is_available %}onclick="console.log('Border click:', this); activateColor(this, 'border');"{% endif %}
  ></div>
  <div class="color-name">{{ color.name }}</div>
  </div>
@@ -615,7 +680,11 @@ font-weight: bold;
  </div>
  {% endif %}
 
- <!-- 🛥️ УБРАНО: Подпятник -->
+ <!-- Скрытые поля для цветов -->
+<input type="hidden" name="carpet_color" id="carpet_color_input" value="{{ initial_carpet_color.uid }}">
+<input type="hidden" name="border_color" id="border_color_input" value="{{ initial_border_color.uid }}">
+
+<!-- 🛥️ УБРАНО: Подпятник -->
 
  <div class="quantity-and-price">
  <div class="quantity-selector">
@@ -625,7 +694,7 @@ font-weight: bold;
  </div>
 
  <div class="final-price">
- Итоговая стоимость: <span class="font-weight-bold" id="finalPrice">{{ product.price|default:product.get_product_price_by_kit }}.00</span>
+ Итоговая стоимость: <span class="font-weight-bold" id="finalPrice">{{ product.price|default:"0" }}.00</span>
  </div>
  </div>
 
@@ -635,8 +704,8 @@ font-weight: bold;
  <form method="POST" action="{% url 'boats:add_to_wishlist' product.uid %}" id="wishlist-form">
  {% csrf_token %}
  <!-- 🛥️ УБРАНО: kit для лодок -->
- <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="">
- <input type="hidden" name="border_color" id="wishlist-border-color" value="">
+ <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="{{ initial_carpet_color.uid }}">
+ <input type="hidden" name="border_color" id="wishlist-border-color" value="{{ initial_border_color.uid }}">
  <!-- 🛥️ УБРАНО: podp для лодок -->
  <input type="hidden" name="quantity" id="wishlist-quantity" value="1">
  <button type="submit" class="btn btn-outline-primary">
@@ -648,8 +717,8 @@ font-weight: bold;
  <form method="POST" action="{% url 'boats:add_to_cart' product.uid %}" id="cart-form">
  {% csrf_token %}
  <!-- 🛥️ УБРАНО: kit для лодок -->
- <input type="hidden" name="carpet_color" id="cart-carpet-color" value="">
- <input type="hidden" name="border_color" id="cart-border-color" value="">
+ <input type="hidden" name="carpet_color" id="cart-carpet-color" value="{{ initial_carpet_color.uid }}">
+ <input type="hidden" name="border_color" id="cart-border-color" value="{{ initial_border_color.uid }}">
  <!-- 🛥️ УБРАНО: podp для лодок -->
  <input type="hidden" name="quantity" id="cart-quantity" value="1">
  <button type="submit" class="btn btn-primary">
@@ -675,97 +744,294 @@ font-weight: bold;
     </div>
  </div>
  
- <h3 class="title padding-bottom-sm">Отзывы</h3>
+        <!-- ⭐ НОВЫЙ БЛОК ОТЗЫВОВ С ЗВЕЗДОЧКАМИ И МОДЕРАЦИЕЙ (ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ) -->
+        <div class="reviews-section mt-4">
+            <h3 class="title padding-bottom-sm d-flex align-items-center">
+                <i class="fas fa-comments me-2"></i>
+                Отзывы
+                {% if reviews %}
+                <span class="badge bg-primary ms-2">{{ reviews.count }}</span>
+                {% endif %}
+            </h3>
 
- {% for review in product.reviews.all %}
-<div class="card mb-3">
- <div class="card-body" style="background-color: #59ee8d91">
- <div class="d-flex justify-content-between align-items-center">
- <div>
- <p>
- <strong>Дата: </strong>{{ review.date_added|date:"Y-m-d" }} от
-<strong>{{ review.user.get_full_name }}</strong><br />
- <strong>Оценка: </strong>{{ review.stars }}/5<br />
- <strong>Комментарий: </strong>{{ review.content }}
-</p>
- </div>
- <div class="d-flex flex-wrap align-items-center gap-2">
- {% if request.user.is_authenticated %}
-<button
- class="btn like-btn d-flex align-items-center"
- onclick="toggleLike('{{ review.uid }}')"
- >
- <i class="fas fa-thumbs-up me-2"></i>
- <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
- </button>
+            <!-- ⚠️ УВЕДОМЛЕНИЯ О МОДЕРАЦИИ -->
+            {% if messages %}
+                {% for message in messages %}
+                    {% if 'модерацию' in message.message or 'ожидает' in message.message %}
+                    <div class="pending-review">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ message.message }}</span>
+                    </div>
+                    {% elif message.tags == 'success' %}
+                    <div class="review-success-message">
+                        <i class="fas fa-check-circle me-2"></i>{{ message.message }}
+                    </div>
+                    {% elif message.tags == 'error' %}
+                    <div class="review-error-message">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ message.message }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
 
- <button
- class="btn dislike-btn d-flex align-items-center"
- onclick="toggleDislike('{{ review.uid }}')"
- >
- <i class="fas fa-thumbs-down me-2"></i>
- <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
- </button>
+            <!-- ✅ ОТЗЫВЫ ПОЛЬЗОВАТЕЛЕЙ (показываем подготовленный qs) -->
+            {% for review in reviews %}
+            <div class="card mb-3 review-card">
+                <div class="card-body" style="background-color: #59ee8d91">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="review-content flex-grow-1">
+                            <div class="review-header mb-2">
+                                <div class="d-flex align-items-center mb-2">
+                                    <!-- 👤 Автор: пользователь или гость -->
+                                    <strong class="me-3">
+                                        {% if review.user %}
+                                            {{ review.user.get_full_name|default:review.user.username }}
+                                        {% else %}
+                                            {{ review.reviewer_name|default:"Анонимный пользователь" }}
+                                        {% endif %}
+                                    </strong>
 
- {% else %}
-<b>Войдите, чтобы оценить отзыв</b>
- {% endif %}
- </div>
- </div>
- </div>
-</div>
- {% endfor %}
+                                    <div class="review-stars me-2">
+                                        {% for star in "12345" %}
+                                            {% if forloop.counter <= review.stars %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="fas fa-star empty"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">{{ review.date_added|date:"d.m.Y в H:i" }}</small>
+                                </div>
+                            </div>
 
-<!-- 📝 Форма для добавления отзыва (если пользователь авторизован) -->
-{% if user.is_authenticated %}
-<div class="row">
- <div class="col-md-6">
- <div class="card">
- <div class="card-header">
- <h5>Оставить отзыв</h5>
- </div>
- <div class="card-body">
- <form method="post" action="">
- {% csrf_token %}
- <div class="form-group">
- <label for="rating">Оценка:</label>
- <div class="rating-stars">
- <input type="radio" name="stars" id="star1" value="1" required>
- <label for="star1">⭐</label>
- <input type="radio" name="stars" id="star2" value="2" required>
- <label for="star2">⭐</label>
- <input type="radio" name="stars" id="star3" value="3" required>
- <label for="star3">⭐</label>
- <input type="radio" name="stars" id="star4" value="4" required>
- <label for="star4">⭐</label>
- <input type="radio" name="stars" id="star5" value="5" required>
- <label for="star5">⭐</label>
- </div>
- </div>
- <div class="form-group">
- <label for="content">Ваш отзыв:</label>
- <textarea name="content" id="content" class="form-control" rows="4" placeholder="Поделитесь своими впечатлениями о товаре..." required></textarea>
- </div>
- <button type="submit" class="btn btn-primary">Отправить отзыв</button>
- </form>
- </div>
- </div>
- </div>
-</div>
-{% else %}
-<div class="alert alert-info">
- <p>Для того чтобы оставить отзыв, необходимо <a href="{% url 'login' %}">войти в систему</a> или <a href="{% url 'register' %}">зарегистрироваться</a>.</p>
-</div>
-{% endif %}
+                            <div class="review-text">
+                                <p class="mb-2">{{ review.content }}</p>
+                            </div>
+                        </div>
 
- </div>
+                        <!-- 👍👎 КНОПКИ ЛАЙК/ДИЗЛАЙК И ДЕЙСТВИЯ -->
+                        <div class="review-actions d-flex flex-wrap align-items-center gap-2">
+                            {% if request.user.is_authenticated %}
+                            <button class="btn like-btn d-flex align-items-center" onclick="toggleLike('{{ review.uid }}')" title="Нравится">
+                                <i class="fas fa-thumbs-up me-1"></i>
+                                <span id="like-count-{{ review.uid }}">{{ review.like_count }}</span>
+                            </button>
+
+                            <button class="btn dislike-btn d-flex align-items-center" onclick="toggleDislike('{{ review.uid }}')" title="Не нравится">
+                                <i class="fas fa-thumbs-down me-1"></i>
+                                <span id="dislike-count-{{ review.uid }}">{{ review.dislike_count }}</span>
+                            </button>
+                            {% else %}
+                            <!-- Для гостей — только счетчики -->
+                            <span class="like-btn-static d-flex align-items-center" title="Войдите для оценки">
+                                <i class="fas fa-thumbs-up me-1"></i>
+                                <span>{{ review.like_count }}</span>
+                            </span>
+                            <span class="dislike-btn-static d-flex align-items-center" title="Войдите для оценки">
+                                <i class="fas fa-thumbs-down me-1"></i>
+                                <span>{{ review.dislike_count }}</span>
+                            </span>
+                            {% endif %}
+
+                            <!-- 🗑️ Кнопка удаления только для автора -->
+                            {% if review.user == request.user %}
+                            <button class="btn btn-outline-danger btn-sm"
+                                    title="Удалить отзыв"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteReviewModal"
+                                    onclick="setDeleteAction('{% url 'delete_review' product.slug review.uid %}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            {% endif %}
+
+                            <!-- 👨‍💼 Кнопки модерации для администраторов -->
+                            {% if request.user.is_staff %}
+                                {% if not review.is_approved %}
+                                <button class="btn btn-success btn-sm" onclick="moderateReview('{{ review.uid }}', 'approve')" title="Одобрить отзыв">
+                                    <i class="fas fa-check"></i> Одобрить
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-warning btn-sm" onclick="moderateReview('{{ review.uid }}', 'reject')" title="Отклонить отзыв">
+                                    <i class="fas fa-times"></i> Отклонить
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-reviews-message text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Отзывов пока нет. Будьте первым!</p>
+            </div>
+            {% endfor %}
+
+            <!-- ✍️ УНИВЕРСАЛЬНАЯ ФОРМА ДОБАВЛЕНИЯ ОТЗЫВА (ДЛЯ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ) -->
+            <div class="review-form-container">
+                <h5>
+                    <i class="fas fa-edit me-2"></i>
+                    {% if user_existing_review %}
+                        Редактировать ваш отзыв
+                    {% else %}
+                        Оставить отзыв
+                    {% endif %}
+                </h5>
+
+                <form method="POST" action="{% url 'boats:product_detail' product.slug %}" class="review-form" id="reviewForm">
+                    {% csrf_token %}
+
+                    {% if not request.user.is_authenticated %}
+                    <!-- 🍯 Honeypot -->
+                    <input type="text" name="website" style="display:none;" tabindex="-1" autocomplete="off">
+                    <!-- ⏱️ Временная метка -->
+                    <input type="hidden" name="form_timestamp" value="{{ form_timestamp }}">
+                    {% endif %}
+
+                    {% if not request.user.is_authenticated %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="review-form-group">
+                                <label for="id_reviewer_name">Ваше имя <span class="text-danger">*</span></label>
+                                <input type="text" name="reviewer_name" id="id_reviewer_name" class="form-control"
+                                       placeholder="Как к вам обращаться?" required maxlength="100"
+                                       value="{% if review_form.reviewer_name.value %}{{ review_form.reviewer_name.value }}{% endif %}">
+                                {% if review_form.reviewer_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in review_form.reviewer_name.errors %}
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="review-form-group">
+                                <label for="id_reviewer_email">Email <span class="text-muted">(необязательно, не публикуется)</span></label>
+                                <input type="email" name="reviewer_email" id="id_reviewer_email" class="form-control"
+                                       placeholder="для связи (не показывается)" maxlength="254"
+                                       value="{% if review_form.reviewer_email.value %}{{ review_form.reviewer_email.value }}{% endif %}">
+                                <small class="form-text text-muted"><i class="fas fa-lock me-1"></i>Email не публикуется и используется только для связи</small>
+                                {% if review_form.reviewer_email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in review_form.reviewer_email.errors %}
+                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ⭐ Оценка -->
+                    <div class="review-form-group">
+                        <label>Ваша оценка <span class="text-danger">*</span></label>
+                        <div class="star-rating-widget" data-field-name="stars">
+                            <input type="hidden" name="stars"
+                                   value="{% if user_existing_review %}{{ user_existing_review.stars }}{% elif review_form.stars.value %}{{ review_form.stars.value }}{% else %}0{% endif %}"
+                                   id="id_stars">
+                            {% for i in "12345" %}
+                            <span class="star
+                                {% if user_existing_review and forloop.counter <= user_existing_review.stars %}active{% elif review_form.stars.value and forloop.counter <= review_form.stars.value %}active{% endif %}"
+                                  data-value="{{ forloop.counter }}"
+                                  title="{{ forloop.counter }} звезд{% if forloop.counter == 1 %}а{% elif forloop.counter <= 4 %}ы{% endif %}">
+                                <i class="fas fa-star"></i>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        <small class="form-text text-muted">Кликните на звездочки для выбора оценки</small>
+
+                        {% if review_form.stars.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in review_form.stars.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- 📝 Комментарий -->
+                    <div class="review-form-group">
+                        <label for="id_content">Комментарий <span class="text-danger">*</span></label>
+                        <textarea name="content" id="id_content" class="form-control review-content-textarea" rows="4"
+                                  placeholder="Поделитесь вашим мнением о товаре..." maxlength="1000" required>{% if user_existing_review %}{{ user_existing_review.content }}{% elif review_form.content.value %}{{ review_form.content.value }}{% endif %}</textarea>
+                        <small class="form-text text-muted">Минимум 10 символов, максимум 1000</small>
+
+                        {% if review_form.content.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in review_form.content.errors %}<i class="fas fa-exclamation-triangle me-1"></i>{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- 🚀 Отправка -->
+                    <div class="text-end">
+                        <button type="submit" name="review_submit" class="review-submit-btn">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% if user_existing_review %}Обновить отзыв{% else %}Отправить отзыв{% endif %}
+                        </button>
+                    </div>
+
+                    <!-- 💡 Инфо о модерации -->
+                    <div class="moderation-info mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Все отзывы проходят модерацию перед публикацией.
+                            {% if user_existing_review and not user_existing_review.is_approved %}
+                                Ваш текущий отзыв ожидает проверки.
+                            {% endif %}
+                            {% if not request.user.is_authenticated %}
+                                Для возможности удаления отзыва в будущем сохраните эту страницу.
+                            {% endif %}
+                        </small>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- 🗑️ МОДАЛЬНОЕ ОКНО УДАЛЕНИЯ ОТЗЫВА (для авторизованных) -->
+        <div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-labelledby="deleteReviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteReviewModalLabel">
+                            <i class="fas fa-trash me-2"></i>Подтверждение удаления
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                            <p>Вы уверены, что хотите удалить этот отзыв?</p>
+                            <p class="text-muted small">Это действие нельзя отменить.</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </button>
+                        <form id="deleteReviewForm" method="POST" style="display: inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>Удалить отзыв
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </section>
+
+<!-- 🔧 СКРЫТЫЕ ДАННЫЕ ДЛЯ JavaScript -->
+<meta name="product-price" content="{{ product.price }}">
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
 <script>
  // JavaScript функции (ТОЧНАЯ КОПИЯ С PRODUCTS)
  let selectedCarpetColor = '';
  let selectedBorderColor = '';
- let selectedQuantity = 1;
+ let document.getElementById('quantity').value = 1;
 
  // Функция изменения главного изображения
  function updateMainImage(imageSrc) {
@@ -777,94 +1043,241 @@ font-weight: bold;
    this.classList.toggle('zoomed-in');
  });
 
- // Выбор цвета
- function selectColor(element, type) {
-   // Убираем выделение с других цветов того же типа
-   const picker = element.closest('.color-picker');
-   const allColors = picker.querySelectorAll('.color-item');
-   allColors.forEach(color => color.classList.remove('active'));
-
-   // Выделяем выбранный цвет
-   element.classList.add('active');
-
-   const colorId = element.dataset.color;
-   const colorName = element.dataset.name;
-
-   if (type === 'carpet') {
-     selectedCarpetColor = colorId;
-     document.getElementById('cart-carpet-color').value = colorName;
-     document.getElementById('wishlist-carpet-color').value = colorName;
-   } else if (type === 'border') {
-     selectedBorderColor = colorId;
-     document.getElementById('cart-border-color').value = colorName;
-     document.getElementById('wishlist-border-color').value = colorName;
+ // 🎨 Активация цвета (СИНХРОНИЗИРОВАНО С АВТОМОБИЛЯМИ)
+ function activateColor(element, type) {
+   // ⚠️ Проверяем доступность цвета
+   const isAvailable = element.dataset.isAvailable === 'true';
+   if (!isAvailable) {
+     console.warn('Попытка выбора недоступного цвета');
+     return;
    }
 
-   updateConfig();
+   // Убираем активный класс у всех элементов того же типа
+   document.querySelectorAll(`.color-picker[data-color-type="${type}"] .color-item`).forEach(item => {
+     item.classList.remove('active');
+     item.style.border = '2px solid #ccc';
+   });
+
+   // Добавляем активный класс выбранному элементу
+   element.classList.add('active');
+   element.style.border = '2px solid #FFEB3B';
+
+   // Получаем UUID цвета и URL изображения
+   const colorUUID = element.getAttribute('data-color-uuid');
+   const imageUrl = element.getAttribute('data-image-url');
+
+   // Обновляем соответствующие скрытые поля
+   if (type === 'carpet') {
+     const carpetColorInput = document.getElementById('carpet_color_input');
+     if (carpetColorInput) carpetColorInput.value = colorUUID;
+
+     // Обновляем поля для корзины и избранного
+     const cartField = document.getElementById('cart-carpet-color');
+     const wishlistField = document.getElementById('wishlist-carpet-color');
+     if (cartField) cartField.value = colorUUID;
+     if (wishlistField) wishlistField.value = colorUUID;
+
+     // 🖼️ Обновляем изображение коврика
+     const matcolorImg = document.querySelector('.matcolor');
+     if (matcolorImg && imageUrl) {
+       matcolorImg.src = imageUrl;
+     }
+
+   } else if (type === 'border') {
+     const borderColorInput = document.getElementById('border_color_input');
+     if (borderColorInput) borderColorInput.value = colorUUID;
+
+     // Обновляем поля для корзины и избранного
+     const cartField = document.getElementById('cart-border-color');
+     const wishlistField = document.getElementById('wishlist-border-color');
+     if (cartField) cartField.value = colorUUID;
+     if (wishlistField) wishlistField.value = colorUUID;
+
+     // 🖼️ Обновляем изображение окантовки
+     const borderImg = document.querySelector('.bordercolor');
+     if (borderImg && imageUrl) {
+       borderImg.src = imageUrl;
+     }
+   }
+
+   console.log(`Выбран цвет ${type}: ${colorUUID}`);
  }
 
  // Обновление конфигурации
  function updateConfig() {
    // Обновляем скрытые поля формы
-   document.getElementById('cart-quantity').value = selectedQuantity;
-   document.getElementById('wishlist-quantity').value = selectedQuantity;
+   document.getElementById('cart-quantity').value = document.getElementById('quantity').value;
+   document.getElementById('wishlist-quantity').value = document.getElementById('quantity').value;
  }
 
  // Управление количеством
- document.getElementById('button-plus').addEventListener('click', function() {
+ /* document.getElementById('button-plus').addEventListener('click', function() {
    const quantityInput = document.getElementById('quantity');
-   selectedQuantity = parseInt(quantityInput.value) + 1;
-   quantityInput.value = selectedQuantity;
+   // Удалено - делегировано в product.js
+   quantityInput.value = document.getElementById('quantity').value;
    updateConfig();
  });
 
  document.getElementById('button-minus').addEventListener('click', function() {
    const quantityInput = document.getElementById('quantity');
-   if (selectedQuantity > 1) {
-     selectedQuantity = parseInt(quantityInput.value) - 1;
-     quantityInput.value = selectedQuantity;
+   if (document.getElementById('quantity').value > 1) {
+     document.getElementById('quantity').value = parseInt(quantityInput.value) - 1;
+     quantityInput.value = document.getElementById('quantity').value;
      updateConfig();
    }
  });
 
- // Функции для лайков/дизлайков отзывов
- function toggleLike(reviewUid) {
-   // AJAX запрос для лайка
-   fetch(`/products/like-review/${reviewUid}/`, {
-     method: 'POST',
-     headers: {
-       'Content-Type': 'application/json',
-       'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-     }
-   })
-   .then(response => response.json())
-   .then(data => {
-     if (data.success) {
-       document.getElementById(`like-count-${reviewUid}`).textContent = data.likes;
-       document.getElementById(`dislike-count-${reviewUid}`).textContent = data.dislikes;
-     }
-   })
-   .catch(error => console.error('Ошибка:', error));
- }
-
- function toggleDislike(reviewUid) {
-   // AJAX запрос для дизлайка
-   fetch(`/products/dislike-review/${reviewUid}/`, {
-     method: 'POST',
-     headers: {
-       'Content-Type': 'application/json',
-       'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-     }
-   })
-   .then(response => response.json())
-   .then(data => {
-     if (data.success) {
-       document.getElementById(`like-count-${reviewUid}`).textContent = data.likes;
-       document.getElementById(`dislike-count-${reviewUid}`).textContent = data.dislikes;
-     }
-   })
-   .catch(error => console.error('Ошибка:', error));
- }
+// ⭐ Дублированные функции удалены - используются из отдельного блока выше
 </script>
+
+<!-- 🛥️ Передача типа товара в JavaScript -->
+<script>window.isBoatProduct = true;</script>
+
+<!-- ⭐ JAVASCRIPT ДЛЯ ИНТЕРАКТИВНЫХ ЗВЕЗДОЧЕК -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeStarRatingWidgets();
+    initializeCharacterCounter();
+});
+
+function initializeStarRatingWidgets() {
+    const widgets = document.querySelectorAll('.star-rating-widget');
+    widgets.forEach(widget => {
+        const stars = widget.querySelectorAll('.star');
+        const hiddenInput = widget.querySelector('input[type="hidden"]');
+        if (!hiddenInput) return;
+
+        stars.forEach(star => {
+            const starValue = parseInt(star.getAttribute('data-value'));
+            star.addEventListener('click', function() {
+                setRating(widget, starValue, hiddenInput);
+                clearHoverEffect(stars);
+            });
+            star.addEventListener('mouseenter', function() { showHoverEffect(stars, starValue); });
+            star.addEventListener('mouseleave', function() {
+                clearHoverEffect(stars);
+                restoreCurrentRating(widget, hiddenInput);
+            });
+        });
+
+        restoreCurrentRating(widget, hiddenInput);
+    });
+}
+
+function setRating(widget, rating, hiddenInput) {
+    hiddenInput.value = rating;
+    const stars = widget.querySelectorAll('.star');
+    stars.forEach(star => {
+        const starValue = parseInt(star.getAttribute('data-value'));
+        if (starValue <= rating) { star.classList.add('active'); star.classList.remove('hover'); }
+        else { star.classList.remove('active', 'hover'); }
+    });
+    showRatingConfirmation(widget, rating);
+    clearValidationErrors(widget);
+}
+
+function showHoverEffect(stars, hoverRating) {
+    stars.forEach(star => {
+        const starValue = parseInt(star.getAttribute('data-value'));
+        if (starValue <= hoverRating) star.classList.add('hover');
+        else star.classList.remove('hover');
+    });
+}
+function clearHoverEffect(stars) { stars.forEach(star => star.classList.remove('hover')); }
+
+function restoreCurrentRating(widget, hiddenInput) {
+    const currentRating = parseInt(hiddenInput.value) || 0;
+    const stars = widget.querySelectorAll('.star');
+    stars.forEach(star => {
+        const starValue = parseInt(star.getAttribute('data-value'));
+        if (starValue <= currentRating) star.classList.add('active'); else star.classList.remove('active');
+        star.classList.remove('hover');
+    });
+}
+
+function showRatingConfirmation(widget, rating) {
+    const existing = widget.querySelector('.rating-confirmation'); if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'rating-confirmation';
+    el.style.cssText = 'color:#28a745;font-size:.9rem;font-weight:600;margin-left:15px;opacity:0;transition:opacity .3s ease;';
+    el.innerHTML = '<i class="fas fa-check-circle"></i> ' + getRatingText(rating);
+    widget.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='1'; },100);
+    setTimeout(()=>{ if(el.parentNode){ el.style.opacity='0'; setTimeout(()=>{ if(el.parentNode){ el.remove(); } },300); } },3000);
+}
+function getRatingText(rating){
+    const t={1:'Очень плохо',2:'Плохо',3:'Нормально',4:'Хорошо',5:'Отлично'}; return t[rating] || 'Оценка выбрана';
+}
+function clearValidationErrors(widget){
+    const errs = widget.parentNode.querySelectorAll('.invalid-feedback, .error-message');
+    errs.forEach(e=>e.style.display='none');
+    const group = widget.closest('.form-group, .review-form-group');
+    if (group) group.classList.remove('has-error','is-invalid');
+}
+
+function initializeCharacterCounter(){
+    const textareas=document.querySelectorAll('.review-content-textarea');
+    textareas.forEach(textarea=>{
+        const maxLength=parseInt(textarea.getAttribute('maxlength'))||1000;
+        const counter=document.createElement('div');
+        counter.className='character-counter';
+        counter.textContent=`0 / ${maxLength}`;
+        textarea.parentNode.insertBefore(counter, textarea.nextSibling);
+        textarea.addEventListener('input', function(){
+            const n=this.value.length;
+            counter.textContent=`${n} / ${maxLength}`;
+            if(n>maxLength*0.9){counter.classList.add('near-limit');}else{counter.classList.remove('near-limit');}
+        });
+        textarea.dispatchEvent(new Event('input'));
+    });
+}
+
+// 🗑️ Удаление
+function setDeleteAction(url) { document.getElementById('deleteReviewForm').action = url; }
+
+// 👨‍💼 Модерация
+function moderateReview(reviewUid, action) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(`/products/moderate-review/${reviewUid}/${action}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, review_uid: reviewUid })
+    })
+    .then(r=>r.json())
+    .then(data=>{
+        if(data.success){ location.reload(); }
+        else{ alert('Ошибка: ' + (data.error || 'Неизвестная ошибка')); }
+    })
+    .catch(err=>{ console.error('Ошибка модерации:', err); alert('Произошла ошибка при модерации отзыва'); });
+}
+
+// 👍👎 Лайк/дизлайк
+function toggleLike(reviewUid){
+    const csrfToken=document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(`/products/toggle-like/${reviewUid}/`, { method:'POST', headers:{'X-CSRFToken':csrfToken,'Content-Type':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{ if(d.success){ document.getElementById(`like-count-${reviewUid}`).textContent=d.likes; document.getElementById(`dislike-count-${reviewUid}`).textContent=d.dislikes; } })
+    .catch(e=>console.error('Ошибка лайка:', e));
+}
+function toggleDislike(reviewUid){
+    const csrfToken=document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch(`/products/toggle-dislike/${reviewUid}/`, { method:'POST', headers:{'X-CSRFToken':csrfToken,'Content-Type':'application/json'} })
+    .then(r=>r.json())
+    .then(d=>{ if(d.success){ document.getElementById(`like-count-${reviewUid}`).textContent=d.likes; document.getElementById(`dislike-count-${reviewUid}`).textContent=d.dislikes; } })
+    .catch(e=>console.error('Ошибка дизлайка:', e));
+}
+
+// 📝 Автофокус на форму при ошибках
+document.addEventListener('DOMContentLoaded', function(){
+    const hasFormErrors = document.querySelector('.invalid-feedback');
+    if (hasFormErrors) {
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm) reviewForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
+
+<!-- 🔧 ПОДКЛЮЧЕНИЕ ОСНОВНОГО JS ФАЙЛА -->
+<script src="/media/js/product.js" type="text/javascript"></script>
 
 {% endblock %}

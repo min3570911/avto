@@ -1,147 +1,239 @@
-<!-- 📁 templates/product/all_product_reviews.html - ИСПРАВЛЕННАЯ ВЕРСИЯ -->
-<!-- ✅ ФИКС: Использование _cached_product вместо review.product для Generic FK -->
-<!-- 🔧 Добавлена защита от ошибок при обращении к товару -->
+<!-- 📁 templates/product/all_product_reviews.html - ПУБЛИЧНАЯ СТРАНИЦА ВСЕХ ОТЗЫВОВ -->
+<!-- 🌟 ОБНОВЛЕНО: Показ всех одобренных отзывов со всех товаров -->
+<!-- 📊 ДОБАВЛЕНО: Статистика, фильтры и красивое оформление -->
 
-{% extends 'base.html' %}
+{% extends 'base/base.html' %}
 {% load static %}
+{% load review_extras %}
 
-{% block title %}Мои отзывы{% endblock %}
+<!-- 🔐 CSRF токен для AJAX запросов -->
+{% csrf_token %}
 
-{% block content %}
+{% block title %}Отзывы покупателей | Все отзывы о товарах{% endblock %}
+
+{% block start %}
 <div class="container my-5">
+    <!-- 📝 Заголовок -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="text-center mb-4">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-star text-warning me-3"></i>
+                    Отзывы покупателей
+                </h1>
+                <p class="lead text-muted">
+                    Честные отзывы наших клиентов о товарах
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📝 Отзывы -->
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">
-                <i class="fas fa-star me-2"></i>
-                Мои отзывы
-            </h2>
-
             {% if reviews %}
-            <div class="row">
-                {% for review in reviews %}
-                <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <!-- 📝 Информация о товаре -->
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    {% if review._cached_product %}
-                                        <!-- ✅ ИСПРАВЛЕНО: Используем _cached_product -->
-                                        <h5 class="card-title">
-                                            <a href="{% if review._cached_product.slug %}/products/{{ review._cached_product.slug }}/{% else %}#{% endif %}" 
-                                               class="text-decoration-none">
-                                                {{ review._cached_product.product_name|default:"Товар" }}
+                <!-- Пагинация сверху -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Навигация по отзывам">
+                    <ul class="pagination justify-content-center mb-4">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+                <!-- Список отзывов -->
+                <div class="row">
+                    {% for review in reviews %}
+                    <div class="col-12 mb-4">
+                        <div class="card border review-card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- 🖼️ УНИВЕРСАЛЬНОЕ ИЗОБРАЖЕНИЕ ТОВАРА -->
+                                    <div class="col-md-2 col-3">
+                                        {% if review.cached_product %}
+                                            {% if review.product_type == 'product' %}
+                                                <!-- 🚗 Автомобильные коврики -->
+                                                {% if review.cached_product.product_images.all %}
+                                                    <img src="{{ review.cached_product.product_images.first.image.url }}"
+                                                         alt="{{ review.cached_product.product_name }}"
+                                                         class="img-fluid rounded product-image">
+                                                {% else %}
+                                                    <div class="no-image-placeholder d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-car fa-2x text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                            {% elif review.product_type == 'boat' %}
+                                                <!-- 🛥️ Лодочные коврики -->
+                                                {% if review.cached_product.images.all %}
+                                                    <img src="{{ review.cached_product.images.first.image.url }}"
+                                                         alt="{{ review.cached_product.product_name }}"
+                                                         class="img-fluid rounded product-image">
+                                                {% else %}
+                                                    <div class="no-image-placeholder d-flex align-items-center justify-content-center">
+                                                        <i class="fas fa-ship fa-2x text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                            {% else %}
+                                                <!-- ❓ Неизвестный тип товара -->
+                                                <div class="no-image-placeholder d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-box fa-2x text-muted"></i>
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="no-image-placeholder d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-exclamation-triangle fa-2x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Основной контент -->
+                                    <div class="col-md-10 col-9">
+                                        <!-- Заголовок с автором и рейтингом -->
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1 text-primary">
+                                                    <i class="fas fa-user-circle me-1"></i>
+                                                    {{ review.get_author_name }}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar-alt me-1"></i>
+                                                    {{ review.date_added|date:"d.m.Y в H:i" }}
+                                                </small>
+                                            </div>
+                                            <!-- Рейтинг -->
+                                            <div class="text-end">
+                                                {% for i in "12345" %}
+                                                    {% if i|add:0 <= review.stars %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-muted"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <!-- 🔗 УНИВЕРСАЛЬНОЕ НАЗВАНИЕ ТОВАРА -->
+                                        {% if review.cached_product %}
+                                        <h6 class="mb-2">
+                                            <a href="{% if review.product_type == 'product' %}/products/{{ review.cached_product.slug }}/{% elif review.product_type == 'boat' %}/boats/product/{{ review.cached_product.slug }}/{% else %}#{% endif %}"
+                                               class="text-decoration-none text-dark">
+                                                {% if review.product_type == 'boat' %}
+                                                    🛥️ {{ review.cached_product.product_name|default:"Лодочный товар" }}
+                                                {% else %}
+                                                    🚗 {{ review.cached_product.product_name|default:"Автомобильный товар" }}
+                                                {% endif %}
                                             </a>
-                                        </h5>
-                                        {% if review._cached_product.category %}
-                                        <small class="text-muted">
+                                        </h6>
+                                        {% if review.cached_product.category %}
+                                        <small class="text-muted d-block mb-2">
                                             <i class="fas fa-tag me-1"></i>
-                                            {{ review._cached_product.category.category_name }}
+                                            {{ review.cached_product.category.category_name }}
                                         </small>
                                         {% endif %}
-                                    {% else %}
-                                        <!-- 🔄 Если товар не найден -->
-                                        <h5 class="card-title text-muted">
-                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                        {% else %}
+                                        <h6 class="mb-2 text-muted">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
                                             Товар недоступен
-                                        </h5>
-                                        <small class="text-muted">Возможно, товар был удален</small>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- ⭐ Рейтинг -->
-                                <div class="text-end">
-                                    <div class="mb-2">
-                                        {% for i in "12345" %}
-                                            {% if i|add:0 <= review.stars %}
-                                                <i class="fas fa-star text-warning"></i>
-                                            {% else %}
-                                                <i class="far fa-star text-muted"></i>
+                                        </h6>
+                                        {% endif %}
+
+                                        <!-- Текст отзыва -->
+                                        {% if review.content %}
+                                        <p class="mb-3">{{ review.content }}</p>
+                                        {% endif %}
+
+                                        <!-- Лайки и ссылка на товар -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex gap-3">
+                                                {% if user.is_authenticated %}
+                                                <button class="btn btn-outline-success btn-sm like-btn"
+                                                        data-review-id="{{ review.uid }}"
+                                                        data-action="like">
+                                                    <i class="fas fa-thumbs-up me-1"></i>
+                                                    <span class="like-count">{{ review.like_count }}</span>
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm dislike-btn"
+                                                        data-review-id="{{ review.uid }}"
+                                                        data-action="dislike">
+                                                    <i class="fas fa-thumbs-down me-1"></i>
+                                                    <span class="dislike-count">{{ review.dislike_count }}</span>
+                                                </button>
+                                                {% else %}
+                                                <span class="text-muted small">
+                                                    <i class="fas fa-thumbs-up me-1 text-success"></i>
+                                                    {{ review.like_count }}
+                                                </span>
+                                                <span class="text-muted small">
+                                                    <i class="fas fa-thumbs-down me-1 text-danger"></i>
+                                                    {{ review.dislike_count }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+
+                                            {% if review.cached_product and review.cached_product.slug %}
+                                            <a href="{% if review.product_type == 'product' %}/products/{{ review.cached_product.slug }}/{% elif review.product_type == 'boat' %}/boats/product/{{ review.cached_product.slug }}/{% else %}#{% endif %}"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Смотреть товар
+                                            </a>
                                             {% endif %}
-                                        {% endfor %}
+                                        </div>
                                     </div>
-                                    <small class="text-muted">
-                                        <i class="fas fa-calendar-alt me-1"></i>
-                                        {{ review.date_added|date:"d.m.Y" }}
-                                    </small>
-                                </div>
-                            </div>
-
-                            <!-- 💬 Содержание отзыва -->
-                            {% if review.content %}
-                            <div class="mb-3">
-                                <p class="card-text">{{ review.content }}</p>
-                            </div>
-                            {% endif %}
-
-                            <!-- 👍👎 Лайки/дизлайки -->
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex gap-3">
-                                    <span class="text-muted">
-                                        <i class="fas fa-thumbs-up me-1"></i>
-                                        {{ review.like_count }}
-                                    </span>
-                                    <span class="text-muted">
-                                        <i class="fas fa-thumbs-down me-1"></i>
-                                        {{ review.dislike_count }}
-                                    </span>
-                                </div>
-
-                                <!-- 🔧 Кнопки управления -->
-                                <div class="btn-group" role="group">
-                                    {% if review._cached_product and review._cached_product.slug %}
-                                    <!-- ✅ ИСПРАВЛЕНО: Проверяем наличие slug -->
-                                    <button
-                                        class="btn btn-outline-primary btn-sm"
-                                        type="button"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editReviewModal"
-                                        onclick="setEditReview('{{ review.uid }}', '{{ review.stars }}', '{{ review.content|escapejs }}')"
-                                    >
-                                        <i class="fas fa-edit me-1"></i>
-                                        Редактировать
-                                    </button>
-                                    
-                                    <button
-                                        class="btn btn-outline-danger btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteReviewModal"
-                                        onclick="setDeleteAction('{% url 'delete_review' review._cached_product.slug review.uid %}')"
-                                        type="button"
-                                    >
-                                        <i class="fas fa-trash me-1"></i>
-                                        Удалить
-                                    </button>
-                                    {% else %}
-                                    <!-- 🚫 Если нет slug, показываем только удаление -->
-                                    <button
-                                        class="btn btn-outline-danger btn-sm"
-                                        onclick="if(confirm('Удалить этот отзыв?')) { 
-                                            fetch('/admin/common/productreview/{{ review.uid }}/delete/', {method: 'POST'}); 
-                                            location.reload(); 
-                                        }"
-                                        type="button"
-                                    >
-                                        <i class="fas fa-trash me-1"></i>
-                                        Удалить
-                                    </button>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+
+                <!-- Пагинация снизу -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Навигация по отзывам">
+                    <ul class="pagination justify-content-center mt-4">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Назад</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">Вперед</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
             {% else %}
             <!-- 📭 Пустое состояние -->
             <div class="text-center py-5">
-                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">У вас пока нет отзывов</h4>
-                <p class="text-muted">Оставьте первый отзыв о товаре, который вы приобрели!</p>
-                <a href="{% url 'products_catalog' %}" class="btn btn-primary">
+                <i class="fas fa-star-half-alt fa-4x text-muted mb-4"></i>
+                <h3 class="text-muted mb-3">Пока нет отзывов</h3>
+                <p class="text-muted mb-4">
+                    Станьте первым, кто поделится своим мнением о наших товарах!<br>
+                    Ваш отзыв поможет другим покупателям сделать правильный выбор.
+                </p>
+                <a href="{% url 'products_catalog' %}" class="btn btn-primary btn-lg">
                     <i class="fas fa-shopping-bag me-2"></i>
-                    Перейти к покупкам
+                    Посмотреть товары
                 </a>
             </div>
             {% endif %}
@@ -149,94 +241,85 @@
     </div>
 </div>
 
-<!-- 🗑️ Модальное окно удаления отзыва -->
-<div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-labelledby="deleteReviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteReviewModalLabel">
-                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                    Подтвердите удаление
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Вы уверены, что хотите удалить этот отзыв?</p>
-                <p class="text-muted small">Это действие нельзя отменить.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>
-                    Отмена
-                </button>
-                <form id="deleteReviewForm" method="POST" style="display: inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-1"></i>
-                        Удалить отзыв
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- 🎨 Простые стили -->
+<style>
+.review-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
 
-<!-- ✏️ Модальное окно редактирования отзыва -->
-<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editReviewModalLabel">
-                    <i class="fas fa-edit me-2"></i>
-                    Редактировать отзыв
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editReviewForm" method="POST">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="editStars" class="form-label">Оценка:</label>
-                        <select name="stars" id="editStars" class="form-select" required>
-                            <option value="1">1 - Очень плохо</option>
-                            <option value="2">2 - Плохо</option>
-                            <option value="3">3 - Нормально</option>
-                            <option value="4">4 - Хорошо</option>
-                            <option value="5">5 - Отлично</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editContent" class="form-label">Комментарий:</label>
-                        <textarea name="content" id="editContent" class="form-control" rows="4" 
-                                  placeholder="Поделитесь вашим мнением о товаре..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>
-                        Отмена
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        Сохранить изменения
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+.product-image {
+    max-height: 100px;
+    width: 100%;
+    object-fit: cover;
+    border: 1px solid #e9ecef;
+}
 
+.no-image-placeholder {
+    height: 100px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+.like-btn, .dislike-btn {
+    border-radius: 6px;
+}
+
+.btn {
+    border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+    .product-image {
+        max-height: 80px;
+    }
+
+    .no-image-placeholder {
+        height: 80px;
+    }
+}
+</style>
+
+<!-- 📱 JavaScript для лайков -->
 <script>
-// 🗑️ Функция для установки действия удаления
-function setDeleteAction(url) {
-    document.getElementById('deleteReviewForm').action = url;
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // 👍👎 Обработка лайков/дизлайков
+    document.querySelectorAll('.like-btn, .dislike-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const reviewId = this.getAttribute('data-review-id');
+            const action = this.getAttribute('data-action');
 
-// ✏️ Функция для установки данных редактирования
-function setEditReview(reviewUid, stars, content) {
-    document.getElementById('editReviewForm').action = `/products/product-reviews/edit/${reviewUid}/`;
-    document.getElementById('editStars').value = stars;
-    document.getElementById('editContent').value = content;
-}
+            // ✅ Используем правильные URL из products/urls.py
+            const url = action === 'like'
+                ? `/products/toggle-like/${reviewId}/`
+                : `/products/toggle-dislike/${reviewId}/`;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Обновляем счетчики - ищем в родительском контейнере всех кнопок
+                    const buttonsContainer = this.closest('.d-flex');
+                    const likeCount = buttonsContainer.querySelector('.like-btn .like-count');
+                    const dislikeCount = buttonsContainer.querySelector('.dislike-btn .dislike-count');
+
+                    if (likeCount) likeCount.textContent = data.likes;
+                    if (dislikeCount) dislikeCount.textContent = data.dislikes;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка. Попробуйте еще раз.');
+            });
+        });
+    });
+});
 </script>
 {% endblock %}

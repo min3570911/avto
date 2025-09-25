@@ -241,6 +241,41 @@ class CartItem(BaseModel):
                     return f"{self.product.boat_mat_length}×{self.product.boat_mat_width} см"
         return None
 
+    def get_product_image(self):
+        """🖼️ Получение изображения товара любого типа"""
+        if not self.product:
+            return None
+
+        if self.is_boat_product():
+            # 🛥️ Для лодочных товаров используем images
+            if hasattr(self.product, 'images') and self.product.images.exists():
+                return self.product.images.first()
+            return None
+        else:
+            # 🚗 Для автомобильных товаров используем product_images
+            if hasattr(self.product, 'product_images') and self.product.product_images.exists():
+                return self.product.product_images.first()
+            return None
+
+    def get_product_image_url(self):
+        """🖼️ URL изображения товара"""
+        image = self.get_product_image()
+        if image and hasattr(image, 'image') and image.image:
+            return image.image.url
+        return None
+
+    def get_product_url(self):
+        """🔗 URL страницы товара"""
+        if not self.product or not hasattr(self.product, 'slug'):
+            return "#"
+
+        if self.is_boat_product():
+            # 🛥️ URL лодочного товара
+            return f"/boats/product/{self.product.slug}/"
+        else:
+            # 🚗 URL автомобильного товара
+            return f"/products/{self.product.slug}/"
+
     def get_product_price(self):
         """💰 Расчет стоимости товара с учетом типа и конфигурации"""
         if not self.product:

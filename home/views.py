@@ -5,6 +5,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator
 from products.models import Product, Category, KitVariant, ProductImage
+from boats.models import BoatCategory  # 🛥️ ДОБАВЛЕНО: импорт категорий лодок
 from .models import FAQ, HeroSection, CompanyDescription
 import random
 
@@ -36,6 +37,9 @@ def index(request):
     # 📂 Получаем только активные категории для каталога
     categories = Category.objects.filter(is_active=True).order_by('display_order', 'category_name')
 
+    # 🛥️ Получаем активные категории лодок
+    boat_categories = BoatCategory.objects.filter(is_active=True).order_by('display_order', 'category_name')
+
     # ❓ Получаем активные FAQ для аккордеона
     faqs = FAQ.objects.filter(is_active=True).order_by('order', 'created_at')
 
@@ -55,6 +59,7 @@ def index(request):
 
         # 📂 Каталог категорий
         'categories': categories,
+        'boat_categories': boat_categories,
 
         # ❓ FAQ для аккордеона
         'faqs': faqs,
@@ -67,6 +72,7 @@ def index(request):
 
         # 📊 Дополнительная информация для шаблона
         'categories_count': categories.count(),
+        'boat_categories_count': boat_categories.count(),
         'faqs_count': faqs.count(),
         'gallery_count': len(gallery_images),
     }

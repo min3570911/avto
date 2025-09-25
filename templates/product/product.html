@@ -697,24 +697,6 @@ hr { margin-top: 10px; margin-bottom: 10px; }
                 </form>
             </div>
 
-            {% if not request.user.is_authenticated %}
-            <div class="anonymous-user-info mt-3 p-3" style="background-color: #f8f9fa; border-radius: 8px;">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-user-circle fa-2x text-muted me-3"></i>
-                    <div>
-                        <h6 class="mb-1">Оставляете отзыв как гость</h6>
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i>Ваш email не публикуется. Все отзывы модерируются.
-                        </small>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                Есть аккаунт? <a href="{% url 'admin:login' %}" class="text-primary">Войти в админку</a>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
 
         <!-- 🗑️ МОДАЛЬНОЕ ОКНО УДАЛЕНИЯ ОТЗЫВА (для авторизованных) -->

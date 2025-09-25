@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.contrib.contenttypes.models import ContentType
 from django.views.decorators.http import require_POST
 from django.contrib.admin.views.decorators import staff_member_required
@@ -664,36 +664,72 @@ def add_to_cart(request, uid):
     return redirect('cart')
 
 
-@login_required
 def product_reviews(request):
-    """📝 Личные отзывы пользователя с пагинацией"""
+    """📝 Публичная страница всех одобренных отзывов"""
+    # Получаем все одобренные отзывы из всех источников (автомобили + лодки)
     reviews = ProductReview.objects.filter(
-        user=request.user
+        is_approved=True
     ).order_by('-date_added').select_related('content_type')
 
-    # Добавляем информацию о товарах
-    for review in reviews:
-        try:
-            if review.content_type.model == 'product':
-                product = Product.objects.get(uid=review.object_id)
-            elif review.content_type.model == 'boatproduct':
-                from boats.models import BoatProduct
-                product = BoatProduct.objects.get(uid=review.object_id)
-            else:
-                product = None
-            review._cached_product = product
-        except Exception as e:
-            logger.warning(f"Не удалось получить товар для отзыва {review.uid}: {e}")
-            review._cached_product = None
+    # Фильтрация по рейтингу
+    rating_filter = request.GET.get('rating')
+    if rating_filter and rating_filter.isdigit():
+        reviews = reviews.filter(stars=int(rating_filter))
+
+    # Фильтрация по типу товара
+    product_type = request.GET.get('type')
+    if product_type == 'auto':
+        reviews = reviews.filter(content_type__model='product')
+    elif product_type == 'boat':
+        reviews = reviews.filter(content_type__model='boatproduct')
+
+    # Поиск по тексту
+    search_query = request.GET.get('search')
+    if search_query:
+        reviews = reviews.filter(content__icontains=search_query)
+
+    # Вычисляем статистику перед пагинацией
+    all_approved_reviews = ProductReview.objects.filter(is_approved=True)
+    total_reviews = all_approved_reviews.count()
+
+    if total_reviews > 0:
+        average_rating = all_approved_reviews.aggregate(
+            avg_rating=Avg('stars')
+        )['avg_rating'] or 0
+        average_rating = round(average_rating, 1)
+
+        # Распределение по звездам
+        rating_distribution = {}
+        for i in range(1, 6):
+            rating_distribution[i] = all_approved_reviews.filter(stars=i).count()
+    else:
+        average_rating = 0
+        rating_distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
     # Пагинация для большого количества отзывов
-    paginator = Paginator(reviews, 10)
+    paginator = Paginator(reviews, 12)  # 12 отзывов на страницу для красивой сетки
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # 🎯 ЦЕНТРАЛИЗОВАННАЯ ОБРАБОТКА: Добавляем информацию о товарах ПОСЛЕ пагинации
+    from common.utils import get_product_by_review
+
+    for review in page_obj.object_list:
+        product, product_type, url_prefix, images_field = get_product_by_review(review)
+        review.cached_product = product
+        review.product_type = product_type  # Для использования в шаблоне
+        review.product_url_prefix = url_prefix
+        review.images_field = images_field
+
     return render(request, 'product/all_product_reviews.html', {
         'reviews': page_obj.object_list,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'total_reviews': total_reviews,
+        'average_rating': average_rating,
+        'rating_distribution': rating_distribution,
+        'current_rating_filter': rating_filter,
+        'current_type_filter': product_type,
+        'current_search': search_query,
     })
 
 
@@ -979,13 +1015,13 @@ def moderate_review(request, review_uid, action):
 
             return JsonResponse({
                 'success': True,
-                'message': f'Отзыв от {review.get_reviewer_name()} одобрен',
+                'message': f'Отзыв от {review.get_author_name()} одобрен',
                 'new_status': 'approved'
             })
 
         elif action == 'reject':
             # 🗑️ Отклоняем отзыв (удаляем)
-            reviewer_name = review.get_reviewer_name()
+            reviewer_name = review.get_author_name()
             review.delete()
 
             logger.info(f"Администратор {request.user.username} отклонил отзыв {review_uid}")
@@ -1023,20 +1059,15 @@ def pending_reviews(request):
         is_approved=False
     ).order_by('-date_added').select_related('user', 'content_type')
 
-    # 🔍 Добавляем информацию о товарах к отзывам
+    # 🎯 ЦЕНТРАЛИЗОВАННАЯ ОБРАБОТКА: Добавляем информацию о товарах к отзывам
+    from common.utils import get_product_by_review
+
     for review in pending_reviews:
-        try:
-            if review.content_type.model == 'product':
-                product = Product.objects.get(uid=review.object_id)
-            elif review.content_type.model == 'boatproduct':
-                from boats.models import BoatProduct
-                product = BoatProduct.objects.get(uid=review.object_id)
-            else:
-                product = None
-            review._cached_product = product
-        except Exception as e:
-            logger.warning(f"Не удалось получить товар для отзыва {review.uid}: {e}")
-            review._cached_product = None
+        product, product_type, url_prefix, images_field = get_product_by_review(review)
+        review.cached_product = product
+        review.product_type = product_type
+        review.product_url_prefix = url_prefix
+        review.images_field = images_field
 
     # 📊 Статистика
     stats = {
@@ -1211,34 +1242,7 @@ def dislike_review(request, review_uid):
     return toggle_dislike(request, review_uid)
 
 
-def moderate_review(request, review_uid, action):
-    """👨‍💼 AJAX модерация отзывов (только для админов)"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Необходима авторизация'}, status=401)
-
-    if not (request.user.is_staff or request.user.is_superuser):
-        return JsonResponse({'success': False, 'error': 'Недостаточно прав доступа'}, status=403)
-
-    review = get_object_or_404(ProductReview, uid=review_uid)
-
-    try:
-        if action == 'approve':
-            review.is_approved = True
-            review.is_suspicious = False  # Убираем флаг подозрительности при одобрении
-            review.save()
-            message = f"Отзыв от {review.get_author_name()} одобрен"
-        elif action == 'reject':
-            review.delete()
-            message = f"Отзыв от {review.get_author_name()} удален"
-        else:
-            return JsonResponse({'success': False, 'error': 'Неизвестное действие'}, status=400)
-
-        logger.info(f"Модератор {request.user.username}: {message}")
-        return JsonResponse({'success': True, 'message': message})
-
-    except Exception as e:
-        logger.error(f"Ошибка модерации отзыва {review_uid}: {str(e)}")
-        return JsonResponse({'success': False, 'error': 'Ошибка при модерации отзыва'}, status=500)
+# Дублирующуюся функцию moderate_review удалена - используется основная версия выше
 
 
 # ==================== 🚨 ДОПОЛНИТЕЛЬНЫЕ АДМИНИСТРАТИВНЫЕ ФУНКЦИИ ==================

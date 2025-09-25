@@ -249,6 +249,32 @@ class BoatProduct(BaseModel):
             return f"{self.price:,}".replace(',', ' ')
         return "Цена по запросу"
 
+    def get_rating(self):
+        """⭐ Рассчитывает средний рейтинг товара на основе отзывов"""
+        # Импортируем здесь чтобы избежать циклического импорта
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            from common.models import ProductReview
+            ct = ContentType.objects.get_for_model(self)
+            reviews = ProductReview.objects.filter(content_type=ct, object_id=self.uid)
+            if reviews.count() > 0:
+                total = sum(int(review.stars) for review in reviews)
+                return total / reviews.count()
+        except ImportError:
+            pass
+        return 0
+
+    def get_reviews_count(self):
+        """📝 Возвращает количество отзывов"""
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            from common.models import ProductReview
+            ct = ContentType.objects.get_for_model(self)
+            return ProductReview.objects.filter(content_type=ct, object_id=self.uid).count()
+        except ImportError:
+            pass
+        return 0
+
     def get_main_image(self):
         """🖼️ Получить главное изображение"""
         main_image = self.images.filter(is_main=True).first()

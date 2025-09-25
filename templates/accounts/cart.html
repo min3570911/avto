@@ -126,25 +126,37 @@
                                     {% if cart_item.kit_variant and cart_item.kit_variant.image %}
                                     <img src="{{ cart_item.kit_variant.image.url }}" class="img-sm"
                                         alt="{{ cart_item.kit_variant.name }}" />
+                                    {% elif cart_item.get_product_image_url %}
+                                    <img src="{{ cart_item.get_product_image_url }}" class="img-sm"
+                                        alt="{{ cart_item.get_product_name }}" />
                                     {% else %}
-                                    <img src="/media/{{ cart_item.product.product_images.first.image }}"
-                                        class="img-sm" alt="{{ cart_item.product.product_name }}" />
+                                    <div class="img-sm d-flex align-items-center justify-content-center bg-light border"
+                                         style="width: 80px; height: 80px; border-radius: 4px;">
+                                        <i class="fas fa-image text-muted fa-2x"></i>
+                                    </div>
                                     {% endif %}
                                 </div>
                                 <figcaption class="info">
-    <a href="{% url 'get_product' cart_item.product.slug %}" class="title text-dark">
-        {{ cart_item.product.product_name }}
+    <a href="{{ cart_item.get_product_url }}" class="title text-dark">
+        {{ cart_item.get_product_name }}
+        {% if cart_item.is_boat_product %}
+        <small class="badge badge-info ml-1">🛥️ Лодка</small>
+        {% else %}
+        <small class="badge badge-secondary ml-1">🚗 Авто</small>
+        {% endif %}
     </a>
     <p class="text-muted small mb-0">
-        <!-- 🛥️ НОВОЕ: Размеры для лодок -->
+        <!-- 🛥️ Размеры для лодок -->
         {% if cart_item.get_product_dimensions %}
         <span style="background: #e3f2fd; padding: 2px 6px; border-radius: 3px; font-size: 11px; display: inline-block; margin-bottom: 2px;">
-            📏 Размер: {{ cart_item.get_product_dimensions }}
+            📏 {{ cart_item.get_product_dimensions }}
         </span><br />
         {% endif %}
 
-        {% if cart_item.kit_variant %}
-        Комплектация: {{ cart_item.kit_variant.name }}<br />
+        {% if cart_item.kit_variant and not cart_item.is_boat_product %}
+        <span style="background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-size: 11px; display: inline-block; margin-bottom: 2px;">
+            🛠️ {{ cart_item.kit_variant.name }}
+        </span><br />
         {% endif %}
 
         {% if cart_item.carpet_color %}
@@ -159,8 +171,10 @@
         {{ cart_item.border_color.name }}<br />
         {% endif %}
 
-        {% if cart_item.has_podpyatnik %}
-        🦶 С подпятником<br />
+        {% if cart_item.has_podpyatnik and not cart_item.is_boat_product %}
+        <span style="background: #d1ecf1; padding: 2px 6px; border-radius: 3px; font-size: 11px; display: inline-block; margin-bottom: 2px;">
+            🦶 С подпятником
+        </span><br />
         {% endif %}
     </p>
 </figcaption>

@@ -1350,7 +1350,7 @@
 <!-- 📂 Compact Categories Catalog - ОБНОВЛЕНО С ОГРАНИЧЕНИЕМ -->
 <section class="catalog-section" id="catalog-section">
   <div class="container">
-    <h2 class="section-title">Категории ковриков</h2>
+    <h2 class="section-title">Автомобильные коврики</h2>
 
     <div class="categories-container">
       <div class="categories-grid" id="categoriesGrid">
@@ -1382,6 +1382,44 @@
     </div>
   </div>
 </section>
+
+<!-- 🛥️ НОВЫЙ БЛОК: Коврики в лодку -->
+{% if boat_categories %}
+<section class="catalog-section" id="boat-catalog-section">
+  <div class="container">
+    <h2 class="section-title">Коврики в лодку</h2>
+
+    <div class="categories-container">
+      <div class="categories-grid" id="boatCategoriesGrid">
+        {% for category in boat_categories %}
+          <a href="{{ category.get_absolute_url }}" class="category-card">
+            <div class="category-icon">
+              {% if category.category_image %}
+                <img src="/media/{{ category.category_image }}" alt="{{ category.category_name }}">
+              {% else %}
+                <img src="{% static 'images/placeholder-category.png' %}" alt="{{ category.category_name }}">
+              {% endif %}
+            </div>
+            <div class="category-name">{{ category.category_name }}</div>
+          </a>
+        {% empty %}
+          <div class="text-center col-12">
+            <p>Категории лодок временно недоступны</p>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- 🆕 Кнопка "Смотреть все марки лодок" -->
+      {% if boat_categories_count > 8 %}
+      <button class="show-all-button" id="showAllBoatCategories" onclick="toggleBoatCategories()">
+        <span>Смотреть все марки лодок</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
 
 <!-- 🎨 EVA - это не просто автоковрики - НОВЫЙ LAYOUT -->
 <section class="eva-benefits">
@@ -1725,6 +1763,32 @@ function toggleCategories() {
 
     // Плавная прокрутка к началу секции
     document.getElementById('catalog-section').scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  } else {
+    // Разворачиваем
+    grid.classList.add('expanded');
+    button.classList.add('active');
+    buttonText.textContent = 'Скрыть';
+  }
+}
+
+// 🛥️ Функция для переключения категорий лодок
+function toggleBoatCategories() {
+  const grid = document.getElementById('boatCategoriesGrid');
+  const button = document.getElementById('showAllBoatCategories');
+  const buttonText = button.querySelector('span');
+  const buttonIcon = button.querySelector('i');
+
+  if (grid.classList.contains('expanded')) {
+    // Сворачиваем
+    grid.classList.remove('expanded');
+    button.classList.remove('active');
+    buttonText.textContent = 'Смотреть все марки лодок';
+
+    // Плавная прокрутка к началу секции
+    document.getElementById('boat-catalog-section').scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });

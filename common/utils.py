@@ -18,8 +18,95 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 import logging
+from django.contrib.contenttypes.models import ContentType
 
 logger = logging.getLogger(__name__)
+
+
+# ==================== УНИВЕРСАЛЬНЫЕ ФУНКЦИИ ДЛЯ ТОВАРОВ ====================
+
+def get_product_by_review(review):
+    """
+    🎯 Универсальная функция для получения товара по отзыву
+    Работает и с автомобилями (Product) и с лодками (BoatProduct)
+
+    Args:
+        review: объект ProductReview
+
+    Returns:
+        tuple: (product_object, product_type, product_url_prefix, images_field)
+
+    Примеры:
+        - Для автомобилей: (product, 'product', '/products/', 'product_images')
+        - Для лодок: (boat_product, 'boat', '/boats/product/', 'images')
+    """
+    try:
+        if review.content_type.model == 'product':
+            # 🚗 Автомобильные коврики
+            from products.models import Product
+            product = Product.objects.select_related('category').prefetch_related('product_images').get(uid=review.object_id)
+            return product, 'product', '/products/', 'product_images'
+
+        elif review.content_type.model == 'boatproduct':
+            # 🛥️ Лодочные коврики
+            from boats.models import BoatProduct
+            product = BoatProduct.objects.select_related('category').prefetch_related('images').get(uid=review.object_id)
+            return product, 'boat', '/boats/product/', 'images'
+
+        else:
+            logger.warning(f"Неизвестный тип товара: {review.content_type.model}")
+            return None, None, None, None
+
+    except Exception as e:
+        logger.error(f"Ошибка получения товара для отзыва {review.uid}: {e}")
+        return None, None, None, None
+
+
+def get_product_images(product, product_type):
+    """
+    🖼️ Универсальная функция для получения картинок товара
+
+    Args:
+        product: объект Product или BoatProduct
+        product_type: 'product' или 'boat'
+
+    Returns:
+        QuerySet: картинки товара
+    """
+    if not product:
+        return None
+
+    try:
+        if product_type == 'product':
+            return product.product_images.all()
+        elif product_type == 'boat':
+            return product.images.all()
+        else:
+            return None
+    except Exception:
+        return None
+
+
+def get_product_url(product, product_type):
+    """
+    🔗 Универсальная функция для получения URL товара
+
+    Args:
+        product: объект Product или BoatProduct
+        product_type: 'product' или 'boat'
+
+    Returns:
+        str: URL страницы товара
+    """
+    if not product or not hasattr(product, 'slug'):
+        return '#'
+
+    if product_type == 'product':
+        return f'/products/{product.slug}/'
+    elif product_type == 'boat':
+        return f'/boats/product/{product.slug}/'
+    else:
+        return '#'
 
 # ==================== КОНСТАНТЫ И НАСТРОЙКИ ====================
 
