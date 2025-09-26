@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import ContactInfo, FAQ, Banner, Testimonial, HeroSection, HeroAdvantage, CompanyDescription
+from .models import ContactInfo, FAQ, Banner, Testimonial, HeroSection, HeroAdvantage, CompanyDescription, ContactMessage, DeliveryOption
 
 
 # 🆕 НОВОЕ: Инлайн админка для преимуществ hero-секции
@@ -261,12 +261,221 @@ class CompanyDescriptionAdmin(admin.ModelAdmin):
         }),
     )
 
+# 🆕 НОВАЯ АДМИНКА: ContactMessage для сообщений обратной связи
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    """📧 Админка для сообщений обратной связи"""
+
+    list_display = (
+        'get_status_icon',
+        'get_name_link',  # Сделаем имя кликабельным
+        'email',
+        'get_subject_short',
+        'get_message_preview',
+        'is_processed',
+        'created_at',
+        'get_reply_status'
+    )
+
+    list_filter = (
+        'is_processed',
+        'created_at',
+        'replied_at'
+    )
+
+    search_fields = (
+        'name',
+        'email',
+        'subject',
+        'message'
+    )
+
+    list_editable = ('is_processed',)
+
+    readonly_fields = ('created_at', 'updated_at', 'replied_at')
+
+    ordering = ('-created_at',)
+
+    # Группировка полей
+    fieldsets = (
+        ('👤 Информация о клиенте', {
+            'fields': ('name', 'email', 'phone')
+        }),
+        ('📝 Сообщение', {
+            'fields': ('subject', 'message')
+        }),
+        ('💬 Ответ администратора', {
+            'fields': ('admin_reply', 'is_processed'),
+            'classes': ('collapse',)
+        }),
+        ('📅 Служебная информация', {
+            'fields': ('created_at', 'updated_at', 'replied_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_status_icon(self, obj):
+        """📊 Иконка статуса"""
+        if obj.is_processed:
+            return "✅"
+        else:
+            return "⏳"
+    get_status_icon.short_description = "Статус"
+
+    def get_subject_short(self, obj):
+        """📝 Короткая тема"""
+        if obj.subject:
+            return obj.subject[:30] + "..." if len(obj.subject) > 30 else obj.subject
+        return "Без темы"
+    get_subject_short.short_description = "Тема"
+
+    def get_message_preview(self, obj):
+        """👁️ Превью сообщения"""
+        preview = obj.message[:50] + "..." if len(obj.message) > 50 else obj.message
+        return format_html('<span title="{}">{}</span>', obj.message, preview)
+    get_message_preview.short_description = "Сообщение"
+
+    def get_name_link(self, obj):
+        """👤 Имя как ссылка для перехода к сообщению"""
+        from django.urls import reverse
+        url = reverse('admin:home_contactmessage_change', args=[obj.uid])
+        return format_html('<a href="{}" style="font-weight: bold;">{}</a>', url, obj.name)
+    get_name_link.short_description = "Имя"
+
+    def get_reply_status(self, obj):
+        """💬 Статус ответа"""
+        if obj.admin_reply:
+            return format_html(
+                '<span style="color: green;">✅ Отвечено</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: orange;">⏳ Нет ответа</span>'
+            )
+    get_reply_status.short_description = "Ответ"
+
+    # Дополнительные действия в админке
+    actions = ['mark_as_processed', 'mark_as_unprocessed']
+
+    def mark_as_processed(self, request, queryset):
+        """✅ Отметить как обработанные"""
+        queryset.update(is_processed=True)
+        self.message_user(request, f"Отмечено как обработанные: {queryset.count()} сообщений")
+    mark_as_processed.short_description = "Отметить как обработанные"
+
+    def mark_as_unprocessed(self, request, queryset):
+        """⏳ Отметить как необработанные"""
+        queryset.update(is_processed=False)
+        self.message_user(request, f"Отмечено как необработанные: {queryset.count()} сообщений")
+    mark_as_unprocessed.short_description = "Отметить как необработанные"
+
+
+# 🚚 НОВАЯ АДМИНКА: DeliveryOption для способов доставки
+@admin.register(DeliveryOption)
+class DeliveryOptionAdmin(admin.ModelAdmin):
+    """🚚 Админка для способов доставки и оплаты"""
+
+    list_display = (
+        'get_icon_display',
+        'title',
+        'get_price_short',
+        'get_delivery_time_short',
+        'coverage_area',
+        'is_active',
+        'order',
+        'created_at'
+    )
+
+    list_filter = (
+        'is_active',
+        'created_at'
+    )
+
+    search_fields = (
+        'title',
+        'description',
+        'coverage_area',
+        'price_info'
+    )
+
+    list_editable = ('is_active', 'order')
+
+    readonly_fields = ('created_at', 'updated_at')
+
+    ordering = ('order', 'title')
+
+    fieldsets = (
+        ('📋 Основная информация', {
+            'fields': ('title', 'description', 'icon')
+        }),
+        ('💰 Стоимость и сроки', {
+            'fields': ('price_info', 'delivery_time')
+        }),
+        ('🌍 Зона покрытия и оплата', {
+            'fields': ('coverage_area', 'payment_methods')
+        }),
+        ('📝 Дополнительная информация', {
+            'fields': ('additional_info',),
+            'classes': ('collapse',)
+        }),
+        ('⚙️ Настройки', {
+            'fields': ('is_active', 'order')
+        }),
+        ('📅 Служебная информация', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_icon_display(self, obj):
+        """🎨 Отображение иконки"""
+        if obj.icon:
+            if "fa" in obj.icon:
+                return format_html('<i class="{}" style="font-size: 1.2rem;"></i>', obj.icon)
+            else:
+                return format_html('<span style="font-size: 1.2rem;">{}</span>', obj.icon)
+        return "❌"
+    get_icon_display.short_description = "Иконка"
+
+    def get_price_short(self, obj):
+        """💰 Краткая информация о цене"""
+        if obj.price_info:
+            return obj.price_info[:30] + "..." if len(obj.price_info) > 30 else obj.price_info
+        return "Не указано"
+    get_price_short.short_description = "Стоимость"
+
+    def get_delivery_time_short(self, obj):
+        """⏱️ Краткая информация о сроках"""
+        if obj.delivery_time:
+            return obj.delivery_time
+        return "Не указано"
+    get_delivery_time_short.short_description = "Сроки"
+
+    # Дополнительные действия
+    actions = ['activate_delivery_options', 'deactivate_delivery_options']
+
+    def activate_delivery_options(self, request, queryset):
+        """✅ Активировать способы доставки"""
+        queryset.update(is_active=True)
+        self.message_user(request, f"Активировано: {queryset.count()} способов доставки")
+    activate_delivery_options.short_description = "Активировать выбранные способы доставки"
+
+    def deactivate_delivery_options(self, request, queryset):
+        """❌ Деактивировать способы доставки"""
+        queryset.update(is_active=False)
+        self.message_user(request, f"Деактивировано: {queryset.count()} способов доставки")
+    deactivate_delivery_options.short_description = "Деактивировать выбранные способы доставки"
+
+
 # 🔧 ИТОГОВЫЕ ИЗМЕНЕНИЯ В ФАЙЛЕ:
 # ✅ ДОБАВЛЕНО: CompanyDescriptionAdmin с синглтон логикой
+# ✅ ДОБАВЛЕНО: ContactMessageAdmin для сообщений обратной связи
 # ✅ ФУНКЦИИ:
 #    - Простая админка с заголовком и содержимым
 #    - Синглтон логика (только один экземпляр)
 #    - Автоматическое перенаправление на создание
-#    - Использование существующего CKEditor 5
+#    - Полнофункциональная админка для обратной связи
+#    - Превью сообщений, статусы, фильтры
+#    - Массовые действия для обработки сообщений
 # ✅ ИСПРАВЛЕНО: Убран конфликт fields и fieldsets
 # ✅ СОХРАНЕНО: Все существующие админки без изменений

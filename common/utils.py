@@ -62,6 +62,44 @@ def get_product_by_review(review):
         return None, None, None, None
 
 
+def get_product_by_content_type(content_type, object_id):
+    """
+    🎯 Универсальная функция для получения товара по content_type и object_id
+    Работает и с автомобилями (Product) и с лодками (BoatProduct)
+
+    Args:
+        content_type: ContentType объект
+        object_id: ID объекта товара
+
+    Returns:
+        tuple: (product_object, product_type, product_url_prefix, images_field)
+
+    Примеры:
+        - Для автомобилей: (product, 'auto', 'products', 'product_images')
+        - Для лодок: (boat_product, 'boat', 'boats/product', 'images')
+    """
+    try:
+        if content_type.model == 'product':
+            # 🚗 Автомобильные коврики
+            from products.models import Product
+            product = Product.objects.select_related('category').prefetch_related('product_images').get(uid=object_id)
+            return product, 'auto', 'products', 'product_images'
+
+        elif content_type.model == 'boatproduct':
+            # 🛥️ Лодочные коврики
+            from boats.models import BoatProduct
+            product = BoatProduct.objects.select_related('category').prefetch_related('images').get(uid=object_id)
+            return product, 'boat', 'boats/product', 'images'
+
+        else:
+            logger.warning(f"Неизвестный тип товара: {content_type.model}")
+            return None, None, None, None
+
+    except Exception as e:
+        logger.error(f"Ошибка получения товара для content_type {content_type.model}, object_id {object_id}: {e}")
+        return None, None, None, None
+
+
 def get_product_images(product, product_type):
     """
     🖼️ Универсальная функция для получения картинок товара

@@ -2,11 +2,11 @@
 # 🆕 ДОБАВЛЕНО: Получение описания компании для главной страницы
 # ✅ СОХРАНЕНО: Все существующие функции без изменений
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from products.models import Product, Category, KitVariant, ProductImage
 from boats.models import BoatCategory  # 🛥️ ДОБАВЛЕНО: импорт категорий лодок
-from .models import FAQ, HeroSection, CompanyDescription
+from .models import FAQ, HeroSection, CompanyDescription, ContactInfo
 import random
 
 
@@ -208,10 +208,117 @@ def product_search(request):
     return render(request, 'home/search.html', context)
 
 
+def send_contact_telegram_notification(contact_message):
+    """🤖 Отправляет уведомление о новом сообщении обратной связи в Telegram"""
+    import requests
+    import logging
+    from django.conf import settings
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Получаем настройки из Django settings
+        telegram_token = settings.TELEGRAM_BOT_TOKEN
+        telegram_chat_id = settings.TELEGRAM_CHAT_ID
+
+        # ⚠️ Проверяем наличие настроек
+        if not telegram_token or not telegram_chat_id:
+            logger.warning("⚠️ Telegram настройки отсутствуют. Добавьте TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в .env")
+            return
+
+        # 🔍 Проверяем что токен и чат ID не дефолтные
+        if telegram_token == 'YOUR_TELEGRAM_BOT_TOKEN' or telegram_chat_id == 'YOUR_TELEGRAM_CHAT_ID':
+            logger.warning("⚠️ Telegram настройки содержат заглушки. Обновите .env файл")
+            return
+
+        # 📝 Формируем красивое сообщение
+        message = f"""📧 <b>НОВОЕ СООБЩЕНИЕ ОБРАТНОЙ СВЯЗИ</b>
+
+👤 <b>Отправитель:</b> {contact_message.name}
+📧 <b>Email:</b> {contact_message.email}"""
+
+        # Добавляем телефон если указан
+        if contact_message.phone:
+            message += f"\n📞 <b>Телефон:</b> {contact_message.phone}"
+
+        # Добавляем тему если указана
+        if contact_message.subject:
+            message += f"\n📝 <b>Тема:</b> {contact_message.subject}"
+
+        # Добавляем текст сообщения
+        message += f"""
+
+💬 <b>Сообщение:</b>
+{contact_message.message}
+
+🕐 <b>Время:</b> {contact_message.created_at.strftime('%d.%m.%Y %H:%M')}
+🔗 <b>ID:</b> {contact_message.uid}
+
+<i>Ответить можно через админку: /admin/home/contactmessage/{contact_message.uid}/change/</i>"""
+
+        # 🚀 Отправляем в Telegram
+        url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+
+        data = {
+            'chat_id': telegram_chat_id,
+            'text': message,
+            'parse_mode': 'HTML'
+        }
+
+        response = requests.post(url, json=data, timeout=10)
+
+        if response.status_code == 200:
+            logger.info(f"✅ Telegram уведомление отправлено для сообщения {contact_message.uid}")
+        else:
+            logger.error(f"❌ Ошибка отправки в Telegram: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        logger.error(f"💥 Исключение при отправке в Telegram: {e}")
+
+
 def contact(request):
-    """📞 Страница контактов"""
-    form_id = "xrgpdzwe"  # ID формы Formspree
-    return render(request, 'home/contact.html', {'form_id': form_id})
+    """📞 Страница контактов с формой обратной связи"""
+    from .forms import ContactForm
+    from django.contrib import messages
+
+    # Получаем контактную информацию из модели
+    contact_info = ContactInfo.objects.filter(is_active=True).first()
+
+    if request.method == 'POST':
+        # Обрабатываем отправку формы
+        form = ContactForm(request.POST)
+
+        if form.is_valid():
+            # Сохраняем сообщение в базу данных
+            contact_message = form.save()
+
+            # Успешное сообщение пользователю
+            messages.success(
+                request,
+                '✅ Ваше сообщение отправлено! Мы свяжемся с вами в ближайшее время.'
+            )
+
+            # 🤖 Отправляем уведомление в Telegram
+            send_contact_telegram_notification(contact_message)
+
+            # Перенаправляем на ту же страницу (POST-redirect-GET pattern)
+            return redirect('contact')
+        else:
+            # Если форма содержит ошибки, показываем их
+            messages.error(
+                request,
+                '❌ Пожалуйста, исправьте ошибки в форме.'
+            )
+    else:
+        # GET запрос - показываем пустую форму
+        form = ContactForm()
+
+    context = {
+        'contact_info': contact_info,
+        'form': form,
+    }
+
+    return render(request, 'home/contact.html', context)
 
 
 def about(request):
@@ -234,6 +341,38 @@ def privacy_policy(request):
 def terms_and_conditions(request):
     """📄 Страница условий использования"""
     return render(request, 'home/terms_and_conditions.html')
+
+
+def delivery(request):
+    """🚚 Страница оплаты и доставки"""
+    from .models import DeliveryOption
+
+    # Получаем активные способы доставки
+    delivery_options = DeliveryOption.objects.filter(is_active=True).order_by('order', 'title')
+
+    context = {
+        'delivery_options': delivery_options,
+    }
+
+    return render(request, 'home/delivery.html', context)
+
+
+def auto_catalog(request):
+    """🚗 Каталог автоковриков"""
+    auto_categories = Category.objects.filter(is_active=True).order_by('display_order', 'category_name')
+
+    return render(request, 'home/auto_catalog.html', {
+        'auto_categories': auto_categories,
+    })
+
+
+def boat_catalog(request):
+    """🛥️ Каталог лодочных ковриков"""
+    boat_categories = BoatCategory.objects.filter(is_active=True).order_by('display_order', 'category_name')
+
+    return render(request, 'home/boat_catalog.html', {
+        'boat_categories': boat_categories,
+    })
 
 # 🔧 ИТОГОВЫЕ ИЗМЕНЕНИЯ В ФАЙЛЕ:
 #

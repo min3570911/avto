@@ -21,52 +21,94 @@
                 <td>
                   <figure class="itemside">
                     <div class="aside">
-                      <img src="/media/{{ item.product.product_images.first.image }}" class="img-sm"/>
+                      {% if item.cached_product %}
+                        {% if item.product_type == 'auto' %}
+                          {% if item.cached_product.product_images.first %}
+                            <img src="/media/{{ item.cached_product.product_images.first.image }}" class="img-sm"/>
+                          {% else %}
+                            <img src="{% static 'images/no-image.jpg' %}" class="img-sm"/>
+                          {% endif %}
+                        {% elif item.product_type == 'boat' %}
+                          {% if item.cached_product.images.first %}
+                            <img src="/media/{{ item.cached_product.images.first.image }}" class="img-sm"/>
+                          {% else %}
+                            <img src="{% static 'images/no-image.jpg' %}" class="img-sm"/>
+                          {% endif %}
+                        {% endif %}
+                      {% else %}
+                        <img src="{% static 'images/no-image.jpg' %}" class="img-sm"/>
+                      {% endif %}
                     </div>
                     <figcaption class="info">
-                      <a href="{% url 'get_product' item.product.slug %}" class="title text-dark">
-                        {{ item.product.product_name }}
-                      </a>
+                      {% if item.cached_product %}
+                        {% if item.product_type == 'auto' %}
+                          <a href="{% url 'get_product' item.cached_product.slug %}" class="title text-dark">
+                            {{ item.cached_product.product_name }}
+                          </a>
+                        {% elif item.product_type == 'boat' %}
+                          <a href="{% url 'boats:product_detail' item.cached_product.slug %}" class="title text-dark">
+                            {{ item.cached_product.product_name }}
+                          </a>
+                        {% endif %}
+                      {% else %}
+                        <span class="title text-muted">Товар недоступен</span>
+                      {% endif %}
 
                       <p class="text-muted small">
-                        {% if item.kit_variant %}
-                            Комплектация: {{ item.kit_variant.name }}<br />
-                        {% else %} Комплектация: Н/Д <br />
-                        {% endif %}
+                        {% if item.product_type == 'auto' %}
+                          <span class="badge badge-primary">Автомобильные коврики</span><br/>
+                          {% if item.kit_variant %}
+                              Комплектация: {{ item.kit_variant.name }}<br />
+                          {% else %}
+                              Комплектация: Стандартная <br />
+                          {% endif %}
 
-                        {% if item.carpet_color %}
-                          Цвет коврика:
-                          <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
-                          {{ item.carpet_color.name }}<br />
-                        {% endif %}
+                          {% if item.carpet_color %}
+                            Цвет коврика:
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+                            {{ item.carpet_color.name }}<br />
+                          {% endif %}
 
-                        {% if item.border_color %}
-                          Цвет окантовки:
-                          <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
-                          {{ item.border_color.name }}<br />
-                        {% endif %}
+                          {% if item.border_color %}
+                            Цвет окантовки:
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+                            {{ item.border_color.name }}<br />
+                          {% endif %}
 
-                        {% if item.has_podpyatnik %}
-                          С подпятником<br />
-                        {% endif %}
+                          {% if item.has_podpyatnik %}
+                            С подпятником<br />
+                          {% endif %}
+                        {% elif item.product_type == 'boat' %}
+                          <span class="badge badge-info">Лодочные коврики</span><br/>
 
-                        {% if item.product.color_variant.exists %}
-                            {% for color in item.product.color_variant.all %}
-                              Цвет: {{ color.color_name }}<br />
-                            {% endfor %}
+                          {% if item.carpet_color %}
+                            Цвет коврика:
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.carpet_color.hex_code }}; border: 1px solid #ccc;"></span>
+                            {{ item.carpet_color.name }}<br />
+                          {% endif %}
+
+                          {% if item.border_color %}
+                            Цвет окантовки:
+                            <span style="display: inline-block; width: 12px; height: 12px; background-color: {{ item.border_color.hex_code }}; border: 1px solid #ccc;"></span>
+                            {{ item.border_color.name }}<br />
+                          {% endif %}
                         {% endif %}
                       </p>
                       <td class="d-flex justify-content-end">
                         <div class="d-sm-flex mr-2">
-                          <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.product.uid %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary">В корзину</button>
-                          </form>
+                          {% if item.cached_product %}
+                            <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.object_id %}">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-primary">В корзину</button>
+                            </form>
 
-                          <form method="POST" action="{% url 'remove_from_wishlist' item.product.uid %}?kit={{ item.kit_variant.code }}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Удалить</button>
-                          </form>
+                            <form method="POST" action="{% url 'remove_from_wishlist' item.object_id %}{% if item.kit_variant %}?kit={{ item.kit_variant.code }}{% endif %}">
+                              {% csrf_token %}
+                              <button type="submit" class="btn btn-danger">Удалить</button>
+                            </form>
+                          {% else %}
+                            <button class="btn btn-secondary" disabled>Товар недоступен</button>
+                          {% endif %}
                         </div>
                       </td>
                     </figcaption>

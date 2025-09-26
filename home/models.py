@@ -215,11 +215,180 @@ class CompanyDescription(BaseModel):
             return  # 🚫 Не создавать новые записи, если уже есть
         super().save(*args, **kwargs)
 
+# 🚚 НОВАЯ МОДЕЛЬ: DeliveryOption для способов доставки и оплаты
+class DeliveryOption(BaseModel):
+    """🚚 Способы доставки и оплаты"""
+
+    # 📝 Основная информация
+    title = models.CharField(
+        max_length=100,
+        verbose_name="Название способа",
+        help_text="Например: Курьерская доставка, Почта, Транспортная компания"
+    )
+
+    description = models.TextField(
+        verbose_name="Описание",
+        help_text="Подробное описание условий доставки"
+    )
+
+    # 💰 Стоимость
+    price_info = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Информация о стоимости",
+        help_text="Например: Бесплатно, От 10 руб., По тарифам перевозчика"
+    )
+
+    # ⏱️ Сроки
+    delivery_time = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Сроки доставки",
+        help_text="Например: 1-2 дня, 2-3 дня, В день заказа"
+    )
+
+    # 🌍 Зона доставки
+    coverage_area = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Зона доставки",
+        help_text="Например: Минск в пределах МКАД, По всей Беларуси"
+    )
+
+    # 💳 Способы оплаты
+    payment_methods = models.CharField(
+        max_length=300,
+        blank=True,
+        null=True,
+        verbose_name="Способы оплаты",
+        help_text="Например: Наличными курьеру, Предоплата, Наложенный платеж"
+    )
+
+    # 📋 Дополнительные условия
+    additional_info = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Дополнительная информация",
+        help_text="Особые условия, ограничения, примечания"
+    )
+
+    # 🎨 Иконка
+    icon = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name="Иконка",
+        help_text="Класс иконки или эмодзи (например: fas fa-truck, 🚚)"
+    )
+
+    # ⚙️ Настройки
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+        help_text="Отображать на сайте"
+    )
+
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Порядок отображения"
+    )
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Способ доставки"
+        verbose_name_plural = "Способы доставки"
+        ordering = ['order', 'title']
+
+
+# 📧 НОВАЯ МОДЕЛЬ: ContactMessage для сообщений обратной связи
+class ContactMessage(BaseModel):
+    """📧 Сообщения обратной связи от клиентов"""
+
+    # 👤 Информация о клиенте
+    name = models.CharField(
+        max_length=100,
+        verbose_name="Имя",
+        help_text="Имя отправителя"
+    )
+    email = models.EmailField(
+        verbose_name="Email",
+        help_text="Email для ответа"
+    )
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name="Телефон",
+        help_text="Телефон клиента (необязательно)"
+    )
+
+    # 📝 Содержание сообщения
+    subject = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name="Тема",
+        help_text="Тема сообщения"
+    )
+    message = models.TextField(
+        verbose_name="Сообщение",
+        help_text="Текст сообщения от клиента"
+    )
+
+    # 🔧 Статус обработки
+    is_processed = models.BooleanField(
+        default=False,
+        verbose_name="Обработано",
+        help_text="Отмечается когда на сообщение ответили"
+    )
+
+    # 💬 Ответ администратора
+    admin_reply = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Ответ администратора",
+        help_text="Ответ или комментарий администратора"
+    )
+
+    # 📅 Дата ответа
+    replied_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="Дата ответа",
+        help_text="Когда был дан ответ"
+    )
+
+    def __str__(self):
+        subject_part = f" - {self.subject}" if self.subject else ""
+        status = "✅" if self.is_processed else "⏳"
+        return f"{status} {self.name} ({self.email}){subject_part}"
+
+    class Meta:
+        verbose_name = "Сообщение обратной связи"
+        verbose_name_plural = "Сообщения обратной связи"
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        """Автоматически ставим дату ответа если добавили admin_reply"""
+        if self.admin_reply and not self.replied_at:
+            from django.utils import timezone
+            self.replied_at = timezone.now()
+            self.is_processed = True
+        super().save(*args, **kwargs)
+
+
 # 🔧 ИТОГОВЫЕ ИЗМЕНЕНИЯ В ФАЙЛЕ:
 # ✅ ДОБАВЛЕНО: CompanyDescription - простая модель для описания компании
+# ✅ ДОБАВЛЕНО: ContactMessage - модель для сообщений обратной связи
 # ✅ ФУНКЦИИ:
 #    - Заголовок и содержимое с CKEditor 5
 #    - Синглтон логика (только один экземпляр)
-#    - Использует существующую конфигурацию редактора
+#    - Система обратной связи с отслеживанием статуса
+#    - Автоматическое управление датами ответов
 # ✅ БЕЗОПАСНОСТЬ: Валидация в методе save()
 # ✅ СОХРАНЕНО: Все существующие модели без изменений

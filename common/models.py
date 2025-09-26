@@ -446,12 +446,23 @@ class AdminReply(BaseModel):
 class Wishlist(BaseModel):
     """❤️ Универсальное избранное для всех типов товаров"""
 
-    # 👤 Пользователь
+    # 👤 Пользователь (опциональный для анонимных сессий)
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="wishlist",
+        null=True,
+        blank=True,
         verbose_name="Пользователь"
+    )
+
+    # 🔗 ID сессии для анонимных пользователей
+    session_id = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name="ID сессии",
+        help_text="Для анонимных пользователей"
     )
 
     # 🔗 Generic FK для связи с любым товаром (Product, BoatProduct, etc.)
@@ -503,7 +514,9 @@ class Wishlist(BaseModel):
 
     def __str__(self):
         product_name = getattr(self.product, 'product_name', str(self.product))
-        return f"❤️ {self.user.username} → {product_name}"
+        if self.user:
+            return f"❤️ {self.user.username} → {product_name}"
+        return f"❤️ Анонимный ({self.session_id[:8]}...) → {product_name}"
 
     class Meta:
         verbose_name = "Избранное"

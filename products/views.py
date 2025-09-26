@@ -505,19 +505,30 @@ def get_product(request, slug):
         category=product.category
     ).exclude(uid=product.uid).select_related('category').prefetch_related('product_images')[:4]
 
-    # ❤️ Проверяем наличие в избранном (только для авторизованных)
+    # ❤️ Проверяем наличие в избранном (поддержка анонимных пользователей)
     in_wishlist = False
-    if request.user.is_authenticated:
-        try:
-            product_content_type = ContentType.objects.get_for_model(Product)
+    try:
+        product_content_type = ContentType.objects.get_for_model(Product)
+        if request.user.is_authenticated:
+            # Авторизованный пользователь
             in_wishlist = Wishlist.objects.filter(
                 user=request.user,
                 content_type=product_content_type,
                 object_id=product.uid
             ).exists()
-        except Exception as e:
-            logger.warning(f"Ошибка проверки избранного: {e}")
-            in_wishlist = False
+        else:
+            # Анонимный пользователь - проверяем по сессии
+            session_key = request.session.session_key
+            if session_key:
+                in_wishlist = Wishlist.objects.filter(
+                    session_id=session_key,
+                    user=None,
+                    content_type=product_content_type,
+                    object_id=product.uid
+                ).exists()
+    except Exception as e:
+        logger.warning(f"Ошибка проверки избранного: {e}")
+        in_wishlist = False
 
     # 📋 Контекст для шаблона
     context = {
@@ -817,7 +828,7 @@ def edit_review(request, review_uid):
 # ==================== ❤️ ФУНКЦИИ ИЗБРАННОГО ====================
 
 def add_to_wishlist(request, uid):
-    """❤️ Добавление товара в избранное"""
+    """❤️ Добавление товара в избранное (поддержка анонимных пользователей)"""
     kit_code = request.POST.get('kit') or request.GET.get('kit')
     carpet_color_id = request.POST.get('carpet_color') or request.GET.get('carpet_color')
     border_color_id = request.POST.get('border_color') or request.GET.get('border_color')
@@ -852,12 +863,38 @@ def add_to_wishlist(request, uid):
             return redirect(request.META.get('HTTP_REFERER'))
 
     product_content_type = ContentType.objects.get_for_model(Product)
-    wishlist_item = Wishlist.objects.filter(
-        user=request.user,
-        content_type=product_content_type,
-        object_id=product.uid,
-        kit_variant=kit_variant
-    ).first()
+
+    # 🔄 Поддержка анонимных пользователей через сессии
+    if request.user.is_authenticated:
+        # Авторизованный пользователь
+        wishlist_item = Wishlist.objects.filter(
+            user=request.user,
+            content_type=product_content_type,
+            object_id=product.uid,
+            kit_variant=kit_variant
+        ).first()
+
+        user_for_wishlist = request.user
+        session_id_for_wishlist = None
+        user_info = request.user.username
+    else:
+        # Анонимный пользователь - используем сессию
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+
+        wishlist_item = Wishlist.objects.filter(
+            session_id=session_key,
+            user=None,
+            content_type=product_content_type,
+            object_id=product.uid,
+            kit_variant=kit_variant
+        ).first()
+
+        user_for_wishlist = None
+        session_id_for_wishlist = session_key
+        user_info = f"анонимный ({session_key[:8]}...)"
 
     if wishlist_item:
         # Обновляем существующий элемент
@@ -869,7 +906,8 @@ def add_to_wishlist(request, uid):
     else:
         # Создаем новый
         Wishlist.objects.create(
-            user=request.user,
+            user=user_for_wishlist,
+            session_id=session_id_for_wishlist,
             content_type=product_content_type,
             object_id=product.uid,
             kit_variant=kit_variant,
@@ -879,35 +917,63 @@ def add_to_wishlist(request, uid):
         )
         messages.success(request, "✅ Товар добавлен в избранное!")
 
-    logger.info(f"Пользователь {request.user.username} добавил товар {product.slug} в избранное")
+    logger.info(f"Пользователь {user_info} добавил товар {product.slug} в избранное")
     return redirect(reverse('wishlist'))
 
 
 def remove_from_wishlist(request, uid):
-    """🗑️ Удаление товара из избранного"""
+    """🗑️ Удаление товара из избранного (поддержка анонимных пользователей)"""
     product = get_object_or_404(Product, uid=uid)
     kit_code = request.GET.get('kit')
 
     product_content_type = ContentType.objects.get_for_model(Product)
 
-    if kit_code:
-        kit_variant = get_object_or_404(KitVariant, code=kit_code)
-        deleted_count = Wishlist.objects.filter(
-            user=request.user,
-            content_type=product_content_type,
-            object_id=product.uid,
-            kit_variant=kit_variant
-        ).delete()[0]
+    # 🔄 Поддержка анонимных пользователей через сессии
+    if request.user.is_authenticated:
+        # Авторизованный пользователь
+        if kit_code:
+            kit_variant = get_object_or_404(KitVariant, code=kit_code)
+            deleted_count = Wishlist.objects.filter(
+                user=request.user,
+                content_type=product_content_type,
+                object_id=product.uid,
+                kit_variant=kit_variant
+            ).delete()[0]
+        else:
+            deleted_count = Wishlist.objects.filter(
+                user=request.user,
+                content_type=product_content_type,
+                object_id=product.uid
+            ).delete()[0]
+        user_info = request.user.username
     else:
-        deleted_count = Wishlist.objects.filter(
-            user=request.user,
-            content_type=product_content_type,
-            object_id=product.uid
-        ).delete()[0]
+        # Анонимный пользователь - используем сессию
+        session_key = request.session.session_key
+        if not session_key:
+            messages.info(request, "Товар отсутствует в избранном.")
+            return redirect(reverse('wishlist'))
+
+        if kit_code:
+            kit_variant = get_object_or_404(KitVariant, code=kit_code)
+            deleted_count = Wishlist.objects.filter(
+                session_id=session_key,
+                user=None,
+                content_type=product_content_type,
+                object_id=product.uid,
+                kit_variant=kit_variant
+            ).delete()[0]
+        else:
+            deleted_count = Wishlist.objects.filter(
+                session_id=session_key,
+                user=None,
+                content_type=product_content_type,
+                object_id=product.uid
+            ).delete()[0]
+        user_info = f"анонимный ({session_key[:8]}...)"
 
     if deleted_count > 0:
         messages.success(request, "✅ Товар удален из избранного!")
-        logger.info(f"Пользователь {request.user.username} удалил товар {product.slug} из избранного")
+        logger.info(f"Пользователь {user_info} удалил товар {product.slug} из избранного")
     else:
         messages.info(request, "Товар уже отсутствует в избранном.")
 
@@ -915,25 +981,77 @@ def remove_from_wishlist(request, uid):
 
 
 def wishlist_view(request):
-    """❤️ Отображение списка избранных товаров"""
-    wishlist_items = Wishlist.objects.filter(
-        user=request.user
-    ).select_related('kit_variant', 'carpet_color', 'border_color').order_by('-created_at')
+    """❤️ Отображение списка избранных товаров (поддержка анонимных пользователей)"""
+
+    # 🔄 Поддержка анонимных пользователей через сессии
+    if request.user.is_authenticated:
+        # Авторизованный пользователь
+        wishlist_items = Wishlist.objects.filter(
+            user=request.user
+        ).select_related('kit_variant', 'carpet_color', 'border_color').order_by('-created_at')
+    else:
+        # Анонимный пользователь - используем сессию
+        session_key = request.session.session_key
+        if session_key:
+            wishlist_items = Wishlist.objects.filter(
+                session_id=session_key,
+                user=None
+            ).select_related('kit_variant', 'carpet_color', 'border_color').order_by('-created_at')
+        else:
+            # Нет сессии - пустой список
+            wishlist_items = Wishlist.objects.none()
+
+    # 🎯 ЦЕНТРАЛИЗОВАННАЯ ОБРАБОТКА: Добавляем информацию о товарах к элементам избранного
+    from common.utils import get_product_by_content_type
+
+    for item in wishlist_items:
+        try:
+            # Получаем реальный объект товара через content_type
+            product, product_type, url_prefix, images_field = get_product_by_content_type(
+                item.content_type, item.object_id
+            )
+            item.cached_product = product
+            item.product_type = product_type  # 'auto' или 'boat'
+            item.product_url_prefix = url_prefix  # 'products' или 'boats'
+            item.images_field = images_field  # 'product_images' или 'boat_images'
+        except Exception as e:
+            logger.warning(f"Ошибка загрузки товара для избранного {item.uid}: {e}")
+            item.cached_product = None
+            item.product_type = 'unknown'
+            item.product_url_prefix = 'products'
+            item.images_field = 'product_images'
 
     return render(request, 'product/wishlist.html', {'wishlist_items': wishlist_items})
 
 
-@login_required
 def move_to_cart(request, uid):
-    """🔄 Перемещение товара из избранного в корзину"""
+    """🔄 Перемещение товара из избранного в корзину (поддержка анонимных пользователей)"""
     product = get_object_or_404(Product, uid=uid)
     product_content_type = ContentType.objects.get_for_model(Product)
 
-    wishlist = Wishlist.objects.filter(
-        user=request.user,
-        content_type=product_content_type,
-        object_id=product.uid
-    ).first()
+    # 🔄 Поддержка анонимных пользователей через сессии
+    if request.user.is_authenticated:
+        # Авторизованный пользователь
+        wishlist = Wishlist.objects.filter(
+            user=request.user,
+            content_type=product_content_type,
+            object_id=product.uid
+        ).first()
+        user_info = request.user.username
+    else:
+        # Анонимный пользователь - используем сессию
+        session_key = request.session.session_key
+        if not session_key:
+            messages.error(request, "❌ Товар не найден в избранном.")
+            return redirect('wishlist')
+
+        wishlist = Wishlist.objects.filter(
+            session_id=session_key,
+            user=None,
+            content_type=product_content_type,
+            object_id=product.uid
+        ).first()
+        user_info = f"анонимный ({session_key[:8]}...)"
 
     if not wishlist:
         messages.error(request, "❌ Товар не найден в избранном.")
@@ -948,8 +1066,20 @@ def move_to_cart(request, uid):
         messages.warning(request, f'Цвет окантовки "{wishlist.border_color.name}" временно недоступен.')
         return redirect('wishlist')
 
-    # Получаем корзину
-    cart, created = Cart.objects.get_or_create(user=request.user, is_paid=False)
+    # Получаем или создаем корзину
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(
+            user=request.user,
+            is_paid=False,
+            defaults={'session_id': None}
+        )
+    else:
+        session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(
+            session_id=session_key,
+            user=None,
+            is_paid=False
+        )
 
     # Проверяем существующий товар в корзине
     cart_item = CartItem.objects.filter(
@@ -980,7 +1110,7 @@ def move_to_cart(request, uid):
     wishlist.delete()
 
     messages.success(request, "✅ Товар перемещен в корзину!")
-    logger.info(f"Пользователь {request.user.username} переместил товар {product.slug} из избранного в корзину")
+    logger.info(f"Пользователь {user_info} переместил товар {product.slug} из избранного в корзину")
 
     return redirect('cart')
 

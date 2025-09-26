@@ -32,7 +32,62 @@
     .text div {
       display: inline;
     }
-}
+  }
+
+  /* 📂 Стили для выпадающего меню каталога */
+  .catalog-dropdown {
+    min-width: 500px;
+    max-width: 800px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+
+  .catalog-item {
+    padding: 8px 15px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: #333;
+  }
+
+  .catalog-item:hover {
+    background-color: #f8f9fa;
+    color: #007bff;
+    text-decoration: none;
+    transform: translateX(5px);
+  }
+
+  .category-icon {
+    flex-shrink: 0;
+  }
+
+  .dropdown-header {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  /* 📱 Адаптивность для мобильных */
+  @media (max-width: 768px) {
+    .catalog-dropdown {
+      min-width: 300px;
+      max-width: 95vw;
+    }
+
+    .catalog-dropdown .row {
+      margin: 0;
+    }
+
+    .catalog-dropdown .col-md-6 {
+      padding: 0 5px;
+    }
+  }
 </style>
 
 <header class="section-header">
@@ -52,16 +107,36 @@
       <div class="collapse navbar-collapse" id="navbarCollapse">
         <ul class="navbar-nav mr-auto" style="gap: 20px;">
           <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Главная</a></li>
+
+          <!-- 📂 Каталог с выпадающим меню -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="catalogDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Каталог
+            </a>
+            <div class="dropdown-menu catalog-dropdown" aria-labelledby="catalogDropdown">
+              <a class="dropdown-item catalog-item d-flex align-items-center" href="{% url 'auto_catalog' %}">
+                <span class="category-icon me-2" style="font-size: 20px;">🚗</span>
+                <span>Автоковрики</span>
+              </a>
+              <a class="dropdown-item catalog-item d-flex align-items-center" href="{% url 'boat_catalog' %}">
+                <span class="category-icon me-2" style="font-size: 20px;">🛥️</span>
+                <span>Коврики для лодок</span>
+              </a>
+            </div>
+          </li>
+
+          <li class="nav-item"><a class="nav-link" href="{% url 'product_reviews' %}">Отзывы</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'delivery' %}">Оплата и доставка</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'blog:article_list' %}">Статьи</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">О нас</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Контакты</a></li>
+
+          <!-- 💖 Избранное перемещено в конец -->
           {% if user.is_authenticated %}
             <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное ({{ request.user.wishlist.count }})</a></li>
           {% else %}
             <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное</a></li>
           {% endif %}
-          <li class="nav-item"><a class="nav-link" href="{% url 'product_reviews' %}">Отзывы</a></li>
-          <!-- 📝 Добавленная ссылка на блог -->
-          <li class="nav-item"><a class="nav-link" href="{% url 'blog:article_list' %}">Статьи</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Контакты</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">О нас</a></li>
         </ul>
       </div>
     </div>

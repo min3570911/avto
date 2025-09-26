@@ -14,8 +14,13 @@ urlpatterns = [
     # 📞 Информационные страницы
     path('contact/', contact, name='contact'),
     path('about/', about, name='about'),
+    path('delivery/', delivery, name='delivery'),
     path('terms-and-conditions/', terms_and_conditions, name='terms-and-conditions'),
     path('privacy-policy/', privacy_policy, name='privacy-policy'),
+
+    # 📂 Каталоги
+    path('catalog/auto/', auto_catalog, name='auto_catalog'),
+    path('catalog/boats/', boat_catalog, name='boat_catalog'),
 
     # 🗑️ УДАЛЕНО: path('category/<slug:slug>/', category_view, name='category'),
     # 📂 Категории товаров теперь обрабатываются в products/urls.py

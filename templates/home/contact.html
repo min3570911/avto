@@ -1,96 +1,188 @@
 {% extends "base/base.html" %}
-{% block title %}Contact Us{% endblock %}
-{% block start %}
+{% block title %}Контакты{% endblock %}
+{% block start %} {% load static %}
 
 <section class="section-content padding-bottom">
   <div class="mx-auto" style="max-width: 85rem; margin-top: 50px">
     <div class="container">
       <div class="row">
         <div class="col-md-5 mr-auto">
-          <h2 style="text-align: left">Contact Us</h2>
-          <p
-            class="mb-5"
-            style="margin-top: revert; text-align: justify; line-height: 2rem"
-          >
-            Have questions or need help with your order? Our dedicated support
-            team is here to assist you with any inquiries you may have. Whether
-            you need help tracking an order, have questions about a product, or
-            need assistance with a return, we're here to help. Don't hesitate to
-            reach out to us anytime!
+          <h2 style="text-align: left">Свяжитесь с нами</h2>
+          <p class="mb-5" style="margin-top: revert; text-align: justify; line-height: 2rem">
+            Есть вопросы или нужна помощь с заказом? Наша команда поддержки готова помочь вам с любыми запросами.
+            Будь то отслеживание заказа, вопросы о товаре или помощь с возвратом - мы здесь, чтобы помочь.
+            Не стесняйтесь обращаться к нам в любое время!
           </p>
-          <ul class="contact-info list-unstyled pl-md-5 mb-5">
-            <li class="d-flex text-black mb-2">
-              <span class="mr-3"><i class="fas fa-map-marker-alt"></i></span>
-              Bhopal, Madhya Pradesh, India
-            </li>
-            <li class="d-flex text-black mb-2">
-              <span class="mr-3"><i class="fas fa-phone"></i></span>
-              +91 7000950845
-            </li>
-            <li class="d-flex text-black">
-              <span class="mr-3"><i class="fas fa-envelope"></i></span>
-              <a href="mailto:support@ecommerce.com">atulguptag111@gmail.com</a>
-            </li>
-          </ul>
+
+          {% if contact_info %}
+            <ul class="contact-info list-unstyled pl-md-5 mb-5" style="font-size: 1.2rem;">
+              <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-map-marker-alt"></i></span>
+                <strong>{{ contact_info.address|default:"г. Минск, Беларусь" }}</strong>
+              </li>
+              <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-phone"></i></span>
+                <a href="tel:{{ contact_info.phone }}" style="font-size: 1.3rem; font-weight: bold; text-decoration: none;">{{ contact_info.phone }}</a>
+              </li>
+              <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-envelope"></i></span>
+                <a href="mailto:{{ contact_info.email }}" style="font-size: 1.3rem; font-weight: bold; text-decoration: none;">{{ contact_info.email }}</a>
+              </li>
+              {% if contact_info.working_hours %}
+                <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                  <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-clock"></i></span>
+                  <strong>{{ contact_info.working_hours }}</strong>
+                </li>
+              {% endif %}
+            </ul>
+
+            <!-- Социальные сети -->
+            {% if contact_info.telegram or contact_info.instagram or contact_info.facebook %}
+              <div class="social-links mb-4">
+                <h5>Мы в социальных сетях:</h5>
+                <div class="d-flex">
+                  {% if contact_info.telegram %}
+                    <a href="{{ contact_info.telegram }}" class="btn btn-outline-primary mr-2" target="_blank">
+                      <i class="fab fa-telegram"></i> Telegram
+                    </a>
+                  {% endif %}
+                  {% if contact_info.instagram %}
+                    <a href="{{ contact_info.instagram }}" class="btn btn-outline-danger mr-2" target="_blank">
+                      <i class="fab fa-instagram"></i> Instagram
+                    </a>
+                  {% endif %}
+                  {% if contact_info.facebook %}
+                    <a href="{{ contact_info.facebook }}" class="btn btn-outline-primary mr-2" target="_blank">
+                      <i class="fab fa-facebook"></i> Facebook
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% else %}
+            <!-- Fallback если нет данных в ContactInfo -->
+            <ul class="contact-info list-unstyled pl-md-5 mb-5">
+              <li class="d-flex text-black mb-2">
+                <span class="mr-3"><i class="fas fa-map-marker-alt"></i></span>
+                г. Минск, Беларусь
+              </li>
+              <li class="d-flex text-black mb-2">
+                <span class="mr-3"><i class="fas fa-phone"></i></span>
+                +375 (29) 357-09-11
+              </li>
+              <li class="d-flex text-black mb-2">
+                <span class="mr-3"><i class="fas fa-envelope"></i></span>
+                <a href="mailto:info@avto-kovrik.by">info@avto-kovrik.by</a>
+              </li>
+            </ul>
+          {% endif %}
         </div>
+
         <div class="col-md-6">
-          <form method="POST" action="https://formspree.io/f/{{ form_id }}" class="mb-5">
-            {% csrf_token %} {% include "base/alert.html" %}
+          <h4 class="mb-4">Отправить сообщение</h4>
+
+          <!-- Django форма обратной связи -->
+          <form method="POST" class="mb-5">
+            {% csrf_token %}
+            {% include "base/alert.html" %}
+
             <div class="row">
               <div class="col-md-12 form-group">
-                <label for="name" class="col-form-label">First Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="first-name"
-                  required
-                />
+                <label for="{{ form.name.id_for_label }}" class="col-form-label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <div class="text-danger">
+                    {% for error in form.name.errors %}
+                      <small>{{ error }}</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
+
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label for="{{ form.email.id_for_label }}" class="col-form-label">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger">
+                    {% for error in form.email.errors %}
+                      <small>{{ error }}</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="{{ form.phone.id_for_label }}" class="col-form-label">{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.help_text %}
+                  <small class="form-text text-muted">{{ form.phone.help_text }}</small>
+                {% endif %}
+                {% if form.phone.errors %}
+                  <div class="text-danger">
+                    {% for error in form.phone.errors %}
+                      <small>{{ error }}</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
             <div class="row">
               <div class="col-md-12 form-group">
-                <label for="name" class="col-form-label">Last Name</label>
-                <input type="text" class="form-control" name="last-name" />
+                <label for="{{ form.subject.id_for_label }}" class="col-form-label">{{ form.subject.label }}</label>
+                {{ form.subject }}
+                {% if form.subject.help_text %}
+                  <small class="form-text text-muted">{{ form.subject.help_text }}</small>
+                {% endif %}
+                {% if form.subject.errors %}
+                  <div class="text-danger">
+                    {% for error in form.subject.errors %}
+                      <small>{{ error }}</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
+
             <div class="row">
               <div class="col-md-12 form-group">
-                <label for="email" class="col-form-label">Email</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="email"
-                  pattern="^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$"
-                  required
-                />
+                <label for="{{ form.message.id_for_label }}" class="col-form-label">{{ form.message.label }}</label>
+                {{ form.message }}
+                {% if form.message.help_text %}
+                  <small class="form-text text-muted">{{ form.message.help_text }}</small>
+                {% endif %}
+                {% if form.message.errors %}
+                  <div class="text-danger">
+                    {% for error in form.message.errors %}
+                      <small>{{ error }}</small>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-12 form-group">
-                <label for="message" class="col-form-label">Message</label>
-                <textarea
-                  class="form-control"
-                  name="message"
-                  cols="30"
-                  rows="7"
-                >
-                </textarea>
-              </div>
-            </div>
+
             <div class="row">
               <div class="col-md-12">
-                <input
+                <button
                   type="submit"
-                  value="Send Message"
                   class="btn btn-primary rounded-0 py-2 px-4"
-                />
+                >
+                  <i class="fas fa-paper-plane mr-2"></i>Отправить сообщение
+                </button>
                 <span class="submitting"></span>
               </div>
             </div>
           </form>
+
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-2"></i>
+            <strong>Время ответа:</strong> Мы отвечаем на сообщения в течение 24 часов в рабочие дни.
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
+
 {% endblock %}
