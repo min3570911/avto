@@ -410,19 +410,6 @@ hr { margin-top: 10px; margin-bottom: 10px; }
 
                         <div class="form-group d-flex justify-content-start mt-3">
                             <div class="d-sm-flex">
-                                <div class="mb-2 mb-sm-0 mr-0 mr-sm-2">
-                                    <form method="POST" action="{% url 'add_to_wishlist' product.uid %}" id="wishlist-form">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="kit" id="wishlist-kit" value="">
-                                        <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="">
-                                        <input type="hidden" name="border_color" id="wishlist-border-color" value="">
-                                        <input type="hidden" name="podp" id="wishlist-podp" value="0">
-                                        <input type="hidden" name="quantity" id="wishlist-quantity" value="1">
-                                        <button type="submit" class="btn btn-outline-primary">
-                                            <i class="fas fa-heart"></i> В избранное
-                                        </button>
-                                    </form>
-                                </div>
 
                                 <form method="POST" action="{% url 'add_to_cart' product.uid %}" id="cart-form">
                                     {% csrf_token %}

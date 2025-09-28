@@ -700,19 +700,6 @@ title="{{ color.name }}{% if not color.is_available %} (Нет в наличии
 
  <div class="form-group d-flex justify-content-start mt-3">
  <div class="d-sm-flex">
- <div class="mb-2 mb-sm-0 mr-0 mr-sm-2">
- <form method="POST" action="{% url 'boats:add_to_wishlist' product.uid %}" id="wishlist-form">
- {% csrf_token %}
- <!-- 🛥️ УБРАНО: kit для лодок -->
- <input type="hidden" name="carpet_color" id="wishlist-carpet-color" value="{{ initial_carpet_color.uid }}">
- <input type="hidden" name="border_color" id="wishlist-border-color" value="{{ initial_border_color.uid }}">
- <!-- 🛥️ УБРАНО: podp для лодок -->
- <input type="hidden" name="quantity" id="wishlist-quantity" value="1">
- <button type="submit" class="btn btn-outline-primary">
- <i class="fas fa-heart"></i> В избранное
-</button>
- </form>
- </div>
 
  <form method="POST" action="{% url 'boats:add_to_cart' product.uid %}" id="cart-form">
  {% csrf_token %}

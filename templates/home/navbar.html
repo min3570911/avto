@@ -113,9 +113,6 @@
 
           <!-- 💖 Избранное перемещено в конец -->
           {% if user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное ({{ request.user.wishlist.count }})</a></li>
-          {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'wishlist' %}">Избранное</a></li>
           {% endif %}
         </ul>
       </div>

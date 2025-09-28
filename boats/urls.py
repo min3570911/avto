@@ -36,13 +36,6 @@ urlpatterns = [
     # 📊 Обновление количества лодочного товара в корзине
     path('update-cart/<uid>/', views.boat_update_cart_quantity, name='update_cart'),
 
-    # ❤️ ИЗБРАННОЕ ДЛЯ ЛОДОК
-
-    # ❤️ Добавление лодочного товара в избранное
-    path('add-to-wishlist/<uid>/', views.boat_add_to_wishlist, name='add_to_wishlist'),
-
-    # 🗑️ Удаление лодочного товара из избранного
-    path('remove-from-wishlist/<uid>/', views.boat_remove_from_wishlist, name='remove_from_wishlist'),
 ]
 
 # 🔧 СТРУКТУРА URL ДЛЯ ЛОДОК:
@@ -58,14 +51,11 @@ urlpatterns = [
 # /boats/remove-from-cart/UUID/ → удалить из корзины
 # /boats/update-cart/UUID/ → обновить количество
 #
-# ❤️ ИЗБРАННОЕ:
-# /boats/add-to-wishlist/UUID/ → добавить в избранное
-# /boats/remove-from-wishlist/UUID/ → удалить из избранного
 #
 # 📋 ОСОБЕННОСТИ:
 # • app_name = 'boats' для namespace
 # • Все URL используют slug для SEO
-# • UID используется для операций с корзиной/избранным
+# • UID используется для операций с корзиной
 # • Структура аналогична products/urls.py
 # • Готовность к добавлению новых функций (фильтры, сравнение и т.д.)
 #
@@ -74,4 +64,3 @@ urlpatterns = [
 # {% url 'boats:product_list_by_category' 'yamaha' %} → /boats/category/yamaha/
 # {% url 'boats:product_detail' product.slug %} → /boats/product/slug/
 # {% url 'boats:add_to_cart' product.uid %} → /boats/add-to-cart/uuid/
-# {% url 'boats:add_to_wishlist' product.uid %} → /boats/add-to-wishlist/uuid/

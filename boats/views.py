@@ -29,7 +29,7 @@ from .models import BoatCategory, BoatProduct, BoatProductImage
 from products.models import Color
 
 # 🤝 Универсальные модели из common
-from common.models import ProductReview, Wishlist
+from common.models import ProductReview
 
 # 👤 Модели пользователей и корзины
 from accounts.models import Cart, CartItem
@@ -702,84 +702,6 @@ def boat_add_to_cart(request, uid):
     return redirect('cart')
 
 
-# ==================== ❤️ ФУНКЦИИ ИЗБРАННОГО ДЛЯ ЛОДОК ==================
-
-@login_required
-def boat_add_to_wishlist(request, uid):
-    """❤️ Добавление лодочного товара в избранное"""
-    carpet_color_id = request.POST.get('carpet_color') or request.GET.get('carpet_color')
-    border_color_id = request.POST.get('border_color') or request.GET.get('border_color')
-
-    product = get_object_or_404(BoatProduct, uid=uid)
-
-    # Проверяем цвета
-    carpet_color = None
-    border_color = None
-    if carpet_color_id:
-        carpet_color = get_object_or_404(Color, uid=carpet_color_id)
-        if not carpet_color.is_available:
-            messages.warning(request, f'Цвет коврика "{carpet_color.name}" временно недоступен.')
-            return redirect(request.META.get('HTTP_REFERER'))
-
-    if border_color_id:
-        border_color = get_object_or_404(Color, uid=border_color_id)
-        if not border_color.is_available:
-            messages.warning(request, f'Цвет окантовки "{border_color.name}" временно недоступен.')
-            return redirect(request.META.get('HTTP_REFERER'))
-
-    boat_content_type = ContentType.objects.get_for_model(BoatProduct)
-
-    # 🛥️ Для лодок: БЕЗ комплектаций и подпятника
-    wishlist_item = Wishlist.objects.filter(
-        user=request.user,
-        content_type=boat_content_type,
-        object_id=product.uid,
-        kit_variant__isnull=True  # Для лодок всегда None
-    ).first()
-
-    if wishlist_item:
-        # Обновляем существующий элемент
-        wishlist_item.carpet_color = carpet_color
-        wishlist_item.border_color = border_color
-        wishlist_item.has_podpyatnik = False  # Для лодок всегда False
-        wishlist_item.save()
-        messages.success(request, "✅ Лодочный коврик в избранном обновлен!")
-    else:
-        # Создаем новый
-        Wishlist.objects.create(
-            user=request.user,
-            content_type=boat_content_type,
-            object_id=product.uid,
-            kit_variant=None,  # Для лодок всегда None
-            carpet_color=carpet_color,
-            border_color=border_color,
-            has_podpyatnik=False  # Для лодок всегда False
-        )
-        messages.success(request, "✅ Лодочный коврик добавлен в избранное!")
-
-    logger.info(f"Пользователь {request.user.username} добавил лодочный товар {product.slug} в избранное")
-    return redirect(reverse('wishlist'))
-
-
-@login_required
-def boat_remove_from_wishlist(request, uid):
-    """🗑️ Удаление лодочного товара из избранного"""
-    product = get_object_or_404(BoatProduct, uid=uid)
-
-    boat_content_type = ContentType.objects.get_for_model(BoatProduct)
-    deleted_count = Wishlist.objects.filter(
-        user=request.user,
-        content_type=boat_content_type,
-        object_id=product.uid
-    ).delete()[0]
-
-    if deleted_count > 0:
-        messages.success(request, "✅ Лодочный коврик удален из избранного!")
-        logger.info(f"Пользователь {request.user.username} удалил лодочный товар {product.slug} из избранного")
-    else:
-        messages.info(request, "Лодочный товар уже отсутствует в избранном.")
-
-    return redirect(reverse('wishlist'))
 
 
 @login_required

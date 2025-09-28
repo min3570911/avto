@@ -41,11 +41,6 @@ urlpatterns = [
     path('export/info/', export_info_view, name='export_info'),
     path('export/stats/', export_ajax_stats, name='export_stats'),
 
-    # ❤️ Избранное
-    path('wishlist/', wishlist_view, name='wishlist'),
-    path('wishlist/add/<uid>/', add_to_wishlist, name='add_to_wishlist'),
-    path('wishlist/move_to_cart/<uid>/', move_to_cart, name='move_to_cart'),
-    path('wishlist/remove/<uid>/', remove_from_wishlist, name='remove_from_wishlist'),
 
     # 📝 Отзывы
     path('product-reviews/', product_reviews, name='product_reviews'),

@@ -43,8 +43,5 @@ if settings.DEBUG:
 # ✅ ДОБАВЛЕНО: path('common/', include('common.urls'))
 #
 # 🎯 ТЕПЕРЬ ДОСТУПНЫ:
-# POST /common/wishlist/add/ - добавление в избранное
-# POST /common/wishlist/remove/ - удаление из избранного
 # POST /common/reviews/add/ - добавление отзыва
 # GET /common/reviews/ - список всех отзывов
-# GET /common/wishlist/ - список избранного пользователя
