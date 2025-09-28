@@ -14,7 +14,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
 
-from .models import BoatCategory, BoatProduct, BoatProductImage
+from .models import BoatCategory, BoatProduct, BoatProductImage, BoatCatalogDescription
 
 logger = logging.getLogger(__name__)
 
@@ -89,29 +89,40 @@ class BoatCategoryAdmin(admin.ModelAdmin):
 
     list_display_links = ['get_category_preview', 'category_name']
     list_filter = ['created_at']
-    search_fields = ['category_name', 'description', 'page_title']
+    search_fields = ['category_name', 'description', 'page_title', 'meta_title']
     list_editable = ['display_order']
     list_per_page = 25
 
     prepopulated_fields = {'slug': ('category_name',)}
 
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = [
+        'created_at', 'updated_at', 'get_image_preview', 'get_meta_title_length',
+        'get_meta_description_length', 'get_google_preview'
+    ]
 
     fieldsets = (
-        ('🏷️ Основная информация', {
-            'fields': ('category_name', 'slug', 'category_image', 'display_order')
+        ('🛥️ Основная информация', {
+            'fields': ('category_name', 'slug', 'category_image', 'get_image_preview', 'display_order'),
+            'description': '🏷️ Базовая информация о категории лодок'
         }),
-        ('📝 Описание категории', {
-            'fields': ('description',),
-            'classes': ('wide',)
+        ('📝 Контент категории', {
+            'fields': ('description', 'additional_content'),
+            'classes': ('wide',),
+            'description': '✍️ Описание и дополнительный контент (YouTube видео)'
         }),
-        ('🔍 SEO настройки', {
-            'fields': ('page_title', 'meta_description'),
-            'classes': ('collapse',),
-            'description': 'Настройки для поисковых систем'
+        ('🔍 SEO-настройки', {
+            'fields': (
+                'page_title',
+                ('meta_title', 'get_meta_title_length'),
+                ('meta_description', 'get_meta_description_length'),
+                'get_google_preview'
+            ),
+            'description': '🎯 Оптимизация для поисковых систем'
         }),
-        ('⚙️ Управление', {
+        ('⚙️ Настройки отображения', {
             'fields': ('is_active',),
+            'classes': ('collapse',),
+            'description': '🔧 Видимость категории'
         }),
         ('📅 Служебная информация', {
             'fields': ('created_at', 'updated_at'),
@@ -147,13 +158,65 @@ class BoatCategoryAdmin(admin.ModelAdmin):
 
     def get_seo_status(self, obj):
         """🔍 Статус SEO оптимизации"""
-        if obj.page_title and obj.meta_description:
+        seo_fields = [obj.page_title, obj.meta_title, obj.meta_description]
+        filled_fields = sum(1 for field in seo_fields if field)
+
+        if filled_fields >= 2:
             return format_html('<span style="color: green;">✅ Настроено</span>')
-        elif obj.page_title or obj.meta_description:
+        elif filled_fields == 1:
             return format_html('<span style="color: orange;">⚠️ Частично</span>')
         return format_html('<span style="color: red;">❌ Не настроено</span>')
 
     get_seo_status.short_description = "SEO"
+
+    def get_image_preview(self, obj):
+        """🖼️ Предпросмотр изображения категории"""
+        if obj.category_image:
+            return format_html(
+                '<img src="{}" style="max-width: 200px; max-height: 150px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.category_image.url
+            )
+        return "❌ Изображение не загружено"
+
+    get_image_preview.short_description = "Предпросмотр изображения"
+
+    def get_meta_title_length(self, obj):
+        """📏 Длина мета-заголовка"""
+        if obj.meta_title:
+            length = len(obj.meta_title)
+            color = "green" if length <= 60 else "red"
+            return format_html('<span style="color: {}; font-weight: bold;">{}/60</span>', color, length)
+        return format_html('<span style="color: gray;">0/60</span>')
+
+    get_meta_title_length.short_description = "Длина"
+
+    def get_meta_description_length(self, obj):
+        """📏 Длина мета-описания"""
+        if obj.meta_description:
+            length = len(obj.meta_description)
+            color = "green" if length <= 160 else "red"
+            return format_html('<span style="color: {}; font-weight: bold;">{}/160</span>', color, length)
+        return format_html('<span style="color: gray;">0/160</span>')
+
+    get_meta_description_length.short_description = "Длина"
+
+    def get_google_preview(self, obj):
+        """🔍 Предпросмотр в стиле Google"""
+        title = obj.meta_title or obj.page_title or obj.category_name
+        description = obj.meta_description or "Описание не заполнено"
+
+        return format_html(
+            '<div style="border: 1px solid #dadce0; border-radius: 8px; padding: 12px; max-width: 500px; font-family: Arial, sans-serif; margin: 10px 0;">'
+            '<div style="color: #1a0dab; font-size: 18px; line-height: 1.3; margin-bottom: 4px;">{}</div>'
+            '<div style="color: #006621; font-size: 14px; margin-bottom: 4px;">https://автоковрик.бай/boats/{}/</div>'
+            '<div style="color: #545454; font-size: 14px; line-height: 1.4;">{}</div>'
+            '</div>',
+            title,
+            obj.slug or 'category-slug',
+            description
+        )
+
+    get_google_preview.short_description = "Предпросмотр Google"
 
     def activate_categories(self, request, queryset):
         """✅ Активировать выбранные категории"""
@@ -171,11 +234,13 @@ class BoatCategoryAdmin(admin.ModelAdmin):
         for category in queryset:
             changed = False
             if not category.page_title:
-                category.page_title = f"🛥️ Лодочные коврики {category.category_name} - Купить с доставкой"
+                category.page_title = category.category_name
+                changed = True
+            if not category.meta_title:
+                category.meta_title = f"ЭВА коврики для лодок {category.category_name}"[:60]
                 changed = True
             if not category.meta_description:
-                category.meta_description = f"Коврики EVA для лодок {category.category_name}. Точные лекала, качественные материалы. Доставка по РБ. Гарантия качества."[
-                                            :160]
+                category.meta_description = f"Качественные ЭВА коврики для лодок {category.category_name.lower()}. Защита дна лодки, выбор цвета, доставка по Беларуси."[:160]
                 changed = True
             if changed:
                 category.save()
@@ -610,6 +675,45 @@ class BoatProductAdmin(admin.ModelAdmin):
 
         except Exception as e:
             return {'success': False, 'error': str(e)}
+
+
+# 🛥️ НОВАЯ АДМИНКА: BoatCatalogDescription (синглтон)
+@admin.register(BoatCatalogDescription)
+class BoatCatalogDescriptionAdmin(admin.ModelAdmin):
+    """📝 Админка для описания каталога лодочных ковриков (только один экземпляр)"""
+
+    # 🚫 Синглтон логика в админке
+    def has_add_permission(self, request):
+        """🚫 Запретить создание новых записей, если уже есть описание"""
+        return not BoatCatalogDescription.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        """⚠️ Разрешить удаление (чтобы можно было пересоздать при необходимости)"""
+        return True
+
+    def changelist_view(self, request, extra_context=None):
+        """📝 Если нет записи, перенаправляем на создание"""
+        if not BoatCatalogDescription.objects.exists():
+            return self.add_view(request)
+        return super().changelist_view(request, extra_context)
+
+    # 🎨 Группировка полей в админке
+    fieldsets = (
+        ('🛥️ Описание каталога лодочных ковриков', {
+            'fields': ('title', 'description'),
+            'description': 'Заголовок и основное описание каталога лодочных ковриков'
+        }),
+        ('🎬 Дополнительный контент', {
+            'fields': ('additional_content',),
+            'classes': ('collapse',),
+            'description': 'YouTube видео или дополнительный HTML контент'
+        }),
+        ('🔍 SEO', {
+            'fields': ('meta_description',),
+            'classes': ('collapse',),
+            'description': 'Мета-описание для поисковых систем'
+        }),
+    )
 
 
 # 🎨 Настройка заголовков админки лодок

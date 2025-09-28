@@ -236,6 +236,37 @@
     padding: 1rem;
     border-radius: 0 8px 8px 0;
   }
+
+  /* 🎬 Стили для YouTube видео в дополнительном контенте */
+  .additional-content .youtube-video-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 соотношение */
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+    background: #000;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .additional-content .youtube-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Адаптивность для YouTube видео */
+  @media (max-width: 768px) {
+    .additional-content .youtube-video-container {
+      margin: 15px 0;
+      border-radius: 6px;
+    }
+  }
 </style>
 
 <!-- 🎯 Заголовок категории лодок -->
@@ -269,41 +300,6 @@
 <div class="container">
   {% include 'base/alert.html' %}
 
-  <!-- 🛥️ Фильтры для товаров в категории лодок -->
-  <div class="boat-filters">
-    <h5>🔍 Поиск в категории {{ category.category_name }}</h5>
-    <form method="GET" class="boat-dimension-filter">
-      <!-- 🔍 Поиск -->
-      <div class="dimension-group">
-        <label>🔍 Поиск:</label>
-        <input type="text" name="search" value="{{ search_query }}" 
-               placeholder="Модель, размер..."
-               class="dimension-input" style="width: 150px;">
-      </div>
-
-      <!-- 📐 Размеры коврика лодки -->
-      <div class="dimension-group">
-        <label>📏 Длина (см):</label>
-        <input type="number" name="min_length" value="{{ min_length }}" 
-               placeholder="от" class="dimension-input">
-        <span>-</span>
-        <input type="number" name="max_length" value="{{ max_length }}" 
-               placeholder="до" class="dimension-input">
-      </div>
-
-      <div class="dimension-group">
-        <label>📐 Ширина (см):</label>
-        <input type="number" name="min_width" value="{{ min_width }}" 
-               placeholder="от" class="dimension-input">
-        <span>-</span>
-        <input type="number" name="max_width" value="{{ max_width }}" 
-               placeholder="до" class="dimension-input">
-      </div>
-
-      <button type="submit" class="btn btn-primary">🔍 Найти</button>
-      <a href="{% url 'boats:product_list_by_category' category.slug %}" class="btn btn-secondary">🗑️ Сбросить</a>
-    </form>
-  </div>
   
   <!-- 🆕 Панель управления товарами (СКОПИРОВАНО С PRODUCTS) -->
   <div class="control-panel">
@@ -415,13 +411,20 @@
   {% endif %}
 
   <!-- 📝 Описание категории лодок -->
-  {% if category.category_description %}
+  {% if category.description or category.additional_content %}
   <div class="category-content mt-5">
     <h3>📝 О лодочных ковриках {{ category.category_name }}</h3>
-    {% if category.category_description.html %}
-      {{ category.category_description.html|safe }}
-    {% else %}
-      {{ category.category_description|safe }}
+
+    <!-- Основное описание -->
+    {% if category.description %}
+      {{ category.description|safe }}
+    {% endif %}
+
+    <!-- Дополнительный контент (YouTube и др.) -->
+    {% if category.additional_content %}
+      <div class="additional-content mt-4">
+        {{ category.additional_content|safe }}
+      </div>
     {% endif %}
   </div>
   {% endif %}

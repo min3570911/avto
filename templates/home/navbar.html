@@ -36,56 +36,38 @@
 
   /* 📂 Стили для выпадающего меню каталога */
   .catalog-dropdown {
-    min-width: 500px;
-    max-width: 800px;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    min-width: 220px;
+    max-width: 280px;
+    padding: 8px 0;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    margin-top: 2px;
   }
 
   .catalog-item {
-    padding: 8px 15px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s ease;
     text-decoration: none;
-    color: #333;
+    color: #495057;
+    display: block;
+    border: none;
   }
 
   .catalog-item:hover {
     background-color: #f8f9fa;
     color: #007bff;
     text-decoration: none;
-    transform: translateX(5px);
-  }
-
-  .category-icon {
-    flex-shrink: 0;
-  }
-
-  .dropdown-header {
-    font-weight: 600;
-    color: #495057;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e9ecef;
+    padding-left: 24px;
   }
 
   /* 📱 Адаптивность для мобильных */
   @media (max-width: 768px) {
     .catalog-dropdown {
-      min-width: 300px;
-      max-width: 95vw;
-    }
-
-    .catalog-dropdown .row {
-      margin: 0;
-    }
-
-    .catalog-dropdown .col-md-6 {
-      padding: 0 5px;
+      min-width: 200px;
+      max-width: 90vw;
     }
   }
 </style>
@@ -114,13 +96,11 @@
               Каталог
             </a>
             <div class="dropdown-menu catalog-dropdown" aria-labelledby="catalogDropdown">
-              <a class="dropdown-item catalog-item d-flex align-items-center" href="{% url 'auto_catalog' %}">
-                <span class="category-icon me-2" style="font-size: 20px;">🚗</span>
-                <span>Автоковрики</span>
+              <a class="dropdown-item catalog-item" href="{% url 'auto_catalog' %}">
+                Автоковрики
               </a>
-              <a class="dropdown-item catalog-item d-flex align-items-center" href="{% url 'boat_catalog' %}">
-                <span class="category-icon me-2" style="font-size: 20px;">🛥️</span>
-                <span>Коврики для лодок</span>
+              <a class="dropdown-item catalog-item" href="{% url 'boat_catalog' %}">
+                Коврики для лодок
               </a>
             </div>
           </li>

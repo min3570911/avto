@@ -1,0 +1,67 @@
+{% extends "base/base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block start %} {% load static %}
+
+<section class="section-content padding-bottom">
+  <div class="mx-auto" style="max-width: 85rem; margin-top: 50px">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+
+          {% if terms %}
+            <div class="text-center mb-5">
+              <h1 class="display-4 mb-3">{{ terms.title }}</h1>
+              <div class="text-muted">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Обновлено: {{ terms.updated_at|date:"d.m.Y" }}
+              </div>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-body p-5">
+                <div class="content-text" style="line-height: 1.8; font-size: 1.1rem;">
+                  {{ terms.content|safe }}
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <!-- Fallback если нет данных в Terms -->
+            <div class="text-center mb-5">
+              <h1 class="display-4 mb-3">Условия оплаты и доставки</h1>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-body p-5">
+                <div class="content-text" style="line-height: 1.8; font-size: 1.1rem;">
+                  <h3>🚛 Доставка</h3>
+                  <p>Мы осуществляем доставку автомобильных ковриков по всей Беларуси. Стоимость и сроки доставки зависят от региона и выбранного способа доставки.</p>
+
+                  <h3>💳 Оплата</h3>
+                  <p>Принимаем к оплате наличные и безналичный расчет. Возможна оплата при получении товара.</p>
+
+                  <h3>📞 Контакты</h3>
+                  <p>По всем вопросам обращайтесь к нашим менеджерам по телефону или через форму обратной связи.</p>
+
+                  <div class="alert alert-info mt-4">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Обратите внимание:</strong> Данная страница находится в разработке. Подробные условия будут добавлены администратором через панель управления.
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Кнопка возврата -->
+          <div class="text-center mt-4">
+            <a href="/" class="btn btn-outline-primary">
+              <i class="fas fa-arrow-left mr-2"></i>На главную
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -7,38 +7,80 @@
   <div class="footer-top">
     <div class="container">
       <div class="inner-content">
-        <div class="row">
-          <div class="col-lg-3 col-md-4 col-12 mb-2">
+        <div class="row align-items-center">
+          <div class="col-lg-3 col-md-4 col-sm-12 col-12 mb-2">
             <div class="footer-logo text-center">
               <a href="/">
                 <img src="{% static 'images/logo-white.png' %}" alt="Logo" class="mx-2"/>
               </a>
             </div>
           </div>
-          <div class="col-lg-9 col-md-8 col-12">
-            <div class="footer-newsletter">
-              <h4 class="title mb-4">
-                Subscribe to our Newsletter
-                <span>Get all the latest information, Sales and Offers.</span>
-              </h4>
-              <div class="newsletter-form-head">
-                <form class="newsletter-form">
-                  <input
-                    class="mb-2"
-                    name="email"
-                    placeholder="Email address here..."
-                    type="email"
-                    required=""
-                    value=""
-                    autocomplete="email"
-                  />
-                  <div class="button mb-4">
-                    <button class="btn">
-                      Subscribe<span class="dir-part"></span>
-                    </button>
+          <div class="col-lg-6 col-md-4 col-12 mb-2">
+            {% if footer_banners %}
+              <div class="footer-top-banners">
+                {% for banner in footer_banners|slice:":1" %}
+                  <div class="footer-top-banner-item">
+                    {% if banner.link %}
+                      <a href="{{ banner.link }}" class="footer-top-banner-link">
+                    {% endif %}
+
+                    <div class="footer-top-banner-content">
+                      {% if banner.image %}
+                        <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="footer-top-banner-image">
+                      {% endif %}
+                      <div class="footer-top-banner-text">
+                        <h4 class="footer-top-banner-title">{{ banner.title }}</h4>
+                        {% if banner.subtitle %}
+                          <p class="footer-top-banner-subtitle">{{ banner.subtitle }}</p>
+                        {% endif %}
+                        {% if banner.button_text and banner.link %}
+                          <span class="footer-top-banner-button">{{ banner.button_text }}</span>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                    {% if banner.link %}
+                      </a>
+                    {% endif %}
                   </div>
-                </form>
+                {% endfor %}
               </div>
+            {% else %}
+              <!-- 🎨 Заглушка баннера -->
+              <div class="footer-banner-placeholder">
+                <div class="placeholder-content">
+                  <i class="fas fa-image"></i>
+                  <p>Место для баннера</p>
+                  <small>Рекомендуемый размер: 400×80px</small>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="col-lg-3 col-md-4 col-12 mb-2">
+            <div class="footer-consultation">
+              <h4 class="consultation-title">Нужна консультация?</h4>
+              {% if site_contact_info %}
+                {% with primary_phone=site_contact_info.phone_numbers.all|first %}
+                  {% if primary_phone %}
+                    <div class="consultation-phone">
+                      <i class="lni lni-mobile"></i>
+                      <a href="tel:{{ primary_phone.phone }}" class="main-phone-link">
+                        {{ primary_phone.phone }}
+                      </a>
+                    </div>
+                  {% else %}
+                    <div class="consultation-phone">
+                      <i class="lni lni-mobile"></i>
+                      <a href="tel:+375291234567" class="main-phone-link">+375 29 123-45-67</a>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              {% else %}
+                <div class="consultation-phone">
+                  <i class="lni lni-mobile"></i>
+                  <a href="tel:+375291234567" class="main-phone-link">+375 29 123-45-67</a>
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -53,10 +95,10 @@
           <div class="col-12">
             <div class="single-footer f-link">
               <ul>
-                <li><a href="{% url 'about' %}">About Us</a></li>
-                <li><a href="{% url 'contact' %}">Contact Us</a></li>
-                <li><a href="{% url 'terms-and-conditions' %}">Terms and Conditions</a></li>
-                <li><a href="{% url 'privacy-policy' %}">Privacy Policy</a></li>
+                <li><a href="{% url 'about' %}">О нас</a></li>
+                <li><a href="{% url 'contact' %}">Контакты</a></li>
+                <li><a href="{% url 'terms-and-conditions' %}">Условия оплаты и доставки</a></li>
+                <li><a href="{% url 'privacy-policy' %}">Политика обработки персональных данных</a></li>
               </ul>
             </div>
           </div>
@@ -70,21 +112,32 @@
       <div class="inner-content">
         <div class="row align-items-center">
           <div class="col-lg-4 col-12">
-            <div class="payment-gateway">
-              <span>We Accept:</span>
-              <img
-                src="{% static 'images/credit-cards-footer.png' %}"
-                alt="#"
-              />
+            <div class="analytics-counters">
+              {% if analytics_counters %}
+                <div class="counter-icons">
+                  {% for counter in analytics_counters %}
+                    <div class="counter-item" title="{{ counter.name }}">
+                      {% if counter.counter_type == 'yandex_metrica' %}
+                        <i class="fab fa-yandex" style="color: #ff0000;"></i>
+                      {% elif counter.counter_type == 'livinternet' %}
+                        <i class="fas fa-chart-line" style="color: #0066cc;"></i>
+                      {% elif counter.counter_type == 'google_analytics' %}
+                        <i class="fab fa-google" style="color: #4285f4;"></i>
+                      {% else %}
+                        <i class="fas fa-chart-bar" style="color: #6c757d;"></i>
+                      {% endif %}
+                    </div>
+                    <!-- Вставляем HTML код счетчика -->
+                    {{ counter.counter_code|safe }}
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
           </div>
           <div class="col-lg-4 col-12">
             <div class="copyright">
               <p>
-                Designed and Developed by ❤️
-                <a href="https://atulguptag.github.io/" rel="nofollow" target="_blank">
-                  Atul Gupta
-                </a>
+                Автоковрик.бай © 2025 Все права защищены
               </p>
             </div>
           </div>

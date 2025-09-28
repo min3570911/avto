@@ -97,15 +97,29 @@
                       <td class="d-flex justify-content-end">
                         <div class="d-sm-flex mr-2">
                           {% if item.cached_product %}
-                            <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.object_id %}">
-                              {% csrf_token %}
-                              <button type="submit" class="btn btn-primary">В корзину</button>
-                            </form>
+                            {% if item.product_type == 'auto' %}
+                              <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'move_to_cart' item.object_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">В корзину</button>
+                              </form>
+                            {% elif item.product_type == 'boat' %}
+                              <form class="mb-2 mb-sm-0 mr-0 mr-sm-3" method="POST" action="{% url 'boats:add_to_cart' item.object_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">В корзину</button>
+                              </form>
+                            {% endif %}
 
-                            <form method="POST" action="{% url 'remove_from_wishlist' item.object_id %}{% if item.kit_variant %}?kit={{ item.kit_variant.code }}{% endif %}">
-                              {% csrf_token %}
-                              <button type="submit" class="btn btn-danger">Удалить</button>
-                            </form>
+                            {% if item.product_type == 'auto' %}
+                              <form method="POST" action="{% url 'remove_from_wishlist' item.object_id %}{% if item.kit_variant %}?kit={{ item.kit_variant.code }}{% endif %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                              </form>
+                            {% elif item.product_type == 'boat' %}
+                              <form method="POST" action="{% url 'boats:remove_from_wishlist' item.object_id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                              </form>
+                            {% endif %}
                           {% else %}
                             <button class="btn btn-secondary" disabled>Товар недоступен</button>
                           {% endif %}

@@ -91,6 +91,10 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'home.context_processors.catalog_menu',  # 📂 Меню каталога
+                'home.context_processors.contact_info',  # 📞 Контактная информация
+                'home.context_processors.analytics_counters',  # 📊 Счетчики аналитики
+                'home.context_processors.header_banner',  # 📢 Бегущая строка
+                'home.context_processors.footer_banners',  # 🎨 Баннеры в футере
             ],
         },
     },

@@ -303,6 +303,19 @@
                         <span class="total-amount-value" id="cart-total-after-coupon">{{ cart.get_cart_total_price_after_coupon }} BYN</span>
                     </div>
 
+                    <!-- Чекбокс согласия -->
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="terms_agree" name="terms_agree" required>
+                            <label class="form-check-label" for="terms_agree" style="font-size: 0.9rem; line-height: 1.4;">
+                                Я подтверждаю свое согласие с
+                                <a href="{% url 'terms-and-conditions' %}" target="_blank" style="color: #007bff; text-decoration: underline;">условиями оплаты и доставки</a>
+                                и
+                                <a href="{% url 'privacy-policy' %}" target="_blank" style="color: #007bff; text-decoration: underline;">политикой обработки персональных данных</a>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Кнопка оформления заказа -->
                     <button type="submit" class="btn btn-primary btn-block" id="placeOrderBtn">
                         Оформить заказ

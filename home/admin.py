@@ -6,7 +6,16 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import ContactInfo, FAQ, Banner, Testimonial, HeroSection, HeroAdvantage, CompanyDescription, ContactMessage, DeliveryOption
+from .models import ContactInfo, FAQ, Banner, Testimonial, HeroSection, HeroAdvantage, CompanyDescription, ContactMessage, DeliveryOption, PhoneNumber, Terms, PrivacyPolicy, AnalyticsCounter, HeaderBanner
+
+
+# 📞 Инлайн админка для номеров телефонов
+class PhoneNumberInline(admin.TabularInline):
+    """📞 Инлайн админка для номеров телефонов"""
+    model = PhoneNumber
+    extra = 1
+    fields = ('phone', 'description', 'is_primary', 'order')
+    ordering = ('-is_primary', 'order')
 
 
 # 🆕 НОВОЕ: Инлайн админка для преимуществ hero-секции
@@ -38,14 +47,39 @@ class HeroAdvantageInline(admin.TabularInline):
 @admin.register(ContactInfo)
 class ContactInfoAdmin(admin.ModelAdmin):
     """📞 Админка для контактной информации"""
-    list_display = ('phone', 'email', 'is_active', 'created_at')
+    list_display = ('get_phones_display', 'email', 'is_active', 'created_at')
     list_filter = ('is_active', 'created_at')
-    search_fields = ('phone', 'email', 'address')
+    search_fields = ('email', 'address', 'phone_numbers__phone')
     readonly_fields = ('created_at', 'updated_at')
+    inlines = [PhoneNumberInline]
+
+    def get_phones_display(self, obj):
+        """📞 Отображение телефонов в списке"""
+        phones = obj.phone_numbers.all()
+        if not phones:
+            return "❌ Нет телефонов"
+
+        phone_list = []
+        for phone in phones[:3]:  # Показываем максимум 3 номера
+            icon = "⭐" if phone.is_primary else "📞"
+            desc = f" ({phone.description})" if phone.description else ""
+            phone_list.append(f"{icon} {phone.phone}{desc}")
+
+        result = ", ".join(phone_list)
+        if phones.count() > 3:
+            result += f" и ещё {phones.count() - 3}"
+
+        return format_html('<div style="white-space: nowrap;">{}</div>', result)
+
+    get_phones_display.short_description = "Телефоны"
 
     fieldsets = (
         ('📞 Основная информация', {
-            'fields': ('phone', 'email', 'address', 'working_hours')
+            'fields': ('email', 'address', 'working_hours')
+        }),
+        ('🗺️ Карта', {
+            'fields': ('yandex_map_iframe',),
+            'description': 'Для добавления карты: 1) Откройте Яндекс.Карты 2) Найдите нужное место 3) Нажмите "Поделиться" → "HTML-код" 4) Скопируйте и вставьте код сюда'
         }),
         ('🌐 Социальные сети', {
             'fields': ('telegram', 'instagram', 'facebook'),
@@ -91,7 +125,26 @@ class BannerAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'created_at')
     search_fields = ('title', 'subtitle')
     list_editable = ('is_active', 'order')
-    readonly_fields = ('created_at', 'updated_at', 'get_image_preview')
+    readonly_fields = ('created_at', 'updated_at', 'get_image_preview', 'get_banner_format_info')
+
+    def get_banner_format_info(self, obj):
+        """📏 Информация о рекомендуемом формате баннера"""
+        return format_html(
+            '<div style="background: #e8f5e8; padding: 12px; border-radius: 5px; margin: 10px 0;">'
+            '<h4 style="margin: 0 0 8px 0; color: #2e7d32;">📐 Рекомендуемые размеры для футера:</h4>'
+            '<ul style="margin: 0; padding-left: 20px;">'
+            '<li><strong>Оптимальный размер:</strong> 400×80 пикселей</li>'
+            '<li><strong>Соотношение сторон:</strong> 5:1 (широкий)</li>'
+            '<li><strong>Формат:</strong> JPG, PNG, WebP</li>'
+            '<li><strong>Размер файла:</strong> до 500 КБ</li>'
+            '</ul>'
+            '<p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">'
+            '💡 Баннер будет отображаться между логотипом и блоком консультации в футере сайта'
+            '</p>'
+            '</div>'
+        )
+
+    get_banner_format_info.short_description = "💡 Рекомендации по размеру"
 
     def get_image_preview(self, obj):
         """👁️ Предпросмотр изображения"""
@@ -106,6 +159,10 @@ class BannerAdmin(admin.ModelAdmin):
     get_image_preview.short_description = "Предпросмотр"
 
     fieldsets = (
+        ('💡 Рекомендации', {
+            'fields': ('get_banner_format_info',),
+            'description': 'Важная информация о размерах и формате баннеров для футера'
+        }),
         ('🎨 Содержимое', {
             'fields': ('title', 'subtitle', 'image', 'get_image_preview')
         }),
@@ -380,6 +437,7 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
         'title',
         'get_price_short',
         'get_delivery_time_short',
+        'get_coverage_tag',
         'coverage_area',
         'is_active',
         'order',
@@ -388,8 +446,11 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
 
     list_filter = (
         'is_active',
+        'coverage_tag',
         'created_at'
     )
+
+    list_display_links = ('title',)
 
     search_fields = (
         'title',
@@ -412,7 +473,7 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
             'fields': ('price_info', 'delivery_time')
         }),
         ('🌍 Зона покрытия и оплата', {
-            'fields': ('coverage_area', 'payment_methods')
+            'fields': ('coverage_tag', 'coverage_area', 'payment_methods')
         }),
         ('📝 Дополнительная информация', {
             'fields': ('additional_info',),
@@ -451,6 +512,11 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
         return "Не указано"
     get_delivery_time_short.short_description = "Сроки"
 
+    def get_coverage_tag(self, obj):
+        """🏷️ Отображение сегмента покрытия"""
+        return obj.coverage_label()
+    get_coverage_tag.short_description = "Сегмент"
+
     # Дополнительные действия
     actions = ['activate_delivery_options', 'deactivate_delivery_options']
 
@@ -467,9 +533,267 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
     deactivate_delivery_options.short_description = "Деактивировать выбранные способы доставки"
 
 
+# 📄 НОВЫЕ АДМИНКИ: Terms и PrivacyPolicy (синглтоны)
+@admin.register(Terms)
+class TermsAdmin(admin.ModelAdmin):
+    """📋 Админка для условий оплаты и доставки (только один экземпляр)"""
+
+    # 🚫 Синглтон логика в админке
+    def has_add_permission(self, request):
+        """🚫 Запретить создание новых записей, если уже есть условия"""
+        return not Terms.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        """⚠️ Разрешить удаление (чтобы можно было пересоздать при необходимости)"""
+        return True
+
+    def changelist_view(self, request, extra_context=None):
+        """📋 Если нет записи, перенаправляем на создание"""
+        if not Terms.objects.exists():
+            return self.add_view(request)
+        return super().changelist_view(request, extra_context)
+
+    # 🎨 Группировка полей в админке
+    fieldsets = (
+        ('📋 Условия оплаты и доставки', {
+            'fields': ('title', 'content'),
+            'description': 'Заголовок и текст условий оплаты и доставки для сайта'
+        }),
+    )
+
+
+@admin.register(PrivacyPolicy)
+class PrivacyPolicyAdmin(admin.ModelAdmin):
+    """🔒 Админка для политики конфиденциальности (только один экземпляр)"""
+
+    # 🚫 Синглтон логика в админке
+    def has_add_permission(self, request):
+        """🚫 Запретить создание новых записей, если уже есть политика"""
+        return not PrivacyPolicy.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        """⚠️ Разрешить удаление (чтобы можно было пересоздать при необходимости)"""
+        return True
+
+    def changelist_view(self, request, extra_context=None):
+        """🔒 Если нет записи, перенаправляем на создание"""
+        if not PrivacyPolicy.objects.exists():
+            return self.add_view(request)
+        return super().changelist_view(request, extra_context)
+
+    # 🎨 Группировка полей в админке
+    fieldsets = (
+        ('🔒 Политика конфиденциальности', {
+            'fields': ('title', 'content'),
+            'description': 'Заголовок и текст политики конфиденциальности для сайта'
+        }),
+    )
+
+
+# 📢 НОВАЯ АДМИНКА: HeaderBanner для бегущей строки
+@admin.register(HeaderBanner)
+class HeaderBannerAdmin(admin.ModelAdmin):
+    """📢 Админка для бегущей строки в шапке сайта"""
+
+    list_display = (
+        'get_text_preview',
+        'get_color_preview',
+        'scroll_speed',
+        'get_link_status',
+        'is_active',
+        'created_at'
+    )
+
+    list_filter = (
+        'is_active',
+        'created_at'
+    )
+
+    search_fields = (
+        'text',
+        'link_url'
+    )
+
+    list_editable = ('is_active',)
+
+    readonly_fields = ('created_at', 'updated_at')
+
+    ordering = ('-created_at',)
+
+    fieldsets = (
+        ('📢 Содержимое бегущей строки', {
+            'fields': ('text', 'link_url')
+        }),
+        ('🎨 Внешний вид', {
+            'fields': ('background_color', 'text_color', 'scroll_speed'),
+            'description': 'Настройка цветов и скорости прокрутки'
+        }),
+        ('⚙️ Настройки', {
+            'fields': ('is_active',)
+        }),
+        ('📅 Служебная информация', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_text_preview(self, obj):
+        """📝 Превью текста"""
+        preview = obj.text[:60] + "..." if len(obj.text) > 60 else obj.text
+        if obj.is_active:
+            return format_html(
+                '<strong style="color: green;">📢 {}</strong>',
+                preview
+            )
+        else:
+            return format_html(
+                '<span style="color: #666;">📢 {}</span>',
+                preview
+            )
+    get_text_preview.short_description = "Текст бегущей строки"
+
+    def get_color_preview(self, obj):
+        """🎨 Превью цветов"""
+        return format_html(
+            '<div style="display: inline-flex; align-items: center; gap: 5px;">'
+            '<div style="width: 20px; height: 20px; background-color: {}; border: 1px solid #ccc; border-radius: 3px;" title="Фон: {}"></div>'
+            '<div style="width: 20px; height: 20px; background-color: {}; border: 1px solid #ccc; border-radius: 3px;" title="Текст: {}"></div>'
+            '</div>',
+            obj.background_color, obj.background_color,
+            obj.text_color, obj.text_color
+        )
+    get_color_preview.short_description = "Цвета"
+
+    def get_link_status(self, obj):
+        """🔗 Статус ссылки"""
+        if obj.link_url:
+            return format_html(
+                '<a href="{}" target="_blank" style="color: green;">🔗 Есть ссылка</a>',
+                obj.link_url
+            )
+        else:
+            return format_html('<span style="color: #999;">❌ Без ссылки</span>')
+    get_link_status.short_description = "Ссылка"
+
+    # Дополнительные действия
+    actions = ['activate_banners', 'deactivate_banners']
+
+    def activate_banners(self, request, queryset):
+        """✅ Активировать баннеры (только один будет активен)"""
+        if queryset.count() > 1:
+            self.message_user(
+                request,
+                "Можно активировать только один баннер за раз. Активирован последний выбранный.",
+                level='warning'
+            )
+        # Активируем только последний выбранный
+        banner = queryset.last()
+        banner.is_active = True
+        banner.save()  # save() автоматически деактивирует остальные
+
+        self.message_user(request, f"Активирован баннер: {banner.get_text_preview()}")
+    activate_banners.short_description = "Активировать выбранный баннер"
+
+    def deactivate_banners(self, request, queryset):
+        """❌ Деактивировать баннеры"""
+        queryset.update(is_active=False)
+        self.message_user(request, f"Деактивировано: {queryset.count()} баннеров")
+    deactivate_banners.short_description = "Деактивировать выбранные баннеры"
+
+
+# 📊 НОВАЯ АДМИНКА: AnalyticsCounter для счетчиков аналитики
+@admin.register(AnalyticsCounter)
+class AnalyticsCounterAdmin(admin.ModelAdmin):
+    """📊 Админка для счетчиков аналитики"""
+
+    list_display = (
+        'get_type_icon',
+        'name',
+        'counter_type',
+        'get_code_preview',
+        'is_active',
+        'order',
+        'created_at'
+    )
+
+    list_filter = (
+        'counter_type',
+        'is_active',
+        'created_at'
+    )
+
+    search_fields = (
+        'name',
+        'counter_code'
+    )
+
+    list_editable = ('is_active', 'order')
+
+    readonly_fields = ('created_at', 'updated_at')
+
+    ordering = ('order', 'counter_type', 'name')
+
+    fieldsets = (
+        ('📊 Информация о счетчике', {
+            'fields': ('name', 'counter_type')
+        }),
+        ('💻 HTML код', {
+            'fields': ('counter_code',),
+            'description': 'Вставьте полный HTML код счетчика (включая теги script). Код будет вставлен в футер сайта.'
+        }),
+        ('⚙️ Настройки', {
+            'fields': ('is_active', 'order')
+        }),
+        ('📅 Служебная информация', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def get_type_icon(self, obj):
+        """🎨 Иконка типа счетчика"""
+        icons = {
+            'yandex_metrica': '📊',
+            'livinternet': '📈',
+            'google_analytics': '📉',
+            'other': '📋'
+        }
+        return icons.get(obj.counter_type, '📋')
+    get_type_icon.short_description = "Тип"
+
+    def get_code_preview(self, obj):
+        """👁️ Превью кода"""
+        if obj.counter_code:
+            preview = obj.counter_code[:50].replace('\n', ' ').replace('\r', '')
+            preview = preview + "..." if len(obj.counter_code) > 50 else preview
+            return format_html(
+                '<code style="background: #f5f5f5; padding: 2px 4px; border-radius: 3px;" title="{}">{}</code>',
+                obj.counter_code,
+                preview
+            )
+        return "❌ Нет кода"
+    get_code_preview.short_description = "Превью кода"
+
+    # Дополнительные действия
+    actions = ['activate_counters', 'deactivate_counters']
+
+    def activate_counters(self, request, queryset):
+        """✅ Активировать счетчики"""
+        queryset.update(is_active=True)
+        self.message_user(request, f"Активировано: {queryset.count()} счетчиков")
+    activate_counters.short_description = "Активировать выбранные счетчики"
+
+    def deactivate_counters(self, request, queryset):
+        """❌ Деактивировать счетчики"""
+        queryset.update(is_active=False)
+        self.message_user(request, f"Деактивировано: {queryset.count()} счетчиков")
+    deactivate_counters.short_description = "Деактивировать выбранные счетчики"
+
+
 # 🔧 ИТОГОВЫЕ ИЗМЕНЕНИЯ В ФАЙЛЕ:
 # ✅ ДОБАВЛЕНО: CompanyDescriptionAdmin с синглтон логикой
 # ✅ ДОБАВЛЕНО: ContactMessageAdmin для сообщений обратной связи
+# ✅ ДОБАВЛЕНО: AnalyticsCounterAdmin для счетчиков аналитики
 # ✅ ФУНКЦИИ:
 #    - Простая админка с заголовком и содержимым
 #    - Синглтон логика (только один экземпляр)
@@ -477,5 +801,6 @@ class DeliveryOptionAdmin(admin.ModelAdmin):
 #    - Полнофункциональная админка для обратной связи
 #    - Превью сообщений, статусы, фильтры
 #    - Массовые действия для обработки сообщений
+#    - Управление счетчиками аналитики с превью кода
 # ✅ ИСПРАВЛЕНО: Убран конфликт fields и fieldsets
 # ✅ СОХРАНЕНО: Все существующие админки без изменений

@@ -15,6 +15,96 @@ from django.db.models import Q
 # 🆕 КРИТИЧНЫЙ ИМПОРТ: Кастомное хранилище без суффиксов
 from .storage import OverwriteStorage
 
+# 🏠 Описание каталога автоковриков
+class AutoCatalogDescription(BaseModel):
+    """📝 Описание страницы каталога автоковриков (синглтон)"""
+
+    title = models.CharField(
+        max_length=200,
+        verbose_name="Заголовок каталога",
+        default="Автомобильные коврики",
+        help_text="Заголовок страницы каталога автоковриков"
+    )
+
+    description = CKEditor5Field(
+        verbose_name="Описание каталога",
+        help_text="Основное описание каталога автоковриков с форматированием",
+        config_name='blog',
+        blank=True,
+        null=True
+    )
+
+    # 🎬 Дополнительный контент с YouTube
+    additional_content = models.TextField(
+        verbose_name="Дополнительный контент",
+        help_text="Вставьте готовый HTML-код для YouTube видео или другого контента. "
+                  "Пример для YouTube: "
+                  '<div class="youtube-video-container" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 20px 0; border-radius: 8px;">'
+                  '<iframe src="https://www.youtube.com/embed/VIDEO_ID" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                  '</div>',
+        blank=True,
+        null=True
+    )
+
+    meta_description = models.TextField(
+        max_length=160,
+        blank=True,
+        null=True,
+        verbose_name="Meta Description",
+        help_text="SEO описание для поисковых систем (до 160 символов)"
+    )
+
+    def convert_youtube_links(self, content):
+        """🎬 Автоматическая конверсия YouTube ссылок в responsive iframe"""
+        if not content:
+            return content
+
+        import re
+        youtube_patterns = [
+            r'https?://(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})(?:[&\w=]*)?',
+            r'https?://youtu\.be/([a-zA-Z0-9_-]{11})(?:\?[&\w=]*)?',
+            r'https?://(?:www\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})(?:\?[&\w=]*)?',
+        ]
+
+        iframe_template = '''
+        <div class="youtube-video-container" style="position: relative; width: 100%%; padding-bottom: 56.25%%; height: 0; overflow: hidden; max-width: 100%%; background: #000; margin: 20px 0; border-radius: 8px;">
+            <iframe src="https://www.youtube.com/embed/{}"
+                    style="position: absolute; top: 0; left: 0; width: 100%%; height: 100%%;"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+            </iframe>
+        </div>
+        '''
+
+        for pattern in youtube_patterns:
+            content = re.sub(pattern, lambda m: iframe_template.format(m.group(1)), content)
+
+        return content
+
+    def has_content(self):
+        """📝 Проверка наличия контента для отображения"""
+        return bool(self.description or self.additional_content)
+
+    def __str__(self):
+        return f"📝 {self.title}"
+
+    class Meta:
+        verbose_name = "Описание каталога автоковриков"
+        verbose_name_plural = "Описание каталога автоковриков"
+
+    def save(self, *args, **kwargs):
+        """💾 Синглтон логика - разрешить только один экземпляр"""
+        if AutoCatalogDescription.objects.exists() and not self.pk:
+            return  # 🚫 Не создавать новые записи, если уже есть
+
+        # 🎬 Автоматическая конверсия YouTube ссылок (временно отключено)
+        # if self.additional_content:
+        #     self.additional_content = self.convert_youtube_links(self.additional_content)
+
+        super().save(*args, **kwargs)
+
+
 # 🎨 Определения типов цветов
 COLOR_TYPE_CHOICES = (
     ('carpet', 'Коврик'),
@@ -102,8 +192,11 @@ class Category(BaseModel):
     # 🎬 Дополнительный контент с YouTube
     additional_content = models.TextField(
         verbose_name="Дополнительный контент",
-        help_text="Вставьте ссылку на YouTube видео или готовый HTML-код. "
-                  "YouTube ссылки автоматически преобразуются в плеер",
+        help_text="Вставьте готовый HTML-код для YouTube видео или другого контента. "
+                  "Пример для YouTube: "
+                  '<div class="youtube-video-container" style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; margin: 20px 0; border-radius: 8px;">'
+                  '<iframe src="https://www.youtube.com/embed/VIDEO_ID" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'
+                  '</div>',
         blank=True,
         null=True
     )

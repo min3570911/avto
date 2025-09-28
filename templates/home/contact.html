@@ -20,10 +20,28 @@
                 <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-map-marker-alt"></i></span>
                 <strong>{{ contact_info.address|default:"г. Минск, Беларусь" }}</strong>
               </li>
-              <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
-                <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-phone"></i></span>
-                <a href="tel:{{ contact_info.phone }}" style="font-size: 1.3rem; font-weight: bold; text-decoration: none;">{{ contact_info.phone }}</a>
-              </li>
+              {% for phone in contact_info.phone_numbers.all %}
+                <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                  <span class="mr-3" style="font-size: 1.4rem;">
+                    {% if phone.is_primary %}
+                      <i class="fas fa-phone" style="color: #007bff;"></i>
+                    {% else %}
+                      <i class="fas fa-mobile-alt"></i>
+                    {% endif %}
+                  </span>
+                  <div>
+                    <a href="tel:{{ phone.phone }}" style="font-size: 1.3rem; font-weight: bold; text-decoration: none;">{{ phone.phone }}</a>
+                    {% if phone.description %}
+                      <span class="text-muted ml-2" style="font-size: 1rem;">({{ phone.description }})</span>
+                    {% endif %}
+                  </div>
+                </li>
+              {% empty %}
+                <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
+                  <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-phone"></i></span>
+                  <span class="text-muted">Телефоны не указаны</span>
+                </li>
+              {% endfor %}
               <li class="d-flex text-black mb-3" style="font-size: 1.3rem;">
                 <span class="mr-3" style="font-size: 1.4rem;"><i class="fas fa-envelope"></i></span>
                 <a href="mailto:{{ contact_info.email }}" style="font-size: 1.3rem; font-weight: bold; text-decoration: none;">{{ contact_info.email }}</a>
@@ -56,6 +74,16 @@
                       <i class="fab fa-facebook"></i> Facebook
                     </a>
                   {% endif %}
+                </div>
+              </div>
+            {% endif %}
+
+            <!-- Яндекс Карта -->
+            {% if contact_info.yandex_map_iframe %}
+              <div class="map-section mt-4">
+                <h5 class="mb-3">📍 Наше местоположение</h5>
+                <div class="map-container" style="border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  {{ contact_info.yandex_map_iframe|safe }}
                 </div>
               </div>
             {% endif %}
@@ -159,6 +187,25 @@
                     {% endfor %}
                   </div>
                 {% endif %}
+              </div>
+            </div>
+
+            <!-- Чекбокс согласия -->
+            <div class="row">
+              <div class="col-md-12 form-group">
+                <div class="form-check">
+                  {{ form.consent }}
+                  <label class="form-check-label" for="{{ form.consent.id_for_label }}">
+                    {{ form.consent.help_text|safe }}
+                  </label>
+                  {% if form.consent.errors %}
+                    <div class="text-danger mt-1">
+                      {% for error in form.consent.errors %}
+                        <small>{{ error }}</small>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
               </div>
             </div>
 

@@ -1,0 +1,199 @@
+{% extends "base/base.html" %}
+{% block title %}Оплата и доставка{% endblock %}
+{% block start %} {% load static %}
+
+<section class="section-content padding-bottom">
+  <div class="mx-auto" style="max-width: 85rem; margin-top: 50px">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h1 id="top" class="text-center mb-5">🚚 Оплата и доставка</h1>
+
+          {% if delivery_summary.options_count %}
+            <div class="card shadow-sm mb-4">
+              <div class="card-body">
+                <div class="row align-items-center g-3">
+                  <div class="col-lg-8">
+                    <h2 class="h4 mb-3">Как мы работаем</h2>
+                    <p class="mb-0">
+                      Мы подготовили {{ delivery_summary.options_count }} {{ delivery_summary.options_count|pluralize:"вариант,варианта,вариантов" }}
+                      доставки, чтобы вы могли выбрать удобный способ получения ковриков.
+                    </p>
+                  </div>
+                  <div class="col-lg-4 text-lg-end">
+                    {% if delivery_summary.last_updated %}
+                      <span class="text-muted small">Обновлено {{ delivery_summary.last_updated|date:"d E Y" }}</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="row g-4">
+                  <div class="col-md-4">
+                    <h3 class="h6 text-muted mb-1">Зоны доставки</h3>
+                    <p class="mb-0 fw-semibold">
+                      {{ delivery_summary.coverage_labels|join:", " }}
+                    </p>
+                    {% if delivery_summary.coverage_examples %}
+                      <p class="small text-muted mb-0 mt-1">
+                        Например: {{ delivery_summary.coverage_examples|join:", " }}
+                      </p>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-4">
+                    <h3 class="h6 text-muted mb-1">Способы оплаты</h3>
+                    <ul class="list-unstyled mb-0">
+                      {% for method in delivery_summary.payment_methods %}
+                        <li class="d-flex align-items-center mb-1">
+                          <span class="me-2">💳</span>
+                          {{ method }}
+                        </li>
+                      {% empty %}
+                        <li class="text-muted">Уточняйте у менеджера</li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  <div class="col-md-4">
+                    <h3 class="h6 text-muted mb-1">Сроки и стоимость</h3>
+                    {% if delivery_summary.delivery_time_examples %}
+                      <p class="mb-1">
+                        ⏱️ {{ delivery_summary.delivery_time_examples|join:", " }}
+                      </p>
+                    {% endif %}
+                    {% if delivery_summary.price_examples %}
+                      <p class="mb-0">
+                        💰 {{ delivery_summary.price_examples|join:", " }}
+                      </p>
+                    {% else %}
+                      <p class="text-muted mb-0">Стоимость рассчитывается индивидуально</p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                {% if grouped_options %}
+                  <hr class="my-4">
+                  <div class="d-flex flex-wrap gap-2">
+                    {% for group in grouped_options %}
+                      <a href="#delivery-{{ group.tag }}" class="btn btn-outline-primary btn-sm">
+                        {{ group.label }}
+                      </a>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if grouped_options %}
+            {% for group in grouped_options %}
+              <div id="delivery-{{ group.tag }}" class="mb-5">
+                <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+                  <h2 class="h4 mb-2">{{ group.label }}</h2>
+                  <a href="#top" class="small text-decoration-none text-muted">Вернуться к началу</a>
+                </div>
+                <div class="row">
+                  {% for option in group.options %}
+                    <div class="col-lg-6 col-md-12 mb-4">
+                      <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                          <div class="d-flex align-items-start mb-3">
+                            {% if option.icon %}
+                              <div class="me-3" style="font-size: 2rem; min-width: 50px;">
+                                {% if "fa" in option.icon %}
+                                  <i class="{{ option.icon }}"></i>
+                                {% else %}
+                                  {{ option.icon }}
+                                {% endif %}
+                              </div>
+                            {% endif %}
+                            <div>
+                              <h4 class="card-title mb-2">{{ option.title }}</h4>
+                              {% if option.coverage_area %}
+                                <span class="badge bg-primary-subtle text-primary">{{ option.coverage_area }}</span>
+                              {% endif %}
+                            </div>
+                          </div>
+
+                          <div class="mb-3">
+                            <div class="card-text">{{ option.description|safe }}</div>
+                          </div>
+
+                          {% if option.delivery_time %}
+                            <div class="mb-2">
+                              <strong>⏱️ Сроки:</strong> {{ option.delivery_time }}
+                            </div>
+                          {% endif %}
+
+                          {% if option.price_info %}
+                            <div class="mb-2">
+                              <strong>💰 Стоимость:</strong> {{ option.price_info }}
+                            </div>
+                          {% endif %}
+
+                          {% with methods=option.payment_methods_list %}
+                            {% if methods %}
+                              <div class="mb-3">
+                                <strong class="d-block mb-1">💳 Способы оплаты:</strong>
+                                <ul class="list-unstyled mb-0">
+                                  {% for method in methods %}
+                                    <li class="d-flex align-items-center mb-1">
+                                      <span class="text-primary me-2">•</span>
+                                      {{ method }}
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              </div>
+                            {% elif option.payment_methods %}
+                              <div class="mb-3">
+                                <strong>💳 Способы оплаты:</strong> {{ option.payment_methods }}
+                              </div>
+                            {% endif %}
+                          {% endwith %}
+
+                          {% if option.additional_info %}
+                            <div class="mt-3">
+                              <small class="text-muted d-block mb-1">ℹ️ Дополнительно:</small>
+                              <div class="small text-muted">{{ option.additional_info|safe }}</div>
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="alert alert-info shadow-sm" role="alert">
+              Мы обновляем условия доставки. Пожалуйста, свяжитесь с менеджером, чтобы подобрать подходящий вариант.
+            </div>
+          {% endif %}
+
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="card bg-light">
+                <div class="card-body text-center">
+                  <h5 class="card-title">❓ Остались вопросы?</h5>
+                  <p class="card-text">Позвоните нам или напишите — подберём оптимальный способ доставки и оплаты.</p>
+                  <div class="row justify-content-center">
+                    <div class="col-md-6">
+                      <a href="{% url 'contact' %}" class="btn btn-primary btn-lg me-3">
+                        <i class="fas fa-envelope me-2"></i>Напишите нам
+                      </a>
+                      <a href="tel:+375293570911" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-phone me-2"></i>+375 (29) 357-09-11
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

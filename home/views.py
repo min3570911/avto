@@ -281,8 +281,8 @@ def contact(request):
     from .forms import ContactForm
     from django.contrib import messages
 
-    # Получаем контактную информацию из модели
-    contact_info = ContactInfo.objects.filter(is_active=True).first()
+    # Получаем контактную информацию из модели с предзагрузкой телефонов
+    contact_info = ContactInfo.objects.filter(is_active=True).prefetch_related('phone_numbers').first()
 
     if request.method == 'POST':
         # Обрабатываем отправку формы
@@ -333,25 +333,113 @@ def about(request):
     return render(request, 'home/about.html', context)
 
 
-def privacy_policy(request):
-    """📜 Страница политики конфиденциальности"""
-    return render(request, 'home/privacy_policy.html')
-
-
 def terms_and_conditions(request):
-    """📄 Страница условий использования"""
-    return render(request, 'home/terms_and_conditions.html')
+    """📋 Страница условий оплаты и доставки"""
+    from .models import Terms
+
+    # Получаем условия из базы данных
+    terms = Terms.objects.first()
+
+    context = {
+        'terms': terms,
+        'page_title': 'Условия оплаты и доставки'
+    }
+
+    return render(request, 'home/terms.html', context)
+
+
+def privacy_policy(request):
+    """🔒 Страница политики конфиденциальности"""
+    from .models import PrivacyPolicy
+
+    # Получаем политику из базы данных
+    privacy_policy = PrivacyPolicy.objects.first()
+
+    context = {
+        'privacy_policy': privacy_policy,
+        'page_title': 'Политика конфиденциальности'
+    }
+
+    return render(request, 'home/privacy.html', context)
+
+
 
 
 def delivery(request):
     """🚚 Страница оплаты и доставки"""
     from .models import DeliveryOption
 
-    # Получаем активные способы доставки
-    delivery_options = DeliveryOption.objects.filter(is_active=True).order_by('order', 'title')
+    queryset = DeliveryOption.objects.filter(is_active=True).order_by('order', 'title')
+    delivery_options = list(queryset)
+
+    coverage_labels_map = dict(DeliveryOption.COVERAGE_TAG_CHOICES)
+    grouped_options = []
+
+    for tag, label in DeliveryOption.COVERAGE_TAG_CHOICES:
+        tagged = [option for option in delivery_options if option.coverage_tag == tag]
+        if tagged:
+            grouped_options.append({
+                'tag': tag,
+                'label': label,
+                'options': tagged,
+            })
+
+    extra_tags = {
+        option.coverage_tag: option.coverage_label() for option in delivery_options
+        if option.coverage_tag not in coverage_labels_map
+    }
+
+    for tag, label in extra_tags.items():
+        tagged = [option for option in delivery_options if option.coverage_tag == tag]
+        grouped_options.append({
+            'tag': tag,
+            'label': label,
+            'options': tagged,
+        })
+
+    payment_methods = sorted({
+        payment_method
+        for option in delivery_options
+        for payment_method in option.payment_methods_list()
+    })
+
+    price_examples = []
+    for option in delivery_options:
+        if option.price_info and option.price_info not in price_examples:
+            price_examples.append(option.price_info)
+        if len(price_examples) >= 3:
+            break
+
+    delivery_time_examples = []
+    for option in delivery_options:
+        if option.delivery_time and option.delivery_time not in delivery_time_examples:
+            delivery_time_examples.append(option.delivery_time)
+        if len(delivery_time_examples) >= 3:
+            break
+
+    coverage_examples = [
+        option.coverage_area for option in delivery_options if option.coverage_area
+    ]
+
+    last_updated = max(
+        (option.updated_at for option in delivery_options),
+        default=None
+    )
+
+    delivery_summary = {
+        'options_count': len(delivery_options),
+        'payment_methods': payment_methods,
+        'price_examples': price_examples,
+        'delivery_time_examples': delivery_time_examples,
+        'coverage_examples': coverage_examples[:3],
+        'coverage_labels': [group['label'] for group in grouped_options],
+        'last_updated': last_updated,
+    }
 
     context = {
         'delivery_options': delivery_options,
+        'grouped_options': grouped_options,
+        'delivery_summary': delivery_summary,
     }
 
     return render(request, 'home/delivery.html', context)
@@ -359,19 +447,27 @@ def delivery(request):
 
 def auto_catalog(request):
     """🚗 Каталог автоковриков"""
+    from products.models import AutoCatalogDescription
+
     auto_categories = Category.objects.filter(is_active=True).order_by('display_order', 'category_name')
+    catalog_description = AutoCatalogDescription.objects.first()
 
     return render(request, 'home/auto_catalog.html', {
         'auto_categories': auto_categories,
+        'catalog_description': catalog_description,
     })
 
 
 def boat_catalog(request):
     """🛥️ Каталог лодочных ковриков"""
+    from boats.models import BoatCatalogDescription
+
     boat_categories = BoatCategory.objects.filter(is_active=True).order_by('display_order', 'category_name')
+    catalog_description = BoatCatalogDescription.objects.first()
 
     return render(request, 'home/boat_catalog.html', {
         'boat_categories': boat_categories,
+        'catalog_description': catalog_description,
     })
 
 # 🔧 ИТОГОВЫЕ ИЗМЕНЕНИЯ В ФАЙЛЕ:
